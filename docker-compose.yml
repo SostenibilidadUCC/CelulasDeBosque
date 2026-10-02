@@ -1,0 +1,21 @@
+# Base de datos para desarrollo local. En producción se usa la de Railway.
+services:
+  db:
+    image: postgres:16
+    container_name: celulas-db
+    environment:
+      POSTGRES_USER: celulas
+      POSTGRES_PASSWORD: celulas
+      POSTGRES_DB: celulas
+    ports:
+      - "5432:5432"
+    volumes:
+      - datos-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U celulas -d celulas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  datos-postgres:

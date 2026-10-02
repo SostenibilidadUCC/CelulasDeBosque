@@ -1,0 +1,27 @@
+# Variables de entorno (nunca se suben)
+.env
+.env.*
+!.env.example
+
+# Go
+*.exe
+*.test
+*.out
+coverage.*
+
+# Node y build de React
+node_modules/
+frontend/dist/
+
+# Logs
+*.log
+
+# Editores y sistema operativo
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Herramientas locales de cada uno
+.atl/
