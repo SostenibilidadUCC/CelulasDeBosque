@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { pedir } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import Tarjeta from '../../components/Tarjeta.jsx'
 import ChipEstado from '../../components/ChipEstado.jsx'
@@ -17,9 +18,36 @@ export default function Prueba() {
   const [modal, setModal] = useState(false)
   const [panel, setPanel] = useState(false)
 
+  // Prueba de conexión con el backend (T03): llama a /api/health al abrir la página.
+  const [salud, setSalud] = useState({ cargando: true })
+  const [intento, setIntento] = useState(0)
+
+  useEffect(() => {
+    pedir('/health')
+      .then((datos) => setSalud({ datos }))
+      .catch((error) => setSalud({ error: error.message }))
+  }, [intento])
+
+  function reintentarSalud() {
+    setSalud({ cargando: true })
+    setIntento(intento + 1)
+  }
+
   return (
     <div className="space-y-8 py-4">
       <h1 className="text-2xl font-bold text-primario">Componentes base</h1>
+
+      <section className="space-y-2">
+        <h2 className="font-semibold">Conexión con el backend</h2>
+        {salud.cargando && <Cargando filas={1} />}
+        {salud.error && <MensajeError mensaje={salud.error} onReintentar={reintentarSalud} />}
+        {salud.datos && (
+          <Tarjeta>
+            <p className="font-semibold">✓ El backend respondió:</p>
+            <p className="font-mono">{JSON.stringify(salud.datos)}</p>
+          </Tarjeta>
+        )}
+      </section>
 
       <section className="space-y-2">
         <h2 className="font-semibold">Botones</h2>
