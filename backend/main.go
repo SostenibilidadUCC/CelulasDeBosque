@@ -3,10 +3,11 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/respuestas"
 )
 
 func main() {
@@ -28,6 +29,5 @@ func main() {
 
 // health responde {"ok": true} para saber si el servidor está prendido.
 func health(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+	respuestas.JSON(w, map[string]bool{"ok": true})
 }
