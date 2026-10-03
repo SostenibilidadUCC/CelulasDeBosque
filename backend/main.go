@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/db"
+	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/handlers"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/respuestas"
 )
 
@@ -26,6 +27,20 @@ func main() {
 
 	mux.HandleFunc("GET /api/health", health)
 
+	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
+	// El orden de registro no importa: el mux siempre elige la ruta más específica.
+	mux.HandleFunc("/api/", apiNoExiste)
+
+	// Todo lo que no empieza con /api es el frontend de React.
+	carpetaFrontend := os.Getenv("FRONTEND_DIR")
+	if carpetaFrontend == "" {
+		carpetaFrontend = "../frontend/dist"
+	}
+	if _, err := os.Stat(carpetaFrontend); err != nil {
+		log.Printf("Aviso: no existe %s. Para ver el frontend desde Go, corré: cd frontend && npm run build", carpetaFrontend)
+	}
+	mux.Handle("/", handlers.Frontend(carpetaFrontend))
+
 	// Railway define PORT solo; en desarrollo usamos 8080.
 	puerto := os.Getenv("PORT")
 	if puerto == "" {
@@ -42,4 +57,9 @@ func main() {
 // health responde {"ok": true} para saber si el servidor está prendido.
 func health(w http.ResponseWriter, r *http.Request) {
 	respuestas.JSON(w, map[string]bool{"ok": true})
+}
+
+// apiNoExiste responde 404 en JSON. Una ruta de la API nunca devuelve index.html.
+func apiNoExiste(w http.ResponseWriter, r *http.Request) {
+	respuestas.Error(w, http.StatusNotFound, "No existe esa ruta de la API")
 }
