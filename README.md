@@ -13,7 +13,7 @@ Instalá esto una sola vez (ticket T01):
 | Herramienta | Versión | Para qué |
 |---|---|---|
 | Git | cualquiera | control de versiones |
-| Go | 1.22 o más | backend |
+| Go | 1.25 o más | backend |
 | Node.js | LTS | frontend |
 | Docker Desktop | cualquiera | base de datos local |
 
