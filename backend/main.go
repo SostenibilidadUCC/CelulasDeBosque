@@ -3,14 +3,24 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/db"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/respuestas"
 )
 
 func main() {
+	// Conexión a la base: se crea una sola vez y la comparten todos los handlers.
+	pool, err := db.Conectar(context.Background())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
+	log.Println("Conectado a PostgreSQL")
+
 	// El "mux" es el que mira la ruta de cada pedido y decide qué función lo atiende.
 	mux := http.NewServeMux()
 
@@ -24,7 +34,9 @@ func main() {
 
 	log.Printf("Servidor escuchando en http://localhost:%s", puerto)
 	// ListenAndServe se queda corriendo para siempre; solo vuelve si hay un error.
-	log.Fatal(http.ListenAndServe(":"+puerto, mux))
+	// No usamos log.Fatal acá para que el defer de arriba llegue a cerrar el pool.
+	err = http.ListenAndServe(":"+puerto, mux)
+	log.Printf("El servidor se detuvo: %v", err)
 }
 
 // health responde {"ok": true} para saber si el servidor está prendido.
