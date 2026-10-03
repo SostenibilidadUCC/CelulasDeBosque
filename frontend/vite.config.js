@@ -4,4 +4,10 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // En desarrollo, los pedidos a /api los atiende el servidor Go.
+  server: {
+    proxy: {
+      '/api': 'http://localhost:8080',
+    },
+  },
 })
