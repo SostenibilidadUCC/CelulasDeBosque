@@ -48,7 +48,7 @@ Abrí Docker Desktop y esperá a que diga "Engine running". Después:
 docker compose up -d
 ```
 
-Levanta PostgreSQL 16 en `localhost:5432`. Los datos se guardan en el volumen `datos-postgres`, así que no se pierden al apagar la compu.
+Levanta PostgreSQL 16 en `localhost:5433`. Los datos se guardan en el volumen `datos-postgres`, así que no se pierden al apagar la compu.
 
 ### 3. Migraciones
 
