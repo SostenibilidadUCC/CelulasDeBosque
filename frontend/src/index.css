@@ -1,78 +1,82 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
 @import "tailwindcss";
 
-/* Tokens de diseño tomados del DESIGN.md de Stitch.
-   Tailwind genera las clases solas: bg-primario, text-texto-suave, rounded-control, shadow-tarjeta, etc. */
+/* Tokens de diseño: copiados de frontend/CLAUDE.md. Si falta un color, se agrega primero allá. */
 @theme {
-  /* Marca */
-  --color-primario: #1b4332;
-  --color-primario-hover: #2d6a4f;
-  --color-primario-claro: #e8f5e9;
-  --color-secundario: #52b788;
-  --color-secundario-suave: #74c69d;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* Superficies y texto */
+  /* Base */
+  --color-bosque: #1b4332;
+  --color-bosque-hover: #2d6a4f;
+  --color-hoja: #52b788;
+  --color-hoja-suave: #74c69d;
+  --color-brote: #d8f3dc;
+  --color-brote-borde: #b7e4c7;
+  --color-tonal: #e8f5e9;
+  --color-niebla: #d1e0d7;
   --color-fondo: #f8faf8;
   --color-superficie: #ffffff;
+  --color-segmento: #eef2ef;
+
+  /* Texto y neutros */
   --color-texto: #1e293b;
-  --color-texto-suave: #475569;
-  --color-texto-placeholder: #94a3b8;
+  --color-texto-2: #475569;
+  --color-texto-3: #64748b;
+  --color-placeholder: #94a3b8;
   --color-borde: #e2e8f0;
-  --color-borde-verde: #d1e0d7;
+  --color-gris-suave: #f1f5f9;
+  --color-gris-borde: #cbd5e1;
 
-  /* Supervivencia */
-  --color-vivo-fondo: #d8f3dc;
-  --color-vivo-borde: #b7e4c7;
-  --color-vivo-texto: #1b4332;
-  --color-vivo-icono: #2d6a4f;
-  --color-muerto-fondo: #f1f5f9;
-  --color-muerto-borde: #cbd5e1;
-  --color-muerto-texto: #475569;
-  --color-muerto-icono: #64748b;
-
-  /* Estado del mes (plano de la isleta). El ámbar no está en el DESIGN.md. */
-  --color-pendiente-fondo: #fef3c7;
+  /* Estados */
+  --color-pendiente: #fef3c7;
   --color-pendiente-borde: #fcd34d;
-  --color-pendiente-texto: #92400e;
-
-  /* Errores */
+  --color-pendiente-texto: #78350f;
+  --color-pendiente-celda: #f5b82e;
   --color-error: #ba1a1a;
   --color-error-fondo: #ffdad6;
+  --color-error-texto: #93000a;
+
+  /* Formas de vida */
+  --color-arbol: #1b4332;
+  --color-arbusto: #52b788;
+  --color-herbacea: #c08552;
+  --color-rastrera: #7c6fb0;
 
   /* Tipografía */
-  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
-
-  /* Formas */
-  --radius-control: 0.75rem; /* botones, campos, celdas */
-  --radius-tarjeta: 1rem;    /* tarjetas y paneles */
+  --text-headline-xl: 36px;   --text-headline-xl--line-height: 44px;
+  --text-headline-lg: 28px;   --text-headline-lg--line-height: 36px;
+  --text-headline-md: 20px;   --text-headline-md--line-height: 28px;
+  --text-headline-sm: 18px;   --text-headline-sm--line-height: 24px;
+  --text-body-lg: 16px;       --text-body-lg--line-height: 24px;
+  --text-body-md: 14px;       --text-body-md--line-height: 20px;
+  --text-body-sm: 12px;       --text-body-sm--line-height: 16px;
+  --text-label-lg: 16px;      --text-label-lg--line-height: 24px;
+  --text-label-md: 14px;      --text-label-md--line-height: 20px;
+  --text-label-sm: 12px;      --text-label-sm--line-height: 16px;
+  --text-code-tag: 13px;      --text-code-tag--line-height: 16px;
 
   /* Sombras */
-  --shadow-tarjeta: 0 2px 8px -2px rgb(27 67 50 / 0.05), 0 1px 4px -1px rgb(0 0 0 / 0.03);
-  --shadow-flotante: 0 8px 20px -4px rgb(27 67 50 / 0.12), 0 2px 6px -1px rgb(27 67 50 / 0.06);
+  --shadow-nivel-1: 0 2px 8px -2px rgb(27 67 50 / 0.05), 0 1px 4px -1px rgb(0 0 0 / 0.03);
+  --shadow-nivel-2: 0 8px 20px -4px rgb(27 67 50 / 0.12), 0 2px 6px -1px rgb(27 67 50 / 0.06);
 }
 
 body {
-  min-height: 100svh;
-  background: var(--color-fondo);
-  color: var(--color-texto);
-  font-family: var(--font-sans);
+  @apply bg-fondo text-texto font-sans text-body-lg antialiased;
 }
 
-/* Códigos de célula (A-1-45): mayúsculas, números tabulares y más espaciado, dentro de una píldora. */
-@utility codigo {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  background: var(--color-primario-claro);
-  color: var(--color-primario);
-  padding: 0.125rem 0.625rem;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums;
+/* Ícono de Material Symbols relleno (por ejemplo, el ítem activo de la barra de navegación). */
+@utility icono-relleno {
+  font-variation-settings: "FILL" 1;
 }
 
-/* Números de métricas y alturas alineados */
-@utility numeros {
-  font-variant-numeric: tabular-nums;
+/* Accesibilidad: si la persona pidió menos movimiento en su teléfono, no hay transiciones. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

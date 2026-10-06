@@ -1,40 +1,42 @@
 import { NavLink } from 'react-router'
+import Icono from './Icono.jsx'
 
-// TODO (cuando esté T10 de Magdi): ocultar "Cargar" para el rol lector.
+// TODO (cuando esté T10 de Magda): mostrar "Cargar" solo a Administrador y Cargador.
 const items = [
-  { a: '/', texto: 'Inicio', icono: '🏠' },
-  { a: '/celulas', texto: 'Células', icono: '🌳' },
-  { a: '/cargar', texto: 'Cargar', icono: '＋', destacado: true },
-  { a: '/resultados', texto: 'Resultados', icono: '📊' },
-  { a: '/mas', texto: 'Más', icono: '☰' },
+  { a: '/', texto: 'Inicio', icono: 'home' },
+  { a: '/celulas', texto: 'Células', icono: 'grid_view' },
+  { a: '/cargar', texto: 'Cargar', icono: 'add', destacado: true },
+  { a: '/resultados', texto: 'Resultados', icono: 'insights' },
+  { a: '/mas', texto: 'Más', icono: 'more_horiz' },
 ]
 
 export default function BarraNavegacion() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-superficie">
-      <ul className="mx-auto flex max-w-3xl items-end justify-around">
+    <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-superficie">
+      <ul className="mx-auto flex max-w-[1120px] items-end justify-around">
         {items.map((item) => (
           <li key={item.a} className="flex-1">
             <NavLink
               to={item.a}
               end={item.a === '/'}
               className={({ isActive }) =>
-                `flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-medium ${
-                  isActive ? 'text-primario' : 'text-texto-suave'
+                `flex min-h-16 flex-col items-center justify-center gap-1 text-label-sm font-semibold focus-visible:outline-2 focus-visible:outline-bosque-hover ${
+                  isActive ? 'text-bosque' : 'text-texto-2'
                 }`
               }
             >
-              <span
-                aria-hidden="true"
-                className={
-                  item.destacado
-                    ? '-mt-6 flex size-14 items-center justify-center rounded-full bg-primario text-2xl text-white shadow-flotante'
-                    : 'text-xl'
-                }
-              >
-                {item.icono}
-              </span>
-              {item.texto}
+              {({ isActive }) => (
+                <>
+                  {item.destacado ? (
+                    <span className="-mt-7 flex size-14 items-center justify-center rounded-full bg-bosque text-white shadow-nivel-2">
+                      <Icono nombre={item.icono} />
+                    </span>
+                  ) : (
+                    <Icono nombre={item.icono} relleno={isActive} />
+                  )}
+                  {item.texto}
+                </>
+              )}
             </NavLink>
           </li>
         ))}
