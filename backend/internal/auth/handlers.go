@@ -79,9 +79,10 @@ func (a *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	expira := time.Now().Add(DuracionSesion)
+	// En la base va la huella del token; en la cookie, el token real (ver hashToken).
 	_, err = a.pool.Exec(r.Context(),
 		`INSERT INTO sesiones (token, usuario_id, expira_en) VALUES ($1, $2, $3)`,
-		token, fila.ID, expira)
+		hashToken(token), fila.ID, expira)
 	if err != nil {
 		log.Printf("auth: no se pudo crear la sesión: %v", err)
 		respuestas.Error(w, http.StatusInternalServerError, mensajeErrorBase)
