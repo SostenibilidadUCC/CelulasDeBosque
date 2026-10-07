@@ -13,8 +13,10 @@ import Plano from '../../components/Plano.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
 
-// Tamaños de celda para el zoom (36 px es el mínimo de frontend/CLAUDE.md).
-const tamanos = [36, 44, 56]
+// Zoom de la grilla: lado de cada celda en px. 36 px es el mínimo de frontend/CLAUDE.md.
+const TAMANO_MINIMO = 36
+const TAMANO_MAXIMO = 72
+const PASO_ZOOM = 8
 
 const formatoMes = new Intl.DateTimeFormat('es-AR', { month: 'short' })
 
@@ -35,7 +37,7 @@ export default function Isleta() {
   const [carga, setCarga] = useState({ cargando: true })
   const [intento, setIntento] = useState(0)
   const [vista, setVista] = useState('plano')
-  const [zoom, setZoom] = useState(1)
+  const [tamano, setTamano] = useState(44)
   const [busqueda, setBusqueda] = useState('')
   const [avisoBusqueda, setAvisoBusqueda] = useState(null)
   const [resaltadaId, setResaltadaId] = useState(null)
@@ -191,8 +193,8 @@ export default function Isleta() {
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    onClick={() => setZoom((z) => Math.max(0, z - 1))}
-                    disabled={zoom === 0}
+                    onClick={() => setTamano((t) => Math.max(TAMANO_MINIMO, t - PASO_ZOOM))}
+                    disabled={tamano <= TAMANO_MINIMO}
                     aria-label="Alejar"
                     className="flex size-12 items-center justify-center rounded-xl text-bosque hover:bg-tonal disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-bosque-hover"
                   >
@@ -200,8 +202,8 @@ export default function Isleta() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setZoom((z) => Math.min(tamanos.length - 1, z + 1))}
-                    disabled={zoom === tamanos.length - 1}
+                    onClick={() => setTamano((t) => Math.min(TAMANO_MAXIMO, t + PASO_ZOOM))}
+                    disabled={tamano >= TAMANO_MAXIMO}
                     aria-label="Acercar"
                     className="flex size-12 items-center justify-center rounded-xl text-bosque hover:bg-tonal disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-bosque-hover"
                   >
@@ -222,7 +224,10 @@ export default function Isleta() {
               filas={isleta.filas}
               columnas={isleta.columnas}
               celulas={celulas}
-              tamanoCelda={tamanos[zoom]}
+              tamanoCelda={tamano}
+              tamanoMinimo={TAMANO_MINIMO}
+              tamanoMaximo={TAMANO_MAXIMO}
+              onCambiarTamano={setTamano} // ISL-01: zoom con dos dedos
               resaltadaId={resaltadaId}
               onSeleccionar={setSeleccionada}
               // TODO (T13 de Magda): imagenUrl={`/api/fotos/${isleta.planoFotoId}`}

@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+
 // Grilla del plano de una isleta (T12). Recibe todo por props para que la puedan reutilizar
 // Nueva célula (T17) y Lugares e isletas (T20).
 //
@@ -5,6 +7,8 @@
 //   filas, columnas     tamaño de la grilla
 //   celulas             [{ id, numero, codigo, fila, columna, estado }]
 //   tamanoCelda         lado de cada celda en px (36 como mínimo, frontend/CLAUDE.md)
+//   onCambiarTamano     (tamano) => void, opcional: si está, se puede hacer zoom pellizcando con dos dedos (ISL-01)
+//   tamanoMinimo, tamanoMaximo  límites del zoom con dos dedos (36 y 72 por defecto)
 //   resaltadaId         id de la célula a resaltar (por ejemplo, la que se buscó)
 //   onSeleccionar       (celula) => void, al tocar una célula
 //   onSeleccionarLibre  (fila, columna) => void, opcional: si está, las celdas libres se pueden tocar
@@ -37,12 +41,32 @@ export default function Plano({
   columnas,
   celulas,
   tamanoCelda = 40,
+  onCambiarTamano,
+  tamanoMinimo = 36,
+  tamanoMaximo = 72,
   resaltadaId,
   onSeleccionar,
   onSeleccionarLibre,
   imagenUrl,
   mostrarLeyenda = true,
 }) {
+  // Zoom con dos dedos: al apoyar dos dedos se guarda la distancia entre ellos y el tamaño de la celda;
+  // al moverlos, el tamaño cambia en la misma proporción que la distancia.
+  const pellizco = useRef(null)
+  const distancia = (toques) => Math.hypot(toques[0].clientX - toques[1].clientX, toques[0].clientY - toques[1].clientY)
+
+  function alEmpezarToque(e) {
+    if (onCambiarTamano && e.touches.length === 2) {
+      pellizco.current = { distancia: distancia(e.touches), tamano: tamanoCelda }
+    }
+  }
+
+  function alMoverToque(e) {
+    if (!pellizco.current || e.touches.length !== 2) return
+    const nuevo = (pellizco.current.tamano * distancia(e.touches)) / pellizco.current.distancia
+    onCambiarTamano(Math.round(Math.min(tamanoMaximo, Math.max(tamanoMinimo, nuevo))))
+  }
+
   // Para encontrar rápido qué célula hay en cada posición: "fila-columna" → célula.
   const porPosicion = new Map(celulas.map((c) => [`${c.fila}-${c.columna}`, c]))
   const hayEstados = celulas.some((c) => c.estado && c.estado !== 'baja')
@@ -107,7 +131,18 @@ export default function Plano({
       )}
 
       {/* overflow-auto: si la grilla no entra en la pantalla, se desplaza con el dedo. */}
-      <div className="overflow-auto rounded-2xl border border-borde bg-tonal p-3 shadow-nivel-1">
+      {/* touch-pan: con un dedo se desplaza; el pellizco con dos dedos lo maneja este componente
+          en lugar de agrandar toda la página. */}
+      <div
+        className={`overflow-auto rounded-2xl border border-borde bg-tonal p-3 shadow-nivel-1 ${
+          onCambiarTamano ? 'touch-pan-x touch-pan-y' : ''
+        }`}
+        onTouchStart={alEmpezarToque}
+        onTouchMove={alMoverToque}
+        onTouchEnd={() => {
+          pellizco.current = null
+        }}
+      >
         <div className="relative w-max">
           {imagenUrl && (
             <img src={imagenUrl} alt="Foto aérea de la isleta" className="absolute inset-0 size-full rounded-xl object-cover" />

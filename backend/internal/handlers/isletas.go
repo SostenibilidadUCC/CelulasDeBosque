@@ -26,8 +26,8 @@ type lugarDeIsleta struct {
 // Go lo manda al front tal cual, sin volver a decodificarlo.
 type ultimoRegistro struct {
 	ID         int64           `json:"id"`
-	Fecha      string          `json:"fecha"` // "2026-11-18"
-	FotoID     int64           `json:"fotoId"`
+	Fecha      string          `json:"fecha"`      // "2026-11-18"
+	FotoID     *int64          `json:"fotoId"`     // puntero: si llegara NULL, sale null en el JSON en vez de romper
 	Individuos json.RawMessage `json:"individuos"` // [{ formaDeVida, nombre, icono, vivo, alturaCm }]
 }
 
@@ -158,7 +158,7 @@ func Isleta(pool *pgxpool.Pool) http.HandlerFunc {
 				c.Estado = &baja
 			}
 			if registroID != nil {
-				c.UltimoRegistro = &ultimoRegistro{ID: *registroID, Fecha: *fecha, FotoID: *fotoID, Individuos: individuos}
+				c.UltimoRegistro = &ultimoRegistro{ID: *registroID, Fecha: *fecha, FotoID: fotoID, Individuos: individuos}
 			}
 			isleta.Celulas = append(isleta.Celulas, c)
 		}
