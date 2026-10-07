@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { obtenerYo } from '../api.js'
+import { EVENTO_SESION_VENCIDA, obtenerYo } from '../api.js'
 import { ContextoSesion } from './contextoSesion.js'
 
 // Pregunta quién está logueado y devuelve { usuario, error }. Nunca lanza.
@@ -43,6 +43,16 @@ export default function ProveedorSesion({ children }) {
       cancelado = true
     }
   }, [aplicar])
+
+  // Si cualquier pedido recibe un 401 mientras se usa la app (por ejemplo, la sesión venció),
+  // se borra el usuario y RutaPrivada manda al login, recordando la pantalla. El aviso lo da pedir().
+  useEffect(() => {
+    function alVencerSesion() {
+      setUsuario(null)
+    }
+    window.addEventListener(EVENTO_SESION_VENCIDA, alVencerSesion)
+    return () => window.removeEventListener(EVENTO_SESION_VENCIDA, alVencerSesion)
+  }, [])
 
   const valor = useMemo(
     () => ({ usuario, cargando, error, setUsuario, recargar }),
