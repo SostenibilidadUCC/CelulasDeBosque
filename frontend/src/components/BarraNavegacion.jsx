@@ -1,7 +1,10 @@
 import { NavLink } from 'react-router'
+import { useSesion } from '../sesion/useSesion.js'
 import Icono from './Icono.jsx'
 
-// TODO (cuando esté T10 de Magda): mostrar "Cargar" solo a Administrador y Cargador.
+// Roles que pueden cargar registros. Es solo para mostrar u ocultar el botón: el permiso real lo valida el backend.
+const rolesQueCargan = ['admin', 'cargador']
+
 const items = [
   { a: '/', texto: 'Inicio', icono: 'home' },
   { a: '/celulas', texto: 'Células', icono: 'grid_view' },
@@ -11,10 +14,14 @@ const items = [
 ]
 
 export default function BarraNavegacion() {
+  const { usuario } = useSesion()
+  const puedeCargar = rolesQueCargan.includes(usuario?.rol)
+  const itemsVisibles = items.filter((item) => !item.destacado || puedeCargar)
+
   return (
     <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-superficie">
       <ul className="mx-auto flex max-w-[1120px] items-end justify-around">
-        {items.map((item) => (
+        {itemsVisibles.map((item) => (
           <li key={item.a} className="flex-1">
             <NavLink
               to={item.a}
