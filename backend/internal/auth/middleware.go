@@ -40,7 +40,7 @@ func (a *Auth) RequiereSesion(siguiente http.HandlerFunc) http.HandlerFunc {
 			 FROM sesiones s
 			 JOIN usuarios u ON u.id = s.usuario_id
 			 LEFT JOIN lugares l ON l.id = u.lugar_id
-			 WHERE s.token = $1`, token), &expira)
+			 WHERE s.token = $1`, hashToken(token)), &expira)
 		if errors.Is(err, pgx.ErrNoRows) {
 			// El token no existe (sesión cerrada o inventada).
 			borrarCookie(w, r)
@@ -73,7 +73,7 @@ func (a *Auth) RequiereSesion(siguiente http.HandlerFunc) http.HandlerFunc {
 		// Así se escribe en la base como máximo una vez por día y no en cada pedido.
 		if time.Until(expira) < DuracionSesion-24*time.Hour {
 			nuevaExpira := time.Now().Add(DuracionSesion)
-			if _, err := a.pool.Exec(r.Context(), `UPDATE sesiones SET expira_en = $2 WHERE token = $1`, token, nuevaExpira); err != nil {
+			if _, err := a.pool.Exec(r.Context(), `UPDATE sesiones SET expira_en = $2 WHERE token = $1`, hashToken(token), nuevaExpira); err != nil {
 				// No es grave: la sesión sigue valiendo, se intentará renovar en el próximo pedido.
 				log.Printf("auth: no se pudo renovar la sesión: %v", err)
 			} else {
@@ -87,9 +87,9 @@ func (a *Auth) RequiereSesion(siguiente http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// borrarSesion elimina una sesión por su token. Si falla, solo queda en el log.
+// borrarSesion elimina una sesión. Recibe el token de la cookie y busca su huella. Si falla, solo queda en el log.
 func (a *Auth) borrarSesion(ctx context.Context, token string) {
-	if _, err := a.pool.Exec(ctx, `DELETE FROM sesiones WHERE token = $1`, token); err != nil {
+	if _, err := a.pool.Exec(ctx, `DELETE FROM sesiones WHERE token = $1`, hashToken(token)); err != nil {
 		log.Printf("auth: no se pudo borrar la sesión: %v", err)
 	}
 }

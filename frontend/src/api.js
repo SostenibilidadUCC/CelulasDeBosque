@@ -32,6 +32,11 @@ export async function pedir(ruta, { cuerpo, headers, ...opciones } = {}) {
   const datos = respuesta.status === 204 ? null : await respuesta.json().catch(() => null)
 
   if (!respuesta.ok) {
+    // T10: un 401 en cualquier pedido significa que la sesión venció o se cerró: se avisa a
+    // ProveedorSesion para que mande al login. /login queda afuera: ahí un 401 es "contraseña incorrecta".
+    if (respuesta.status === 401 && ruta !== '/login') {
+      window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA))
+    }
     throw new ErrorApi(datos?.error ?? 'Ocurrió un error inesperado. Probá de nuevo.', respuesta.status)
   }
   return datos
@@ -42,3 +47,6 @@ export const iniciarSesion = (email, contrasena) =>
   pedir('/login', { method: 'POST', cuerpo: { email, contrasena } })
 export const cerrarSesion = () => pedir('/logout', { method: 'POST' })
 export const obtenerYo = () => pedir('/yo')
+
+// Nombre del evento que dispara pedir() cuando recibe un 401. Lo escucha ProveedorSesion.
+export const EVENTO_SESION_VENCIDA = 'sesion-vencida'

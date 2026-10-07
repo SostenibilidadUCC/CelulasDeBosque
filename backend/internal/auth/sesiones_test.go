@@ -82,3 +82,18 @@ func TestBorrarCookie(t *testing.T) {
 		t.Errorf("para borrar la cookie MaxAge tiene que ser negativo, llegó %d", cookie.MaxAge)
 	}
 }
+
+func TestHashToken(t *testing.T) {
+	token := "token-de-prueba"
+	huella := hashToken(token)
+
+	if len(huella) != 64 {
+		t.Errorf("esperaba 64 caracteres, llegaron %d", len(huella))
+	}
+	if huella == token {
+		t.Errorf("la huella no puede ser igual al token")
+	}
+	if hashToken(token) != huella {
+		t.Errorf("el mismo token tiene que dar siempre la misma huella")
+	}
+}

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"net/http"
 	"time"
@@ -22,6 +23,15 @@ func nuevoToken() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+// hashToken devuelve la "huella" SHA-256 del token, en hexadecimal (64 caracteres).
+// En la tabla sesiones se guarda la huella y nunca el token: si alguien llegara a ver la base,
+// con la huella no puede entrar, porque de la huella no se puede volver al token.
+// Alcanza con SHA-256 (no hace falta bcrypt) porque el token ya es largo y al azar.
+func hashToken(token string) string {
+	suma := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(suma[:])
 }
 
 // esHTTPS dice si el pedido llegó por HTTPS. Railway termina el HTTPS antes de llegar a Go,
