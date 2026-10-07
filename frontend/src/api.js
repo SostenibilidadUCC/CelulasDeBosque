@@ -36,3 +36,9 @@ export async function pedir(ruta, { cuerpo, headers, ...opciones } = {}) {
   }
   return datos
 }
+
+// T10: sesión
+export const iniciarSesion = (email, contrasena) =>
+  pedir('/login', { method: 'POST', cuerpo: { email, contrasena } })
+export const cerrarSesion = () => pedir('/logout', { method: 'POST' })
+export const obtenerYo = () => pedir('/yo')
