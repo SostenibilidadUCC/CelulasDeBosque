@@ -50,3 +50,6 @@ export const obtenerYo = () => pedir('/yo')
 
 // Nombre del evento que dispara pedir() cuando recibe un 401. Lo escucha ProveedorSesion.
 export const EVENTO_SESION_VENCIDA = 'sesion-vencida'
+
+// T12: plano de la isleta
+export const obtenerIsleta = (id) => pedir(`/isletas/${id}`)

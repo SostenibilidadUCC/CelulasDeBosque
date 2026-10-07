@@ -34,6 +34,8 @@ func main() {
 	mux.HandleFunc("POST /api/logout", a.RequiereSesion(a.Logout))
 	mux.HandleFunc("GET /api/yo", a.RequiereSesion(a.Yo))
 
+	mux.HandleFunc("GET /api/isletas/{id}", a.RequiereSesion(handlers.Isleta(pool)))
+
 	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
 	// El orden de registro no importa: el mux siempre elige la ruta más específica.
 	mux.HandleFunc("/api/", apiNoExiste)

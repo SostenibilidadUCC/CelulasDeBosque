@@ -73,7 +73,8 @@ FROM (VALUES
     ('C', 1, 'Entrada',           3,  5,  0.0005)
 ) AS v (letra, numero, nombre, filas, columnas, desvio)
 JOIN lugares l ON l.letra = v.letra
-JOIN fotos f ON f.ruta_r2 = 'seed/plano-' || v.letra || '-' || v.numero || '.jpg';
+JOIN fotos f ON f.ruta_r2 = 'seed/plano-' || v.letra || '-' || v.numero || '.jpg'
+ORDER BY v.letra, v.numero; -- así los id salen en orden: A-1 es la isleta 1, A-2 la 2…
 
 -- 5. Células: 60 + 20 + 15 + 15 + 10 = 120. Se ubican en la grilla de izquierda a derecha
 --    y de arriba abajo: la célula n va en la fila (n-1)/columnas + 1 y la columna (n-1)%columnas + 1.
@@ -90,7 +91,8 @@ FROM (VALUES ('A', 1, 60), ('A', 2, 20), ('B', 1, 15), ('B', 2, 15), ('C', 1, 10
 JOIN lugares l ON l.letra = v.letra
 JOIN isletas i ON i.lugar_id = l.id AND i.numero = v.isleta
 CROSS JOIN generate_series(1, v.cantidad) AS n
-CROSS JOIN (SELECT id FROM usuarios WHERE email = 'admin@celulas.test') AS admin;
+CROSS JOIN (SELECT id FROM usuarios WHERE email = 'admin@celulas.test') AS admin
+ORDER BY l.letra, v.isleta, n;
 
 -- C-1-10 dada de baja el mes pasado (RN-14).
 UPDATE celulas c
