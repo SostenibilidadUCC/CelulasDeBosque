@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/auth"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/db"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/handlers"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/respuestas"
@@ -26,6 +27,12 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/health", health)
+
+	// T10: sesión. Las demás rutas internas se protegen con a.RequiereSesion(...).
+	a := auth.Nuevo(pool)
+	mux.HandleFunc("POST /api/login", a.Login)
+	mux.HandleFunc("POST /api/logout", a.RequiereSesion(a.Logout))
+	mux.HandleFunc("GET /api/yo", a.RequiereSesion(a.Yo))
 
 	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
 	// El orden de registro no importa: el mux siempre elige la ruta más específica.

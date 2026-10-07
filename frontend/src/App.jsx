@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router'
 import Layout from './components/Layout.jsx'
+import RutaPrivada from './components/RutaPrivada.jsx'
 import Login from './pages/Login/Login.jsx'
 import Publico from './pages/Publico/Publico.jsx'
 import Inicio from './pages/Inicio/Inicio.jsx'
@@ -26,7 +27,7 @@ export default function App() {
         <Route path="/publico/:letra" element={<Publico />} />
 
         {/* Pantallas internas, con barra de navegación */}
-        <Route element={<Layout />}>
+        <Route element={<RutaPrivada><Layout /></RutaPrivada>}>
           <Route index element={<Inicio />} />
           <Route path="celulas" element={<Celulas />} />
           <Route path="celulas/nueva" element={<NuevaCelula />} />
