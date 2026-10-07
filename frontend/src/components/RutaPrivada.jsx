@@ -17,6 +17,6 @@ export default function RutaPrivada({ children }) {
       </div>
     )
   }
-  if (!usuario) return <Navigate to="/login" replace state={{ desde: location.pathname }} />
+  if (!usuario) return <Navigate to="/login" replace state={{ desde: location.pathname + location.search }} />
   return children
 }

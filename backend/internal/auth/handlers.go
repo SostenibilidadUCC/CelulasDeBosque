@@ -27,6 +27,10 @@ type pedidoLogin struct {
 // Login valida email y contraseña, crea la sesión y devuelve el usuario (D2).
 // Nunca se loguea la contraseña ni el cuerpo del pedido (RNF-SEG-03).
 func (a *Auth) Login(w http.ResponseWriter, r *http.Request) {
+	// La respuesta trae datos personales: que no quede guardada en la caché del navegador
+	// (importa en celulares compartidos) ni de ningún proxy.
+	w.Header().Set("Cache-Control", "no-store")
+
 	// Un login real pesa pocos bytes: se corta en 4 KB para que nadie mande cuerpos enormes.
 	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 
@@ -100,5 +104,6 @@ func (a *Auth) Logout(w http.ResponseWriter, r *http.Request) {
 
 // Yo devuelve el usuario de la sesión actual (D1). El front lo usa al cargar la página.
 func (a *Auth) Yo(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store") // datos personales: ver Login
 	respuestas.JSON(w, UsuarioActual(r))
 }
