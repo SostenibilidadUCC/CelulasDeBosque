@@ -42,3 +42,6 @@ export const iniciarSesion = (email, contrasena) =>
   pedir('/login', { method: 'POST', cuerpo: { email, contrasena } })
 export const cerrarSesion = () => pedir('/logout', { method: 'POST' })
 export const obtenerYo = () => pedir('/yo')
+
+// T12: plano de la isleta
+export const obtenerIsleta = (id) => pedir(`/isletas/${id}`)
