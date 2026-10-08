@@ -53,3 +53,16 @@ export const EVENTO_SESION_VENCIDA = 'sesion-vencida'
 
 // T12: plano de la isleta
 export const obtenerIsleta = (id) => pedir(`/isletas/${id}`)
+
+// T11: inicio y explorar células
+export const obtenerLugares = () => pedir('/lugares')
+// filtros: { isleta, estado, q }. Los vacíos no se mandan.
+// URLSearchParams arma "isleta=1&q=A-1-45" y escapa los caracteres especiales.
+export const obtenerCelulasDeLugar = (lugarId, filtros = {}) => {
+  const parametros = new URLSearchParams()
+  for (const [nombre, valor] of Object.entries(filtros)) {
+    if (valor) parametros.set(nombre, valor)
+  }
+  const texto = parametros.toString()
+  return pedir(`/lugares/${lugarId}/celulas${texto ? `?${texto}` : ''}`)
+}
