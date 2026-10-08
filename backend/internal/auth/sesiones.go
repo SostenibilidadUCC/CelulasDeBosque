@@ -34,7 +34,7 @@ func hashToken(token string) string {
 	return hex.EncodeToString(suma[:])
 }
 
-// esHTTPS dice si el pedido llegó por HTTPS. Railway termina el HTTPS antes de llegar a Go,
+// esHTTPS dice si el pedido llegó por HTTPS. Render termina el HTTPS antes de llegar a Go,
 // por eso también se mira el header X-Forwarded-Proto.
 func esHTTPS(r *http.Request) bool {
 	return r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
