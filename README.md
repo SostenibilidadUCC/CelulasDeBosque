@@ -97,7 +97,7 @@ npm run dev                   # queda en http://localhost:5173
 | Borrar la base y empezar de cero | `docker compose down -v` (borra el volumen) y repetir los pasos 2 a 4 |
 | Deshacer la última migración | `goose -dir migrations postgres "$DATABASE_URL" down` |
 | Deshacer todas | `goose -dir migrations postgres "$DATABASE_URL" down-to 0` |
-| Crear una migración nueva | `goose -dir migrations create <nombre> sql` (avisá antes en el grupo) |
+| Crear una migración nueva | `goose -dir migrations -s create <nombre> sql` (avisá antes en el grupo; el `-s` mantiene la numeración 00001, 00002…) |
 
 ## Base de datos
 
@@ -105,6 +105,7 @@ npm run dev                   # queda en http://localhost:5173
 |---|---|
 | `00001_tablas.sql` | Crea las 12 tablas y carga las 4 formas de vida. |
 | `00002_variables.sql` | Carga el catálogo de variables por individuo: vivo, altura, flores, frutos y plántulas nuevas. |
+| `00003_registro_unico_no_anulado.sql` | Cambia la regla de un registro por célula por período: ahora solo cuentan los registros no anulados. |
 
 Las reglas de negocio importantes se garantizan en la base, no solo en Go:
 
@@ -112,7 +113,7 @@ Las reglas de negocio importantes se garantizan en la base, no solo en Go:
 |---|---|
 | RN-01: un individuo por forma de vida por célula | `UNIQUE (celula_id, forma_de_vida_id)` |
 | RN-02: letra de lugar única; número de isleta único por lugar; número y posición de célula únicos por isleta | `UNIQUE` |
-| RN-04: un registro por célula por período | `UNIQUE (celula_id, periodo)` |
+| RN-04: un registro por célula por período | `UNIQUE (celula_id, periodo) WHERE NOT anulado` (índice único parcial, 00003) |
 | El período es el día 1 del mes de la medición | `CHECK (periodo = date_trunc('month', fecha_medicion))` |
 | RN-07: foto obligatoria | `foto_id NOT NULL` |
 | RN-10: un cargador activo por lugar | índice único parcial en `usuarios` |
