@@ -43,8 +43,8 @@ Somos tres estudiantes con poca experiencia. Cada semana, cada persona hace una 
 
 - **Backend:** Go 1.25+, `net/http` de la librería estándar (sin framework), `pgx` para PostgreSQL, `goose` para migraciones, `bcrypt` para contraseñas, `excelize` para Excel, `aws-sdk-go-v2` para fotos en Cloudflare R2.
 - **Frontend:** React + Vite en JavaScript, React Router, Tailwind CSS, Recharts, `browser-image-compression`, `qrcode`.
-- **Base de datos:** PostgreSQL 16 (Docker en desarrollo, Railway en producción).
-- **Deploy:** un solo servicio en Railway. **El servidor Go también entrega el build de React**: cualquier ruta que no empiece con `/api` devuelve `frontend/dist`. En desarrollo, Vite hace proxy de `/api` al servidor Go. No hay CORS.
+- **Base de datos:** PostgreSQL 16 (Docker en desarrollo, Neon en producción).
+- **Deploy:** un solo servicio en Render (plan gratuito), armado con el `Dockerfile` de la raíz. **El servidor Go también entrega el build de React**: cualquier ruta que no empiece con `/api` devuelve `frontend/dist`. En desarrollo, Vite hace proxy de `/api` al servidor Go. No hay CORS.
 
 ## Estructura
 

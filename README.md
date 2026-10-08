@@ -123,3 +123,20 @@ Las reglas de negocio importantes se garantizan en la base, no solo en Go:
 > ```sql
 > SELECT setval(pg_get_serial_sequence('lugares', 'id'), (SELECT max(id) FROM lugares));
 > ```
+
+## Publicar
+
+La app está en **Render** (servidor Go, plan gratuito) con la base en **Neon** (PostgreSQL, plan gratuito).
+
+- **Cada merge a `main` se publica solo.** Render arma la imagen con el `Dockerfile` de la raíz: compila el frontend, compila Go y, al arrancar, corre las migraciones pendientes antes de prender el servidor. Si una migración falla, el servidor no arranca y queda la versión anterior.
+- **Variables en Render:** `DATABASE_URL` (la conexión directa de Neon, sin pooling). `PORT` la pone Render.
+- **Health check:** `/api/health`.
+- **El `seed.sql` nunca se corre en producción:** tiene usuarios con contraseñas conocidas.
+- **Plan gratuito:** Render apaga el servidor después de 15 minutos sin visitas y tarda alrededor de un minuto en volver. Neon suspende la base a los 5 minutos sin uso y vuelve rápido.
+
+Para probar la imagen en tu compu antes de subirla:
+
+```bash
+docker build -t celulas-de-bosque .
+docker run --rm -p 8080:8080 -e PORT=8080 -e DATABASE_URL="postgres://...@host.docker.internal:5433/..." celulas-de-bosque
+```
