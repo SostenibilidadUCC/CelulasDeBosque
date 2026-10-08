@@ -11,6 +11,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # 2. Compilación del servidor Go y de goose (para correr las migraciones).
+# Los -tags de goose dejan afuera los drivers de otras bases: solo usamos PostgreSQL.
 FROM golang:1.26-alpine AS backend
 WORKDIR /app/backend
 COPY backend/go.mod backend/go.sum ./
@@ -18,7 +19,7 @@ RUN go mod download
 COPY backend/ ./
 # CGO_ENABLED=0 arma un binario que no depende de librerías de C del sistema.
 RUN CGO_ENABLED=0 go build -o /servidor . \
- && CGO_ENABLED=0 GOBIN=/ go install github.com/pressly/goose/v3/cmd/goose@v3.28.0
+ && CGO_ENABLED=0 GOBIN=/ go install -tags='no_clickhouse no_libsql no_mssql no_mysql no_sqlite3 no_vertica no_ydb' github.com/pressly/goose/v3/cmd/goose@v3.28.0
 
 # 3. Imagen final.
 FROM alpine:3.22

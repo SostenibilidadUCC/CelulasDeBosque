@@ -138,5 +138,5 @@ Para probar la imagen en tu compu antes de subirla:
 
 ```bash
 docker build -t celulas-de-bosque .
-docker run --rm -p 8080:8080 -e PORT=8080 -e DATABASE_URL="postgres://...@host.docker.internal:5432/..." celulas-de-bosque
+docker run --rm -p 8080:8080 -e PORT=8080 -e DATABASE_URL="postgres://...@host.docker.internal:5433/..." celulas-de-bosque
 ```
