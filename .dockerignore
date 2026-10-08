@@ -1,0 +1,9 @@
+# Lo que no se manda a Docker al armar la imagen.
+.git
+.env
+.env.*
+**/node_modules
+frontend/dist
+docs
+diseno
+.atl
