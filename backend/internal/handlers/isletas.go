@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/auth"
+	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/estados"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/respuestas"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,8 +41,7 @@ type celdaCelula struct {
 	Fila    int    `json:"fila"`
 	Columna int    `json:"columna"`
 	// Estado del mes: "al-dia", "pendiente", "sin-registro", "fuera-de-termino" o "baja".
-	// TODO: calcularlo con EstadoCelula de Cande (T11). Hasta entonces solo se completa "baja"
-	// (sale de la columna celulas.estado) y el resto llega null.
+	// Lo calcula el paquete estados (T11); el Plano pinta cada celda según este valor.
 	Estado         *string         `json:"estado"`
 	UltimoRegistro *ultimoRegistro `json:"ultimoRegistro"`
 }
@@ -100,7 +101,7 @@ func Isleta(pool *pgxpool.Pool) http.HandlerFunc {
 		// reciente que no esté anulado, y para ese registro arma la lista de los 4 individuos.
 		// Es LEFT para que también vengan las células que todavía no tienen registros.
 		filas, err := pool.Query(r.Context(), `
-			SELECT c.id, c.numero, c.fila, c.columna, c.estado = 'baja',
+			SELECT c.id, c.numero, c.fila, c.columna,
 			       ur.id, to_char(ur.fecha_medicion, 'YYYY-MM-DD'), ur.foto_id, ind.lista
 			FROM celulas c
 			LEFT JOIN LATERAL (
@@ -140,23 +141,18 @@ func Isleta(pool *pgxpool.Pool) http.HandlerFunc {
 		for filas.Next() {
 			var (
 				c          celdaCelula
-				dadaDeBaja bool
 				registroID *int64
 				fecha      *string
 				fotoID     *int64
 				individuos []byte
 			)
-			if err := filas.Scan(&c.ID, &c.Numero, &c.Fila, &c.Columna, &dadaDeBaja,
+			if err := filas.Scan(&c.ID, &c.Numero, &c.Fila, &c.Columna,
 				&registroID, &fecha, &fotoID, &individuos); err != nil {
 				log.Printf("isletas: no se pudo leer una célula: %v", err)
 				respuestas.Error(w, http.StatusInternalServerError, "No se pudo cargar la isleta. Probá de nuevo.")
 				return
 			}
 			c.Codigo = codigoCelula(isleta.Lugar.Letra, isleta.Numero, c.Numero)
-			if dadaDeBaja {
-				baja := "baja"
-				c.Estado = &baja
-			}
 			if registroID != nil {
 				c.UltimoRegistro = &ultimoRegistro{ID: *registroID, Fecha: *fecha, FotoID: fotoID, Individuos: individuos}
 			}
@@ -166,6 +162,24 @@ func Isleta(pool *pgxpool.Pool) http.HandlerFunc {
 			log.Printf("isletas: error al recorrer las células de la isleta %d: %v", id, err)
 			respuestas.Error(w, http.StatusInternalServerError, "No se pudo cargar la isleta. Probá de nuevo.")
 			return
+		}
+
+		// 3. El estado del mes de cada célula sale del paquete estados de Cande (T11):
+		// así el plano muestra el mismo estado que Inicio y Células, con las mismas reglas
+		// (registros anulados, dadas de baja, período en hora de Córdoba).
+		ids := make([]int64, 0, len(isleta.Celulas))
+		for _, c := range isleta.Celulas {
+			ids = append(ids, c.ID)
+		}
+		estadoDe, err := estados.DeCelulas(r.Context(), pool, ids, estados.PeriodoActual(time.Now()))
+		if err != nil {
+			log.Printf("isletas: no se pudieron calcular los estados de la isleta %d: %v", id, err)
+			respuestas.Error(w, http.StatusInternalServerError, "No se pudo cargar la isleta. Probá de nuevo.")
+			return
+		}
+		for i := range isleta.Celulas {
+			estado := estadoDe[isleta.Celulas[i].ID]
+			isleta.Celulas[i].Estado = &estado
 		}
 
 		respuestas.JSON(w, isleta)
