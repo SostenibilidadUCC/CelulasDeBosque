@@ -11,6 +11,7 @@ const estados = {
   'sin-registro': { texto: 'Sin registro inicial', icono: 'hourglass_empty', clases: 'border-gris-borde bg-gris-suave text-texto-2', colorIcono: '' },
   'fuera-de-termino': { texto: 'Fuera de término', icono: 'check_circle', clases: 'border-pendiente-borde bg-brote text-bosque', colorIcono: 'text-bosque-hover' },
   baja: { texto: 'Dada de baja', icono: 'block', clases: 'border-gris-borde bg-gris-suave text-texto-3 line-through', colorIcono: '' },
+  'sin-datos': { texto: 'Sin datos', icono: 'help', clases: 'border-gris-borde bg-gris-suave text-texto-3', colorIcono: '' },
 }
 
 export default function ChipEstado({ estado }) {
