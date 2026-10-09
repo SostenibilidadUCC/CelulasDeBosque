@@ -68,7 +68,7 @@ type respuestaFicha struct {
 // ---------- PARTE B: quién ve el botón "Editar" ----------
 
 // puedeEditarRegistro dice si el usuario ve el botón "Editar" en un mes de la ficha.
-// Por ahora (decisión pendiente 6 con la clienta) el admin edita cualquier mes y el cargador
+// Por ahora (pregunta 9 de Requerimientos v4, RN-11) el admin edita cualquier mes y el cargador
 // solo el mes actual de su lugar. Esto solo oculta el botón: el que valida es PUT /api/registros (T13).
 func puedeEditarRegistro(u *auth.Usuario, lugarID int64, periodo, periodoActual string) bool {
 	if auth.EsAdmin(u) {
