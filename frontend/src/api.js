@@ -66,3 +66,6 @@ export const obtenerCelulasDeLugar = (lugarId, filtros = {}) => {
   const texto = parametros.toString()
   return pedir(`/lugares/${lugarId}/celulas${texto ? `?${texto}` : ''}`)
 }
+
+// T15: ficha de la célula (datos, 4 individuos y todos sus registros)
+export const obtenerCelula = (id) => pedir(`/celulas/${id}`)
