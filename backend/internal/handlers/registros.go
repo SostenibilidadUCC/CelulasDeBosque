@@ -208,6 +208,56 @@ func guardarMediciones(ctx context.Context, tx pgx.Tx, registroID int64, individ
 	return resultados.Close()
 }
 
+// errorInternoRegistro registra el detalle en el log y le responde a la persona un 500 genérico.
+func errorInternoRegistro(w http.ResponseWriter, que string, err error) {
+	log.Printf("registros: %s: %v", que, err)
+	respuestas.Error(w, http.StatusInternalServerError, mensajeErrorRegistro)
+}
+
+// registroValidado es el pedido ya revisado, listo para guardar.
+type registroValidado struct {
+	pedido pedidoRegistro
+	fecha  time.Time
+	cat    catalogo
+}
+
+// prepararPedido lee el cuerpo y aplica todas las validaciones (crear y editar usan la misma).
+// Si algo está mal, ya responde (400 o 500) y devuelve ok = false.
+func prepararPedido(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool, plantacion time.Time) (registroValidado, bool) {
+	var datos registroValidado
+	pedido, ok := leerPedidoRegistro(w, r)
+	if !ok {
+		return datos, false
+	}
+
+	// Los rangos de altura y flores salen del catálogo, no están escritos fijos en el código.
+	cat, err := cargarCatalogo(r.Context(), pool)
+	if err != nil {
+		errorInternoRegistro(w, "no se pudo leer el catálogo de variables", err)
+		return datos, false
+	}
+
+	fecha, mensaje := validarRegistro(pedido, hoyEnCordoba(time.Now()), plantacion, cat.rangos)
+	if mensaje != "" {
+		respuestas.Error(w, http.StatusBadRequest, mensaje)
+		return datos, false
+	}
+
+	// RN-07: además de venir, la foto tiene que existir.
+	var existeFoto bool
+	err = pool.QueryRow(r.Context(), `SELECT EXISTS (SELECT 1 FROM fotos WHERE id = $1)`, pedido.FotoID).Scan(&existeFoto)
+	if err != nil {
+		errorInternoRegistro(w, "no se pudo buscar la foto", err)
+		return datos, false
+	}
+	if !existeFoto {
+		respuestas.Error(w, http.StatusBadRequest, "La foto no existe. Subila de nuevo")
+		return datos, false
+	}
+
+	return registroValidado{pedido: pedido, fecha: fecha, cat: cat}, true
+}
+
 // esRegistroDuplicado dice si el error de la base es la violación del índice único
 // "un registro no anulado por célula por período" (RN-04).
 func esRegistroDuplicado(err error) bool {
@@ -222,10 +272,7 @@ func CrearRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		errorInterno := func(que string, err error) {
-			log.Printf("registros: %s: %v", que, err)
-			respuestas.Error(w, http.StatusInternalServerError, mensajeErrorRegistro)
-		}
+		errorInterno := func(que string, err error) { errorInternoRegistro(w, que, err) }
 
 		celulaID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 		if err != nil {
@@ -254,23 +301,20 @@ func CrearRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		// 2. El cuerpo del pedido.
-		pedido, ok := leerPedidoRegistro(w, r)
-		if !ok {
-			return
-		}
-		fecha, err := time.Parse(formatoFecha, pedido.Fecha)
-		if err != nil {
-			respuestas.Error(w, http.StatusBadRequest, "La fecha no es válida")
+		// Una célula dada de baja ya no recibe registros (RN-14).
+		if celula.dadaDeBaja {
+			respuestas.Error(w, http.StatusBadRequest, "La célula está dada de baja y no admite registros")
 			return
 		}
 
-		// 3. Lo que hace falta de la base para armar las mediciones.
-		cat, err := cargarCatalogo(ctx, pool)
-		if err != nil {
-			errorInterno("no se pudo leer el catálogo de variables", err)
+		// 2. El cuerpo del pedido, ya revisado (fecha, foto, individuos, rangos).
+		datos, ok := prepararPedido(w, r, pool, celula.fechaPlantacion)
+		if !ok {
 			return
 		}
+		pedido, fecha, cat := datos.pedido, datos.fecha, datos.cat
+
+		// 3. Los ids de los 4 individuos de la célula.
 		individuoIDs, err := cargarIndividuos(ctx, pool, celulaID)
 		if err != nil {
 			errorInterno("no se pudieron leer los individuos", err)
@@ -295,7 +339,7 @@ func CrearRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 			                       fuera_de_termino, creado_por, modificado_por)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
 			RETURNING id`,
-			celulaID, fecha, periodo, pedido.FotoID, pedido.Observaciones, fueraDeTermino, usuario.ID).
+			celulaID, fecha, periodo, pedido.FotoID, observacionesLimpias(pedido.Observaciones), fueraDeTermino, usuario.ID).
 			Scan(&registroID)
 		if esRegistroDuplicado(err) {
 			existente := registroExistente(ctx, pool, celulaID, periodo)
