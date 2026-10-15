@@ -379,3 +379,131 @@ func registroExistente(ctx context.Context, pool *pgxpool.Pool, celulaID int64, 
 	}
 	return &id
 }
+
+// EditarRegistro atiende PUT /api/registros/{id} (T13): corrige un registro y reemplaza sus mediciones.
+// Valida lo mismo que al crear. Va envuelta en RequiereSesion. Responde {"id": <id del registro>}.
+//
+// Permisos: el admin edita cualquier registro; el cargador solo los de su lugar y solo del mes
+// actual. Que el cargador pueda editar meses anteriores es la decisión pendiente 6 con la clienta.
+func EditarRegistro(pool *pgxpool.Pool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		errorInterno := func(que string, err error) { errorInternoRegistro(w, que, err) }
+
+		registroID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+		if err != nil {
+			respuestas.Error(w, http.StatusBadRequest, "El registro no es válido")
+			return
+		}
+
+		// 1. El registro, con el lugar y la plantación de su célula.
+		var (
+			celulaID, lugarID int64
+			periodo           time.Time
+			plantacion        time.Time
+			anulado           bool
+			fueraDeTermino    bool
+		)
+		err = pool.QueryRow(ctx, `
+			SELECT r.celula_id, i.lugar_id, r.periodo, r.anulado, r.fuera_de_termino, c.fecha_plantacion
+			FROM registros r
+			JOIN celulas c ON c.id = r.celula_id
+			JOIN isletas i ON i.id = c.isleta_id
+			WHERE r.id = $1`, registroID).
+			Scan(&celulaID, &lugarID, &periodo, &anulado, &fueraDeTermino, &plantacion)
+		if errors.Is(err, pgx.ErrNoRows) {
+			respuestas.Error(w, http.StatusNotFound, "No existe ese registro")
+			return
+		}
+		if err != nil {
+			errorInterno("no se pudo leer el registro", err)
+			return
+		}
+
+		// 2. Permisos (siempre en el backend). Se revisan antes de mirar el cuerpo del pedido.
+		usuario := auth.UsuarioActual(r)
+		if !auth.PuedeEditarLugar(usuario, lugarID) {
+			respuestas.Error(w, http.StatusForbidden, "No tenés permiso para editar registros de este lugar")
+			return
+		}
+		periodoActual := primerDiaDelMes(hoyEnCordoba(time.Now()))
+		if !auth.EsAdmin(usuario) && !periodo.Equal(periodoActual) {
+			respuestas.Error(w, http.StatusForbidden, "Solo el administrador puede editar registros de meses anteriores")
+			return
+		}
+		// Un registro anulado se dejó así a propósito (RN-12): no se edita.
+		// Es 400 y no 404 porque el registro existe; lo que falla es el pedido.
+		if anulado {
+			respuestas.Error(w, http.StatusBadRequest, "El registro está anulado y no se puede editar")
+			return
+		}
+
+		// 3. El cuerpo del pedido, con las mismas validaciones que al crear.
+		datos, ok := prepararPedido(w, r, pool, plantacion)
+		if !ok {
+			return
+		}
+		pedido, fecha, cat := datos.pedido, datos.fecha, datos.cat
+
+		nuevoPeriodo := primerDiaDelMes(fecha)
+		// El cargador no puede "mover" su registro a un mes anterior cambiando la fecha.
+		if !auth.EsAdmin(usuario) && !nuevoPeriodo.Equal(periodoActual) {
+			respuestas.Error(w, http.StatusBadRequest, "La fecha tiene que ser de este mes")
+			return
+		}
+		// Si no cambió de mes, se conserva la marca original de fuera de término.
+		if !nuevoPeriodo.Equal(periodo) {
+			fueraDeTermino = nuevoPeriodo.Before(periodoActual)
+		}
+
+		individuoIDs, err := cargarIndividuos(ctx, pool, celulaID)
+		if err != nil {
+			errorInterno("no se pudieron leer los individuos", err)
+			return
+		}
+
+		// 4. Actualizar el registro y reemplazar sus mediciones, todo en una transacción.
+		// Se borran y se vuelven a insertar: así, si un individuo pasó de vivo a muerto,
+		// no quedan datos viejos (RN-08).
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			errorInterno("no se pudo abrir la transacción", err)
+			return
+		}
+		defer tx.Rollback(ctx)
+
+		_, err = tx.Exec(ctx, `
+			UPDATE registros
+			SET fecha_medicion = $2, periodo = $3, foto_id = $4, observaciones = $5,
+			    fuera_de_termino = $6, modificado_por = $7, modificado_en = now()
+			WHERE id = $1`,
+			registroID, fecha, nuevoPeriodo, pedido.FotoID, observacionesLimpias(pedido.Observaciones), fueraDeTermino, usuario.ID)
+		if esRegistroDuplicado(err) {
+			// Solo pasa si cambió la fecha a un mes que la célula ya tiene cargado.
+			existente := registroExistente(ctx, pool, celulaID, nuevoPeriodo)
+			respuestas.ErrorConDatos(w, http.StatusConflict,
+				"Esta célula ya tiene un registro de ese mes",
+				map[string]any{"registroId": existente})
+			return
+		}
+		if err != nil {
+			errorInterno("no se pudo actualizar el registro", err)
+			return
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM mediciones WHERE registro_id = $1`, registroID); err != nil {
+			errorInterno("no se pudieron borrar las mediciones anteriores", err)
+			return
+		}
+		if err := guardarMediciones(ctx, tx, registroID, individuoIDs, cat, pedido.Individuos); err != nil {
+			errorInterno("no se pudieron guardar las mediciones", err)
+			return
+		}
+		if err := tx.Commit(ctx); err != nil {
+			errorInterno("no se pudo confirmar la transacción", err)
+			return
+		}
+
+		respuestas.JSON(w, map[string]int64{"id": registroID})
+	}
+}
