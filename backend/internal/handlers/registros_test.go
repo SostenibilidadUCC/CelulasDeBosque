@@ -36,8 +36,8 @@ func TestRegistrosConBase(t *testing.T) {
 	mux.HandleFunc("POST /api/celulas/{id}/registros", a.RequiereSesion(CrearRegistro(pool)))
 	mux.HandleFunc("PUT /api/registros/{id}", a.RequiereSesion(EditarRegistro(pool)))
 
-	// Datos del seed: la célula A-2-18 (sin registros), una célula del lugar B, una foto y un registro viejo.
-	var celulaA, celulaB, fotoID, registroViejo int64
+	// Datos del seed: la célula A-2-18 (sin registros), una célula del lugar B, fotos y un registro viejo.
+	var celulaA, celulaB, fotoID, fotoAjena, fotoUsada, registroViejo int64
 	err = pool.QueryRow(ctx, `
 		SELECT c.id FROM celulas c
 		JOIN isletas i ON i.id = c.isleta_id JOIN lugares l ON l.id = i.lugar_id
@@ -49,7 +49,26 @@ func TestRegistrosConBase(t *testing.T) {
 		SELECT c.id FROM celulas c
 		JOIN isletas i ON i.id = c.isleta_id JOIN lugares l ON l.id = i.lugar_id
 		WHERE l.letra = 'B' LIMIT 1`).Scan(&celulaB)
-	pool.QueryRow(ctx, `SELECT id FROM fotos ORDER BY id LIMIT 1`).Scan(&fotoID)
+	// fotoID: una foto que subió el cargador (como pasa en la app, antes de crear el registro).
+	err = pool.QueryRow(ctx, `
+		INSERT INTO fotos (ruta_r2, subida_por)
+		VALUES ('test/registro.jpg', (SELECT id FROM usuarios WHERE email = 'cargador@celulas.test'))
+		RETURNING id`).Scan(&fotoID)
+	if err != nil {
+		t.Fatalf("no se pudo crear la foto de prueba: %v", err)
+	}
+	// Se registra antes que la limpieza de registros, así corre después (los Cleanup corren al revés).
+	t.Cleanup(func() { pool.Exec(ctx, `DELETE FROM fotos WHERE id = $1`, fotoID) })
+	// fotoAjena: la subió el admin y no está en ningún registro. fotoUsada: ya está en un registro.
+	pool.QueryRow(ctx, `
+		SELECT f.id FROM fotos f
+		WHERE f.subida_por = (SELECT id FROM usuarios WHERE email = 'admin@celulas.test')
+		  AND NOT EXISTS (SELECT 1 FROM registros r WHERE r.foto_id = f.id)
+		LIMIT 1`).Scan(&fotoAjena)
+	pool.QueryRow(ctx, `SELECT foto_id FROM registros WHERE foto_id IS NOT NULL LIMIT 1`).Scan(&fotoUsada)
+	if fotoAjena == 0 || fotoUsada == 0 {
+		t.Fatalf("faltan fotos en el seed (ajena %d, usada %d)", fotoAjena, fotoUsada)
+	}
 	pool.QueryRow(ctx, `
 		SELECT r.id FROM registros r
 		JOIN celulas c ON c.id = r.celula_id JOIN isletas i ON i.id = c.isleta_id JOIN lugares l ON l.id = i.lugar_id
@@ -148,6 +167,21 @@ func TestRegistrosConBase(t *testing.T) {
 		malo := cuerpoValido()
 		malo["fotoId"] = 999999
 		if codigo, _ := enviar(cargador, "POST", rutaCrear, malo); codigo != http.StatusBadRequest {
+			t.Errorf("código = %d, se esperaba 400", codigo)
+		}
+	})
+
+	t.Run("cargador no puede usar una foto que subió otro", func(t *testing.T) {
+		malo := cuerpoValido()
+		malo["fotoId"] = fotoAjena
+		if codigo, _ := enviar(cargador, "POST", rutaCrear, malo); codigo != http.StatusBadRequest {
+			t.Errorf("código = %d, se esperaba 400", codigo)
+		}
+	})
+	t.Run("ni el admin puede usar una foto que ya está en otro registro", func(t *testing.T) {
+		malo := cuerpoValido()
+		malo["fotoId"] = fotoUsada
+		if codigo, _ := enviar(admin, "POST", rutaCrear, malo); codigo != http.StatusBadRequest {
 			t.Errorf("código = %d, se esperaba 400", codigo)
 		}
 	})

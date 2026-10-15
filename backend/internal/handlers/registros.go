@@ -222,8 +222,9 @@ type registroValidado struct {
 }
 
 // prepararPedido lee el cuerpo y aplica todas las validaciones (crear y editar usan la misma).
+// celulaID es la célula del registro; registroID es el registro que se edita, o 0 al crear.
 // Si algo está mal, ya responde (400 o 500) y devuelve ok = false.
-func prepararPedido(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool, plantacion time.Time) (registroValidado, bool) {
+func prepararPedido(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool, plantacion time.Time, usuario *auth.Usuario, celulaID, registroID int64) (registroValidado, bool) {
 	var datos registroValidado
 	pedido, ok := leerPedidoRegistro(w, r)
 	if !ok {
@@ -243,15 +244,34 @@ func prepararPedido(w http.ResponseWriter, r *http.Request, pool *pgxpool.Pool, 
 		return datos, false
 	}
 
-	// RN-07: además de venir, la foto tiene que existir.
-	var existeFoto bool
-	err = pool.QueryRow(r.Context(), `SELECT EXISTS (SELECT 1 FROM fotos WHERE id = $1)`, pedido.FotoID).Scan(&existeFoto)
+	// RN-07: además de venir, la foto tiene que existir. Y como el fotoId lo manda el cliente,
+	// no alcanza con que exista: si no, alguien podría colgar en su registro la foto de otro
+	// lugar (por ejemplo, la de un colegio privado en un lugar público).
+	// La foto sirve si la subió este usuario (o es admin, o ya es la foto de este mismo registro)
+	// y no la usa otro registro. Un registro de la misma célula y el mismo período no cuenta:
+	// así un reintento con la misma foto llega al INSERT y responde 409 (RN-04), no 400.
+	var propia, usadaEnOtro bool
+	err = pool.QueryRow(r.Context(), `
+		SELECT f.subida_por = $2 OR $3
+		       OR EXISTS (SELECT 1 FROM registros r WHERE r.id = $4 AND r.foto_id = f.id),
+		       EXISTS (SELECT 1 FROM registros r
+		               WHERE r.foto_id = f.id AND r.id <> $4
+		                 AND NOT (r.celula_id = $5 AND r.periodo = $6))
+		FROM fotos f
+		WHERE f.id = $1`,
+		pedido.FotoID, usuario.ID, auth.EsAdmin(usuario), registroID, celulaID, primerDiaDelMes(fecha)).
+		Scan(&propia, &usadaEnOtro)
+	// Una foto ajena responde igual que una que no existe, para no avisar que ese id existe.
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && !propia) {
+		respuestas.Error(w, http.StatusBadRequest, "La foto no existe. Subila de nuevo")
+		return datos, false
+	}
 	if err != nil {
 		errorInternoRegistro(w, "no se pudo buscar la foto", err)
 		return datos, false
 	}
-	if !existeFoto {
-		respuestas.Error(w, http.StatusBadRequest, "La foto no existe. Subila de nuevo")
+	if usadaEnOtro {
+		respuestas.Error(w, http.StatusBadRequest, "Esa foto ya está en otro registro. Sacá una foto nueva")
 		return datos, false
 	}
 
@@ -308,7 +328,7 @@ func CrearRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		// 2. El cuerpo del pedido, ya revisado (fecha, foto, individuos, rangos).
-		datos, ok := prepararPedido(w, r, pool, celula.fechaPlantacion)
+		datos, ok := prepararPedido(w, r, pool, celula.fechaPlantacion, usuario, celulaID, 0)
 		if !ok {
 			return
 		}
@@ -440,7 +460,7 @@ func EditarRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		// 3. El cuerpo del pedido, con las mismas validaciones que al crear.
-		datos, ok := prepararPedido(w, r, pool, plantacion)
+		datos, ok := prepararPedido(w, r, pool, plantacion, usuario, celulaID, registroID)
 		if !ok {
 			return
 		}
