@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/almacen"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/auth"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/db"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/handlers"
@@ -39,6 +40,19 @@ func main() {
 	// T11: inicio y explorar células
 	mux.HandleFunc("GET /api/lugares", a.RequiereSesion(handlers.Lugares(pool)))
 	mux.HandleFunc("GET /api/lugares/{id}/celulas", a.RequiereSesion(handlers.CelulasDeLugar(pool)))
+
+	// T13: fotos. Si faltan las variables de R2 el servidor arranca igual,
+	// pero las rutas de fotos responden 500 hasta que se configuren.
+	var fotos almacen.Almacen // nil = sin configurar
+	r2, err := almacen.NuevoR2(context.Background())
+	if err != nil {
+		log.Printf("Aviso: las fotos no van a funcionar, R2 no está configurado: %v", err)
+	} else {
+		fotos = r2
+	}
+	mux.HandleFunc("POST /api/fotos", a.RequiereSesion(handlers.SubirFoto(pool, fotos)))
+	// Esta ruta NO usa RequiereSesion: los visitantes ven las fotos de los lugares públicos.
+	mux.HandleFunc("GET /api/fotos/{id}", handlers.VerFoto(pool, fotos, a.UsuarioOpcional))
 
 	// T13: guardar y editar registros
 	mux.HandleFunc("POST /api/celulas/{id}/registros", a.RequiereSesion(handlers.CrearRegistro(pool)))
