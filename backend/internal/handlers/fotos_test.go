@@ -177,28 +177,51 @@ func TestVerFoto(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se pudo conectar a la base: %v", err)
 	}
-	defer pool.Close()
+	// (el pool se cierra en t.Cleanup, después de restaurar los datos)
 
-	// Una foto de un registro del lugar A (público) y una del lugar B (privado).
-	fotoDeLugar := func(letra string) (int64, string) {
-		var id int64
-		var ruta string
-		err := pool.QueryRow(ctx, `
-			SELECT f.id, f.ruta_r2
-			FROM registros r
-			JOIN fotos f ON f.id = r.foto_id
-			JOIN celulas c ON c.id = r.celula_id
-			JOIN isletas i ON i.id = c.isleta_id
-			JOIN lugares l ON l.id = i.lugar_id
-			WHERE l.letra = $1 AND NOT r.anulado
-			LIMIT 1`, letra).Scan(&id, &ruta)
-		if err != nil {
-			t.Fatalf("no se encontró una foto del lugar %s (¿corriste el seed?): %v", letra, err)
-		}
-		return id, ruta
+	// El seed reparte las mismas 10 fotos entre todos los registros, así que una foto del seed
+	// también puede ser de un lugar público. Para tener una foto SOLO del lugar B (privado)
+	// se crea una nueva y se la asigna a un registro de B; al terminar se deja todo como estaba.
+	var idPublica, idPrivada, registroB, fotoOriginalB int64
+	var rutaPublica string
+	err = pool.QueryRow(ctx, `
+		SELECT f.id, f.ruta_r2
+		FROM registros r
+		JOIN fotos f ON f.id = r.foto_id
+		JOIN celulas c ON c.id = r.celula_id
+		JOIN isletas i ON i.id = c.isleta_id
+		JOIN lugares l ON l.id = i.lugar_id
+		WHERE l.letra = 'A' AND NOT r.anulado
+		LIMIT 1`).Scan(&idPublica, &rutaPublica)
+	if err != nil {
+		t.Fatalf("no se encontró una foto del lugar A (¿corriste el seed?): %v", err)
 	}
-	idPublica, rutaPublica := fotoDeLugar("A")
-	idPrivada, rutaPrivada := fotoDeLugar("B")
+	err = pool.QueryRow(ctx, `
+		SELECT r.id, r.foto_id
+		FROM registros r
+		JOIN celulas c ON c.id = r.celula_id
+		JOIN isletas i ON i.id = c.isleta_id
+		JOIN lugares l ON l.id = i.lugar_id
+		WHERE l.letra = 'B' AND NOT r.anulado
+		LIMIT 1`).Scan(&registroB, &fotoOriginalB)
+	if err != nil {
+		t.Fatalf("no se encontró un registro del lugar B (¿corriste el seed?): %v", err)
+	}
+	const rutaPrivada = "test/foto-privada-de-b.jpg"
+	err = pool.QueryRow(ctx, `
+		INSERT INTO fotos (ruta_r2, subida_por) VALUES ($1, (SELECT id FROM usuarios LIMIT 1)) RETURNING id`,
+		rutaPrivada).Scan(&idPrivada)
+	if err != nil {
+		t.Fatalf("no se pudo crear la foto de prueba: %v", err)
+	}
+	if _, err := pool.Exec(ctx, `UPDATE registros SET foto_id = $2 WHERE id = $1`, registroB, idPrivada); err != nil {
+		t.Fatalf("no se pudo asignar la foto de prueba: %v", err)
+	}
+	t.Cleanup(func() {
+		pool.Exec(ctx, `UPDATE registros SET foto_id = $2 WHERE id = $1`, registroB, fotoOriginalB)
+		pool.Exec(ctx, `DELETE FROM fotos WHERE id = $1`, idPrivada)
+		pool.Close()
+	})
 
 	almacenFalso := nuevoAlmacenEnMemoria()
 	almacenFalso.archivos[rutaPublica] = []byte("foto-publica")
