@@ -58,6 +58,9 @@ func main() {
 	mux.HandleFunc("POST /api/celulas/{id}/registros", a.RequiereSesion(handlers.CrearRegistro(pool)))
 	mux.HandleFunc("PUT /api/registros/{id}", a.RequiereSesion(handlers.EditarRegistro(pool)))
 
+	// T15: ficha de la célula
+	mux.HandleFunc("GET /api/celulas/{id}", a.RequiereSesion(handlers.Ficha(pool)))
+
 	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
 	// El orden de registro no importa: el mux siempre elige la ruta más específica.
 	mux.HandleFunc("/api/", apiNoExiste)
