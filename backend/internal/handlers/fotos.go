@@ -26,8 +26,10 @@ const (
 	maxBytesFoto = 10 << 20 // 10 MB
 
 	// maxPixelesFoto evita las "bombas de descompresión": un archivo chiquito que al abrirlo
-	// ocupa gigas de memoria. 50 millones de píxeles es más que cualquier cámara de celular.
-	maxPixelesFoto = 50_000_000
+	// ocupa gigas de memoria. El front ya manda fotos de 1600 px de lado mayor (unos 2 millones
+	// de píxeles), así que 16 millones sobra. Al abrirla, una foto ocupa unos 4 bytes por píxel:
+	// 16 millones son unos 64 MB, contra unos 200 MB con el límite anterior de 50 millones.
+	maxPixelesFoto = 16_000_000
 
 	// calidadJPEG es la calidad al volver a guardar la foto (de 1 a 100).
 	calidadJPEG = 85

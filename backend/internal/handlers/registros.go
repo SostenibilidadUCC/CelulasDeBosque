@@ -343,7 +343,7 @@ func CrearRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 
 		// 4. Registro + mediciones en UNA transacción: o se guarda todo o no se guarda nada.
 		periodo := primerDiaDelMes(fecha)
-		// Cargar un mes que ya terminó es válido, pero queda marcado (RN-18).
+		// Cargar un mes que ya terminó es válido, pero queda marcado (RN-16).
 		fueraDeTermino := periodo.Before(primerDiaDelMes(hoyEnCordoba(time.Now())))
 
 		tx, err := pool.Begin(ctx)
@@ -404,7 +404,8 @@ func registroExistente(ctx context.Context, pool *pgxpool.Pool, celulaID int64, 
 // Valida lo mismo que al crear. Va envuelta en RequiereSesion. Responde {"id": <id del registro>}.
 //
 // Permisos: el admin edita cualquier registro; el cargador solo los de su lugar y solo del mes
-// actual. Que el cargador pueda editar meses anteriores es la decisión pendiente 6 con la clienta.
+// actual. Que el cargador pueda editar meses anteriores está a confirmar con la clienta
+// (RN-11, pregunta 9 del documento de requerimientos v4).
 func EditarRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
