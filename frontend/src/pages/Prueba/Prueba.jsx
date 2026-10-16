@@ -15,6 +15,7 @@ import PanelInferior from '../../components/PanelInferior.jsx'
 import Cargando from '../../components/Cargando.jsx'
 import Vacio from '../../components/Vacio.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
+import Foto from '../../components/Foto.jsx'
 
 // Página para ver y probar los componentes base. No es una pantalla de la app.
 export default function Prueba() {
@@ -26,6 +27,7 @@ export default function Prueba() {
   const [modal, setModal] = useState(false)
   const [panel, setPanel] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [fotoId, setFotoId] = useState(null)
 
   // Prueba de conexión con el backend (T03): llama a /api/health al abrir la página.
   const [salud, setSalud] = useState({ cargando: true })
@@ -112,6 +114,11 @@ export default function Prueba() {
         </Tarjeta>
       </section>
 
+      <section className="space-y-2">
+        <Titulo nivel="md">Foto (sube de verdad a /api/fotos, hace falta sesión)</Titulo>
+        <Foto onCambio={setFotoId} />
+        {fotoId && <p className="font-mono">fotoId: {fotoId}</p>}
+      </section>
       <section className="space-y-2">
         <Titulo nivel="md">Modal y panel inferior</Titulo>
         <Boton variante="secundario" onClick={() => setModal(true)}>Abrir modal</Boton>
