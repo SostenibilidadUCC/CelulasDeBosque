@@ -69,3 +69,43 @@ export const obtenerCelulasDeLugar = (lugarId, filtros = {}) => {
 
 // T15: ficha de la célula (datos, 4 individuos y todos sus registros)
 export const obtenerCelula = (id) => pedir(`/celulas/${id}`)
+
+// T13: sube una foto a POST /api/fotos y devuelve { id }.
+// Usa XMLHttpRequest en vez de fetch porque fetch no avisa cuánto lleva subido,
+// y sin eso no hay barra de progreso. alProgresar(porcentaje) recibe un número de 0 a 100.
+export function subirFoto(archivo, alProgresar = () => {}) {
+  return new Promise((resolver, rechazar) => {
+    const formulario = new FormData()
+    formulario.append('foto', archivo, archivo.name || 'foto.jpg')
+
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/api/fotos')
+    xhr.withCredentials = true
+    // Si en 60 segundos no terminó (señal muy débil), se corta para que se pueda reintentar.
+    xhr.timeout = 60000
+
+    xhr.upload.onprogress = (evento) => {
+      if (evento.lengthComputable) alProgresar(Math.round((evento.loaded / evento.total) * 100))
+    }
+
+    xhr.onload = () => {
+      let datos = null
+      try {
+        datos = JSON.parse(xhr.responseText)
+      } catch {
+        // La respuesta no es JSON: se usa el mensaje genérico.
+      }
+      if (xhr.status >= 200 && xhr.status < 300 && datos?.id != null) {
+        resolver(datos)
+        return
+      }
+      // Igual que pedir(): un 401 avisa que la sesión venció.
+      if (xhr.status === 401) window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA))
+      rechazar(new ErrorApi(datos?.error ?? 'No se pudo subir la foto. Probá de nuevo.', xhr.status))
+    }
+
+    xhr.ontimeout = () => rechazar(new ErrorApi('La subida tardó demasiado. Revisá tu señal y probá de nuevo.', 0))
+    xhr.onerror = () => rechazar(new ErrorApi('No hay conexión. Revisá tu señal y probá de nuevo.', 0))
+    xhr.send(formulario)
+  })
+}

@@ -19,6 +19,16 @@ func Error(w http.ResponseWriter, codigo int, mensaje string) {
 	escribir(w, codigo, map[string]string{"error": mensaje})
 }
 
+// ErrorConDatos es como Error, pero suma campos extra al cuerpo: {"error": mensaje, ...datos}.
+// Sirve, por ejemplo, para un 409 que además le dice al front el id del registro que ya existe.
+func ErrorConDatos(w http.ResponseWriter, codigo int, mensaje string, datos map[string]any) {
+	cuerpo := map[string]any{"error": mensaje}
+	for clave, valor := range datos {
+		cuerpo[clave] = valor
+	}
+	escribir(w, codigo, cuerpo)
+}
+
 // escribir hace el trabajo común de JSON y Error.
 // El orden importa: primero los headers, después el código y al final el cuerpo.
 func escribir(w http.ResponseWriter, codigo int, datos any) {
