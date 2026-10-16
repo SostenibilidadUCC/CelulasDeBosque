@@ -81,6 +81,8 @@ export function subirFoto(archivo, alProgresar = () => {}) {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', '/api/fotos')
     xhr.withCredentials = true
+    // Si en 60 segundos no terminó (señal muy débil), se corta para que se pueda reintentar.
+    xhr.timeout = 60000
 
     xhr.upload.onprogress = (evento) => {
       if (evento.lengthComputable) alProgresar(Math.round((evento.loaded / evento.total) * 100))
@@ -93,7 +95,7 @@ export function subirFoto(archivo, alProgresar = () => {}) {
       } catch {
         // La respuesta no es JSON: se usa el mensaje genérico.
       }
-      if (xhr.status >= 200 && xhr.status < 300) {
+      if (xhr.status >= 200 && xhr.status < 300 && datos?.id != null) {
         resolver(datos)
         return
       }
@@ -102,6 +104,7 @@ export function subirFoto(archivo, alProgresar = () => {}) {
       rechazar(new ErrorApi(datos?.error ?? 'No se pudo subir la foto. Probá de nuevo.', xhr.status))
     }
 
+    xhr.ontimeout = () => rechazar(new ErrorApi('La subida tardó demasiado. Revisá tu señal y probá de nuevo.', 0))
     xhr.onerror = () => rechazar(new ErrorApi('No hay conexión. Revisá tu señal y probá de nuevo.', 0))
     xhr.send(formulario)
   })

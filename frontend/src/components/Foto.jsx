@@ -21,7 +21,9 @@ const opcionesCompresion = {
 // - fotoAnteriorId: foto del mes anterior; si viene, se muestra al lado como referencia de encuadre.
 export default function Foto({ fotoId, onCambio, fotoAnteriorId }) {
   // estado: 'vacia' | 'comprimiendo' | 'subiendo' | 'lista' | 'error'
-  const [estado, setEstado] = useState(fotoId ? 'lista' : 'vacia')
+  const [estadoInterno, setEstado] = useState('vacia')
+  // Si la pantalla trae una foto ya guardada (aunque llegue después, al editar), se muestra como lista.
+  const estado = estadoInterno === 'vacia' && fotoId ? 'lista' : estadoInterno
   const [progreso, setProgreso] = useState(0)
   const [error, setError] = useState('')
   const [vistaPrevia, setVistaPrevia] = useState(null)
@@ -30,6 +32,20 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId }) {
   const entradaGaleria = useRef(null)
   // Guardamos la foto ya comprimida para que "Reintentar" no tenga que comprimirla de nuevo.
   const [comprimida, setComprimida] = useState(null)
+
+  // Si la persona sale de la pantalla mientras sube, al terminar no hay que tocar el estado
+  // ni avisarle a la pantalla. onCambio se guarda en un ref para llamar siempre a la versión actual.
+  const montado = useRef(true)
+  const alCambiar = useRef(onCambio)
+  useEffect(() => {
+    alCambiar.current = onCambio
+  })
+  useEffect(() => {
+    montado.current = true
+    return () => {
+      montado.current = false
+    }
+  }, [])
 
   // La vista previa es una URL temporal del navegador (blob:). Hay que liberarla cuando cambia
   // o cuando se cierra la pantalla; si no, queda ocupando memoria.
@@ -47,9 +63,11 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId }) {
     setError('')
     try {
       const { id } = await subirFoto(archivo, setProgreso)
+      if (!montado.current) return
       setEstado('lista')
-      onCambio?.(id)
+      alCambiar.current?.(id)
     } catch (e) {
+      if (!montado.current) return
       setEstado('error')
       setError(e.message)
     }
@@ -62,6 +80,8 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId }) {
     if (!archivo) return
 
     if (!archivo.type.startsWith('image/')) {
+      onCambio?.(null)
+      setVistaPrevia(null)
       setComprimida(null)
       setEstado('error')
       setError('El archivo no es una foto. Elegí una imagen.')
@@ -93,7 +113,7 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId }) {
       <div className={`grid gap-2 ${fotoAnteriorId ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {fotoAnteriorId && (
           <figure className="flex flex-col gap-1">
-            <FotoRegistro fotoId={fotoAnteriorId} descripcion="Foto del mes anterior" />
+            <FotoRegistro key={fotoAnteriorId} fotoId={fotoAnteriorId} descripcion="Foto del mes anterior" />
             <figcaption className="text-body-sm text-texto-2">Mes anterior</figcaption>
           </figure>
         )}
@@ -146,7 +166,7 @@ function FotoActual({ vistaPrevia, fotoId }) {
     return <img src={vistaPrevia} alt="Foto de este mes" className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover" />
   }
   if (fotoId) {
-    return <FotoRegistro fotoId={fotoId} descripcion="Foto de este mes" />
+    return <FotoRegistro key={fotoId} fotoId={fotoId} descripcion="Foto de este mes" />
   }
   return (
     <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-xl border-[1.5px] border-dashed border-gris-borde bg-gris-suave text-texto-3">
