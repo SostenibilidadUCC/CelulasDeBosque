@@ -127,6 +127,10 @@ func TestCalcularMetricasConBase(t *testing.T) {
 	}
 	igual("supervivencia del primer mes", m.Evolucion[0].Supervivencia, 100)
 	igual("supervivencia del último mes", m.Evolucion[3].Supervivencia, 83.3)
+	// El catálogo de formas de vida viene siempre completo, aunque se filtre por una.
+	if len(m.FormasDeVida) != 4 {
+		t.Errorf("llegaron %d formas de vida, se esperaban 4", len(m.FormasDeVida))
+	}
 	// Altura promedio del Árbol en el primer mes: (68+67+66+62+61+75+71+70+69) ÷ 9 = 609 ÷ 9 = 67,7.
 	if altura := m.Evolucion[0].AlturaPromedio[1]; altura != 67.7 {
 		t.Errorf("altura del Árbol en el primer mes = %v, se esperaba 67.7", altura)

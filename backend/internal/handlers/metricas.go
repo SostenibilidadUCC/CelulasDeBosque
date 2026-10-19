@@ -10,6 +10,7 @@ import (
 
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/estados"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/respuestas"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,6 +24,14 @@ type FiltrosMetricas struct {
 	Desde    *time.Time // primer día del mes; nil = desde la plantación
 	Hasta    time.Time  // primer día del mes; por defecto, el mes actual
 	Forma    *int       // forma de vida, 1 a 4
+}
+
+// formaDeVidaDeMetricas es una forma de vida del catálogo, para que el front muestre los nombres
+// en los filtros y en las leyendas sin escribirlos a mano.
+type formaDeVidaDeMetricas struct {
+	FormaDeVida int    `json:"formaDeVida"`
+	Nombre      string `json:"nombre"`
+	Icono       string `json:"icono"`
 }
 
 // supervivenciaDeForma es una barra del gráfico de supervivencia por forma de vida (RES-03).
@@ -45,15 +54,16 @@ type mesDeEvolucion struct {
 // Los porcentajes y promedios son punteros: si no hay datos para calcularlos, salen null
 // (así el front muestra "sin datos" en vez de un 0 que no es cierto).
 type Metricas struct {
-	CelulasPlantadas      int                    `json:"celulasPlantadas"`
-	IndividuosConRegistro int                    `json:"individuosConRegistro"`
-	TasaSupervivencia     *float64               `json:"tasaSupervivencia"`
-	CrecimientoPromedioCm *float64               `json:"crecimientoPromedioCm"`
-	IndividuosEnFloracion *float64               `json:"individuosEnFloracion"`
-	IndividuosConFrutos   *float64               `json:"individuosConFrutos"`
-	CelulasConPlantulas   *float64               `json:"celulasConPlantulas"`
-	SupervivenciaPorForma []supervivenciaDeForma `json:"supervivenciaPorForma"`
-	Evolucion             []mesDeEvolucion       `json:"evolucion"`
+	CelulasPlantadas      int                     `json:"celulasPlantadas"`
+	IndividuosConRegistro int                     `json:"individuosConRegistro"`
+	TasaSupervivencia     *float64                `json:"tasaSupervivencia"`
+	CrecimientoPromedioCm *float64                `json:"crecimientoPromedioCm"`
+	IndividuosEnFloracion *float64                `json:"individuosEnFloracion"`
+	IndividuosConFrutos   *float64                `json:"individuosConFrutos"`
+	CelulasConPlantulas   *float64                `json:"celulasConPlantulas"`
+	SupervivenciaPorForma []supervivenciaDeForma  `json:"supervivenciaPorForma"`
+	Evolucion             []mesDeEvolucion        `json:"evolucion"`
+	FormasDeVida          []formaDeVidaDeMetricas `json:"formasDeVida"` // siempre las 4, de 1 a 4
 }
 
 // ---------- PARTE B: ayudas ----------
@@ -313,7 +323,21 @@ func CalcularMetricas(ctx context.Context, pool *pgxpool.Pool, f FiltrosMetricas
 			mes.AlturaPromedio[forma] = redondear(*altura)
 		}
 	}
-	return m, filas.Err()
+	if err := filas.Err(); err != nil {
+		return m, err
+	}
+
+	// 5. El catálogo de formas de vida, en orden de 1 a 4.
+	filas, err = pool.Query(ctx, `SELECT id, nombre, icono FROM formas_de_vida ORDER BY id`)
+	if err != nil {
+		return m, err
+	}
+	m.FormasDeVida, err = pgx.CollectRows(filas, func(f pgx.CollectableRow) (formaDeVidaDeMetricas, error) {
+		var forma formaDeVidaDeMetricas
+		err := f.Scan(&forma.FormaDeVida, &forma.Nombre, &forma.Icono)
+		return forma, err
+	})
+	return m, err
 }
 
 // ---------- PARTE E: el handler ----------
