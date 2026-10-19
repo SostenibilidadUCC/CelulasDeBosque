@@ -17,6 +17,7 @@ export default function Login() {
   const [verContrasena, setVerContrasena] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState(null)
+  const [estadoError, setEstadoError] = useState(0)
 
   // Si ya hay sesión, vuelve a la pantalla a la que quería entrar (la guarda RutaPrivada en "desde").
   // Es el único lugar que navega después del login: si también navegara enviar(), los dos podrían pisarse.
@@ -33,6 +34,7 @@ export default function Login() {
     } catch (err) {
       // err.message ya viene en español: del backend (400, 401, 403) o armado por api.js (0, 500).
       setError(err.message)
+      setEstadoError(err.estado)
       setEnviando(false)
     }
   }
@@ -78,17 +80,30 @@ export default function Login() {
           </button>
         </div>
 
-        {error && (
-          <p role="alert" className="flex items-center gap-2 rounded-xl bg-error-fondo p-3 text-body-md text-error-texto">
-            <Icono nombre="error" />
-            {error}
-          </p>
-        )}
+        {/* Un 403 no es una equivocación de la persona: la cuenta espera aprobación o está pausada.
+            Se muestra como aviso (no como error) con el texto que manda el backend. */}
+        {error &&
+          (estadoError === 403 ? (
+            <p role="alert" className="flex items-start gap-2 rounded-xl bg-tonal p-3 text-body-md text-bosque">
+              <Icono nombre="schedule" className="shrink-0" />
+              {error}
+            </p>
+          ) : (
+            <p role="alert" className="flex items-center gap-2 rounded-xl bg-error-fondo p-3 text-body-md text-error-texto">
+              <Icono nombre="error" />
+              {error}
+            </p>
+          ))}
 
         <Boton type="submit" cargando={enviando} textoCargando="Ingresando…">
           Ingresar
         </Boton>
       </form>
+
+      <p className="text-center text-body-md text-texto-2">¿No tenés cuenta?</p>
+      <Boton variante="secundario" onClick={() => navigate('/pedir-acceso')}>
+        Pedí acceso
+      </Boton>
 
       <Boton variante="texto" onClick={() => navigate('/publico/A')}>
         Ver resultados del Campus UCC
