@@ -4,7 +4,7 @@ Este archivo va en `frontend/CLAUDE.md`. Claude Code lo lee además del `CLAUDE.
 
 ## Principios
 
-1. **Se usa en el campo, al sol, con una mano.** Contraste alto, zonas táctiles grandes, pocos pasos. Cargar un registro completo tiene que tomar menos de 2 minutos.
+1. **Se usa en el campo, al sol, con una mano.** Contraste alto, zonas táctiles grandes, pocos pasos. El tiempo de carga de un registro completo se mide en la prueba en campo: cada toque de más cuenta.
 2. **Sensibilizar, no competir.** Tono cálido y educativo. Nada de rankings, medallas, "mejor lugar" ni alertas alarmistas.
 3. **Simple antes que lindo.** Si hay que elegir entre una pantalla más vistosa y una más clara, gana la más clara.
 4. **Consistencia.** Mismo color, mismo componente y misma palabra para lo mismo en todas las pantallas.
@@ -66,7 +66,7 @@ Usá **solo** estos tokens. Nunca escribas un hexadecimal suelto en un component
 |---|---|---|
 | Árbol | `#1b4332` | `park` |
 | Arbusto | `#52b788` | `nature` |
-| Herbácea | `#c08552` | `local_florist` |
+| Gramínea | `#c08552` | `local_florist` |
 | Rastrera | `#7c6fb0` | `grass` |
 
 Estos colores se usan **solo** para distinguir formas de vida (líneas de gráficos, puntos de leyenda, íconos).
@@ -159,7 +159,6 @@ Nada de sombras fuertes ni degradados llamativos.
 | Cantidad de flores | `filter_vintage` |
 | Presencia de frutos | `nutrition` |
 | Nuevas plántulas | `psychiatry` |
-| Polinizadores | `pest_control` |
 | Observaciones | `edit_note` |
 | QR | `qr_code_2` |
 | Descargar | `download` |
@@ -199,17 +198,16 @@ Pastilla `rounded-full` con fondo `tonal`, texto `bosque`, estilo `code-tag` y c
 - Error: borde `#ba1a1a` y mensaje debajo en `body-sm` con ícono `error`.
 - Campos numéricos con `inputMode="numeric"` para que el celular abra el teclado de números.
 
-### `ContadorMasMenos` (altura y polinizadores)
-
-Botón −1 · número grande (`headline-md`, tabular) con unidad (`cm`) · botón +1. Botones de 48 × 48 px, fondo `tonal`. El número también se puede tipear. Debajo, en `body-sm`, el valor del mes anterior y la diferencia: "Octubre: 173 cm · +12".
-
 ### `BotonesVivoMuerto`
 
 Dos botones lado a lado de 48 px de alto y el mismo ancho. Seleccionado Vivo: fondo `bosque`, texto blanco, ícono `eco`. Seleccionado Muerto: fondo `#475569`, texto blanco, ícono `remove_circle`. No seleccionado: fondo blanco con borde `niebla`.
 
-### `SelectorNumero` (cantidad de flores)
+### `SelectorNumero` (altura y cantidad de flores)
 
-Desplegable nativo (`<select>`) para que el celular abra su propio selector, alto 48 px, mismo estilo que los inputs, texto en 16 px y cifras tabulares. Opciones de 0 a 100 (propuesta, a confirmar con la clienta). Al lado, la etiqueta con ícono `filter_vintage`; debajo, en `body-sm`, el valor del mes anterior ("Octubre: 3 flores"). Si la clienta pide rangos, el componente recibe las opciones por props, así que no hace falta reescribirlo.
+Desplegable nativo (`<select>`) para que el celular abra su propio selector, alto 48 px, mismo estilo que los inputs, texto en 16 px y cifras tabulares. Recibe las opciones por props:
+
+- **Altura:** números exactos de 1 a 999 con unidad (`cm`), arranca en la altura del mes anterior. Debajo, en `body-sm`, el valor del mes anterior y la diferencia: "Octubre: 173 cm · +12".
+- **Cantidad de flores:** números exactos de 0 a 100, arranca en 0. Al lado, la etiqueta con ícono `filter_vintage`; debajo, en `body-sm`, el valor del mes anterior ("Octubre: 3 flores").
 
 ### `BotonesSiNo` (presencia de frutos y nuevas plántulas)
 
@@ -217,16 +215,17 @@ Igual que `BotonesVivoMuerto` pero más compacto: dos botones lado a lado de 48 
 
 ### Bloque de individuo (carga mensual)
 
-Tarjeta, una por forma de vida y siempre en el orden Árbol, Arbusto, Herbácea, Rastrera:
+Tarjeta, una por forma de vida y siempre en el orden Árbol, Arbusto, Gramínea, Rastrera:
 
 1. Arriba: ícono y nombre de la forma de vida.
 2. `BotonesVivoMuerto`.
-3. Altura con `ContadorMasMenos` (arranca en la altura del mes anterior).
+3. Altura con `SelectorNumero` (arranca en la altura del mes anterior).
 4. Cantidad de flores con `SelectorNumero` (arranca en 0).
 5. Presencia de frutos y nuevas plántulas con `BotonesSiNo` (arrancan en No). En pantallas de 400 px o más pueden ir en la misma fila.
-6. Diámetro, solo en el Árbol, como campo opcional al final (a confirmar).
 
-Si se marca Muerto, los puntos 3 a 6 se ocultan juntos con una transición corta. El bloque tiene que ser compacto: cuatro bloques con cinco datos cada uno tienen que poder recorrerse rápido con el pulgar. Separación de 12 px entre filas dentro del bloque y de 16 px entre bloques.
+No hay diámetro ni polinizadores (descartados).
+
+**Individuo muerto:** al marcar Muerto se pide confirmación con un `Modal`. Confirmado, el bloque se ve en gris (colores de Muerto), los puntos 3 a 5 se ocultan juntos con una transición corta y no se le carga nada. Si el registro anterior lo tenía muerto, el bloque llega así y muestra el botón tonal "Cargar uno nuevo (reposición)", que lo habilita como vivo (en la base sigue siendo el mismo individuo). Ese botón solo aparece en ese caso. El bloque tiene que ser compacto: cuatro bloques con cinco datos cada uno tienen que poder recorrerse rápido con el pulgar. Separación de 12 px entre filas dentro del bloque y de 16 px entre bloques.
 
 ### Control segmentado de formas de vida (filtros)
 
@@ -234,6 +233,7 @@ Barra `rounded-full` con fondo `segmento` y 4 px de relleno interior. Opción el
 
 ### `Foto`
 
+- Archivo `components/Foto.jsx`. Props: `fotoId` (la foto actual), `onCambio(id)` (recibe el id nuevo al terminar de subir, o `null` al elegir otra) y `fotoAnteriorId` (la foto del mes anterior, opcional). Sube con `subirFoto` de `api.js`, que informa el progreso.
 - Relación 4:3, `rounded-xl`.
 - Vacío: fondo `fondo`, borde 2 px discontinuo `brote-borde`, ícono de cámara `bosque-hover` al centro y el texto "Tocá para sacar la foto desde arriba, con las 4 plantas en el cuadro".
 - Con foto: imagen de borde a borde, fecha en una etiqueta abajo a la izquierda y botón "Cambiar foto".
@@ -307,7 +307,7 @@ Número grande (`headline-xl` en computadora, `headline-lg` en celular, tabular,
 
 - Español rioplatense con **voseo**: "Cargá", "Elegí", "Tocá", "Revisá". Nunca "Carga", "Elige", "Toca".
 - Frases cortas y concretas. Una idea por oración.
-- Vocabulario del dominio (ver `CLAUDE.md` de la raíz): célula, isleta, lugar, individuo, forma de vida, registro. Nunca "ejemplar", "especie", "lote", "parcela" ni "cuadrante".
+- Vocabulario del dominio (ver `CLAUDE.md` de la raíz): célula, isleta, lugar, individuo, forma de vida, registro. Nunca "ejemplar", "especie", "lote", "parcela", "cuadrante" ni "herbácea" (la forma de vida 3 es **Gramínea**). "Herbácea" todavía aparece en el código (migración `00001_tablas.sql`, `registros_validacion.go`, `ficha.go`, `index.css`, `formato.js` y `seed.sql`); el renombre es el ticket **T28**: no la cambies en otros tickets.
 - Botones con verbo + objeto: "Guardar registro", "Dar de alta célula", "Descargar Excel".
 - Errores: qué pasó + qué hacer. "No se pudo subir la foto. Revisá la conexión y tocá Reintentar." Nunca "Error 500" ni mensajes técnicos.
 - Tono alentador sin exagerar: "¡Registro guardado!" está bien; "¡Increíble, sos un héroe del bosque!" no.
@@ -388,7 +388,7 @@ Para Tailwind v4, en `src/index.css`. Si el proyecto usa Tailwind v3, los mismos
   /* Formas de vida */
   --color-arbol: #1b4332;
   --color-arbusto: #52b788;
-  --color-herbacea: #c08552;
+  --color-herbacea: #c08552; /* Gramínea (pasa a --color-graminea en T28, junto con el código) */
   --color-rastrera: #7c6fb0;
 
   /* Tipografía */
