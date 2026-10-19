@@ -8,7 +8,7 @@ Plataforma web para el programa **UCC Sostenible** (Universidad Católica de Có
 
 El objetivo es la **sensibilización ambiental**, no la investigación científica ni la competencia entre lugares. Por eso:
 
-- La carga tiene que ser simple: pocos datos y una foto, en menos de 2 minutos desde el celular.
+- La carga tiene que ser simple: pocos datos y una foto, desde el celular. No hay un tope de tiempo fijo: el tiempo de carga se mide en la prueba en campo.
 - Los resultados se muestran con pocas métricas claras.
 - Nunca se agregan rankings ni comparaciones del tipo "mejor o peor lugar".
 
@@ -35,8 +35,8 @@ Somos tres estudiantes con poca experiencia. Cada semana, cada persona hace una 
 
 ## Documentación
 
-- `docs/Requerimientos_Celulas_de_Bosque_v4.pdf`: especificación completa. Cada requerimiento tiene un ID (AUT-01, CAR-06, RN-04…). Si un ticket nombra un ID, los criterios de aceptación están ahí.
-- `docs/Plan_de_Trabajo_Equipo_v3.pdf`: tickets (T01 a T27), calendario y lista de endpoints.
+- `docs/Requerimientos_Celulas_de_Bosque_v5.pdf`: especificación completa. Cada requerimiento tiene un ID (AUT-01, CAR-06, RN-04…). Si un ticket nombra un ID, los criterios de aceptación están ahí.
+- `docs/Plan_de_Trabajo_Equipo_v4.pdf`: tickets (T01 a T27), calendario y lista de endpoints.
 - `diseno/`: pantallas exportadas de Stitch (`code.html` + `screen.png`) y `DESIGN.md` con colores y tipografía.
 
 ## Stack
@@ -60,8 +60,8 @@ backend/
     handlers/              ← un archivo por funcionalidad (lugares.go, celulas.go, registros.go, fotos.go, metricas.go, usuarios.go, admin.go, datos.go, publico.go)
 frontend/src/
   App.jsx                  ← registra TODAS las rutas
-  api.js                   ← pedir(ruta, opciones): única forma de llamar al backend
-  components/              ← piezas compartidas (Boton, Tarjeta, ChipEstado, ContadorMasMenos, BotonesVivoMuerto, Plano, Foto…)
+  api.js                   ← pedir(ruta, opciones): única forma de llamar al backend; subirFoto(archivo, alProgresar) para las fotos
+  components/              ← piezas compartidas (Boton, Tarjeta, ChipEstado, BotonesVivoMuerto, Plano, Foto…)
   pages/<Pantalla>/        ← una carpeta por pantalla
 ```
 
@@ -89,14 +89,14 @@ Usá siempre estas palabras, en el código y en la interfaz:
 | **Isleta** | Grupo de células dentro de un lugar. Número 1, 2, 3… |
 | **Célula** (de bosque) | Contenedor con 4 plantas. Número dentro de la isleta. Es la unidad que se ubica, fotografía y registra. |
 | **Individuo** | Cada una de las 4 plantas de la célula. |
-| **Forma de vida** | 1 Árbol, 2 Arbusto, 3 Herbácea, 4 Rastrera. |
+| **Forma de vida** | 1 Árbol, 2 Arbusto, 3 Gramínea, 4 Rastrera. |
 | **Registro** | Carga de una célula en un período: fecha, 1 foto, datos de los 4 individuos, observaciones. |
 | **Período** | Mes calendario del registro (`2026-11`). |
 | **Plano** | Foto de dron de la isleta con una grilla de filas y columnas donde se ubica cada célula. |
 
 - **Código de célula:** `Lugar-Isleta-Número`, por ejemplo `A-1-45`. **Código de individuo:** `A-1-45-1`. Los códigos **no se guardan**: se calculan desde la jerarquía.
 - En pantalla se muestra el nombre de la forma de vida ("Árbol"), nunca el dígito.
-- **No uses** "árbol", "ejemplar" o "especie" para referirte a una célula, ni "lote", "parcela" o "cuadrante" para una isleta.
+- **No uses** "árbol", "ejemplar" o "especie" para referirte a una célula, ni "lote", "parcela" o "cuadrante" para una isleta. Tampoco "herbácea": la forma de vida 3 es **Gramínea**. "Herbácea" todavía aparece en el código (migración `00001_tablas.sql`, `registros_validacion.go`, `ficha.go`, `index.css`, `formato.js` y `seed.sql`); el renombre es el ticket **T28**: no la cambies en otros tickets.
 - No hay carteles, estacas ni NFC: la célula se encuentra por el plano y el código.
 
 ## Reglas de negocio
@@ -104,11 +104,11 @@ Usá siempre estas palabras, en el código y en la interfaz:
 - **RN-01:** toda célula tiene exactamente 4 individuos, uno por forma de vida; se crean al crear la célula.
 - **RN-02:** letra de lugar única; número de isleta único por lugar; número de célula y posición (fila, columna) únicos por isleta. Se garantizan con restricciones `UNIQUE` en la base, no solo en Go.
 - **RN-03:** la letra, el número de isleta y el número de célula no se cambian si ya tienen registros.
-- **RN-04:** un solo registro por célula por período (`UNIQUE (celula_id, periodo)`). Si ya existe, responder 409 y el front abre la edición.
+- **RN-04:** un solo registro por célula por período (`UNIQUE (celula_id, periodo)`). Si ya existe, responder 409 con el `registroId` del existente en el JSON y el front abre la edición.
 - **RN-06:** la fecha de medición no puede ser futura ni anterior a la fecha de plantación.
 - **RN-07:** la foto es obligatoria en todo registro.
 - **RN-08:** vivo/muerto es obligatorio para los 4 individuos. Si está vivo, también son obligatorios altura, cantidad de flores, presencia de frutos y nuevas plántulas. Si está muerto, no se guarda ninguno de esos datos.
-- **RN-09:** un individuo muerto el mes anterior se precarga como muerto; pasarlo a vivo pide confirmación.
+- **RN-09:** un individuo muerto se ve en gris, sin controles, y no se le carga nada. Al marcar Muerto se pide confirmación. Si se repuso, el botón "Cargar uno nuevo (reposición)" lo habilita como vivo; ese botón solo aparece si el registro anterior lo tenía muerto. En la base sigue siendo el mismo individuo.
 - **RN-10:** un lugar tiene como máximo un cargador activo.
 - **RN-12 y RN-13:** nunca se borran registros ni usuarios; se anulan o deshabilitan.
 - **RN-15:** un lugar solo es visible sin sesión si está marcado como público (al inicio, solo el Campus UCC).
@@ -116,20 +116,20 @@ Usá siempre estas palabras, en el código y en la interfaz:
 
 ## Variables por individuo
 
-Las cuatro formas de vida (Árbol, Arbusto, Herbácea, Rastrera) registran exactamente lo mismo en cada registro. Las variables viven en el catálogo `variables` de la base: no las escribas fijas en el código del formulario ni de la tabla.
+Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exactamente lo mismo en cada registro. Las variables viven en el catálogo `variables` de la base: no las escribas fijas en el código del formulario ni de la tabla.
 
 | Variable | Código | Tipo | Rango | Control en pantalla | Valor inicial |
 |---|---|---|---|---|---|
 | Supervivencia | `vivo` | booleano | vivo / muerto | `BotonesVivoMuerto` | el del mes anterior |
-| Altura | `altura_cm` | entero | 1 a 999 cm | `ContadorMasMenos` con tipeo | la del mes anterior |
-| Cantidad de flores | `flores` | entero | 0 a 100 (propuesta) | `SelectorNumero` (desplegable) | 0 |
+| Altura | `altura_cm` | entero | 1 a 999 cm | `SelectorNumero` (desplegable) | la del mes anterior |
+| Cantidad de flores | `flores` | entero | 0 a 100 | `SelectorNumero` (desplegable de números exactos) | 0 |
 | Presencia de frutos | `frutos` | booleano | sí / no | `BotonesSiNo` | No |
-| Nuevas plántulas | `plantulas_nuevas` | booleano | sí / no | `BotonesSiNo` | No |
+| Nuevas plántulas | `plantulas_nuevas` | booleano | sí / no (campo simple) | `BotonesSiNo` | No |
 
 - En el JSON van en camelCase: `vivo`, `alturaCm`, `flores`, `frutos`, `plantulasNuevas`.
 - Altura: mostrar un aviso (no bloquear) si baja más de 20 % o sube más de 50 cm respecto del mes anterior.
-- Además: polinizadores a nivel célula (contador, opcional) y diámetro del tronco solo en el Árbol (opcional). **Los dos están a confirmar** porque no figuran en la última lista de la clienta: no les agregues lógica nueva hasta que se confirmen.
-- Con 20 datos por célula, el tiempo de carga (menos de 2 minutos) está en riesgo: cualquier cosa que sume toques en la carga mensual, consultala antes.
+- **No se registran** diámetro del tronco ni polinizadores (descartados): no los agregues a ningún código.
+- Con 20 datos por célula, el tiempo de carga se mide en la prueba en campo: cualquier cosa que sume toques en la carga mensual, consultala antes.
 
 ## Roles y permisos
 
@@ -151,7 +151,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Herbácea, Rastrera) registran exact
 - Rutas con los patrones de Go 1.22: `mux.HandleFunc("GET /api/celulas/{id}", h.ObtenerCelula)` y `r.PathValue("id")`.
 - Todas las respuestas son JSON. Usá siempre `respuestas.JSON` y `respuestas.Error`.
 - Formato de error: `{ "error": "mensaje en español para mostrar al usuario" }`.
-- Códigos de estado: 400 datos inválidos, 401 sin sesión, 403 sin permiso, 404 no existe, 409 ya existe, 500 error del servidor. En un 500, logueá el detalle y devolvé un mensaje genérico.
+- Códigos de estado: 400 datos inválidos, 401 sin sesión, 403 sin permiso, 404 no existe, 409 ya existe (en registros, el JSON incluye además el `registroId` del existente), 500 error del servidor. En un 500, logueá el detalle y devolvé un mensaje genérico.
 - SQL escrito a mano con `pgx` y **siempre con parámetros** (`$1`, `$2`). Nunca armes SQL concatenando strings.
 - Si una operación escribe en varias tablas (registro + mediciones), usá una transacción.
 - JSON en camelCase (`alturaCm`, `formaDeVida`); columnas de la base en snake_case (`altura_cm`).
@@ -163,7 +163,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Herbácea, Rastrera) registran exact
 
 - Componentes funcionales con hooks. Un componente por archivo.
 - Las llamadas al backend pasan **solo** por `api.js`. Nunca uses `fetch` directo en una pantalla.
-- Antes de crear un componente, fijate si ya existe en `components/`. Usá los compartidos: `Boton`, `Tarjeta`, `ChipEstado`, `ContadorMasMenos`, `BotonesVivoMuerto`, `BotonesSiNo`, `SelectorNumero`, `Modal`, `PanelInferior`, `Cargando`, `Vacio`, `MensajeError`, `Plano`, `Foto`.
+- Antes de crear un componente, fijate si ya existe en `components/`. Usá los compartidos: `Boton`, `Tarjeta`, `ChipEstado`, `BotonesVivoMuerto`, `BotonesSiNo`, `SelectorNumero`, `Modal`, `PanelInferior`, `Cargando`, `Vacio`, `MensajeError`, `Plano`, `Foto` (`components/Foto.jsx`, props `fotoId`, `onCambio` y `fotoAnteriorId`; sube con `subirFoto` de `api.js`).
 - Toda pantalla maneja los estados cargando, vacío, error y sin permiso.
 - Diseño **mobile first**: botones y zonas táctiles de al menos 48 px, texto de al menos 16 px en campos de carga.
 - Los estados usan color **y** ícono, nunca solo color.
@@ -208,14 +208,17 @@ Las cuatro formas de vida (Árbol, Arbusto, Herbácea, Rastrera) registran exact
 Si un cambio depende de alguna de estas, avisá antes de asumir un valor:
 
 1. Si cada individuo tiene especie.
-2. Qué pasa cuando un individuo muerto se repone.
 3. Si hay señal de internet en los lotes (define si hace falta carga sin conexión).
 4. Qué 3 o 4 métricas se muestran en el resumen.
 5. Si la supervivencia principal es sobre los 4 individuos o solo el árbol.
 6. Si el cargador puede editar meses anteriores (por ahora, solo el admin).
-7. Si la altura tiene que ser un desplegable (la clienta lo pidió así; por ahora se usan −1/+1 con tipeo).
-8. Hasta cuántas flores se cuentan y si sirven rangos en lugar del número exacto (por ahora, 0 a 100).
-9. Qué cuenta como nueva plántula y si se registra aunque el individuo esté muerto (por ahora, no se registra).
-10. Si se mantienen diámetro y polinizadores.
+19. Cómo se mide el crecimiento de un individuo repuesto (propuesta: guardar una marca "repuesto" y medir desde la reposición).
 
-Ya respondidas: la cuarta forma de vida es **Rastrera** y en ella se mide la **altura**.
+Ya respondidas:
+
+- La cuarta forma de vida es **Rastrera** y en ella se mide la **altura**. La tercera es **Gramínea** (antes Herbácea).
+- 2: un individuo muerto que se repone se habilita como vivo con "Cargar uno nuevo (reposición)" y sigue siendo el mismo individuo en la base (ver RN-09).
+- 7: la altura es un desplegable de 1 a 999 que arranca en la altura del mes anterior.
+- 8: las flores se cuentan de 0 a 100, con un desplegable de números exactos.
+- 9: nuevas plántulas es un campo simple Sí/No y no se carga si el individuo está muerto.
+- 10: diámetro y polinizadores se descartaron.
