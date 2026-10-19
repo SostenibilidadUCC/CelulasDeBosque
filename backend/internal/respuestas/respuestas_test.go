@@ -49,3 +49,20 @@ func TestError(t *testing.T) {
 		t.Errorf("cuerpo: esperaba el mensaje de error, llegó %s", w.Body.String())
 	}
 }
+
+func TestErrorConDatos(t *testing.T) {
+	w := httptest.NewRecorder()
+
+	ErrorConDatos(w, http.StatusConflict, "Ya existe", map[string]any{"registroId": 7})
+
+	if w.Code != http.StatusConflict {
+		t.Errorf("código: esperaba %d, llegó %d", http.StatusConflict, w.Code)
+	}
+	var cuerpo map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &cuerpo); err != nil {
+		t.Fatalf("el cuerpo no es JSON válido: %v", err)
+	}
+	if cuerpo["error"] != "Ya existe" || cuerpo["registroId"] != float64(7) {
+		t.Errorf("cuerpo inesperado: %s", w.Body.String())
+	}
+}
