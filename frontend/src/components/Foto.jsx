@@ -19,7 +19,7 @@ const opcionesCompresion = {
 // - fotoId: id de la foto ya guardada (por ejemplo, al editar un registro).
 // - onCambio(id): se llama con el id nuevo cuando la foto terminó de subir, y con null al elegir otra.
 // - fotoAnteriorId: foto del mes anterior; si viene, se muestra al lado como referencia de encuadre.
-export default function Foto({ fotoId, onCambio, fotoAnteriorId }) {
+export default function Foto({ fotoId, onCambio, fotoAnteriorId, onOcupada }) {
   // estado: 'vacia' | 'comprimiendo' | 'subiendo' | 'lista' | 'error'
   const [estadoInterno, setEstado] = useState('vacia')
   // Si la pantalla trae una foto ya guardada (aunque llegue después, al editar), se muestra como lista.
@@ -37,8 +37,10 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId }) {
   // ni avisarle a la pantalla. onCambio se guarda en un ref para llamar siempre a la versión actual.
   const montado = useRef(true)
   const alCambiar = useRef(onCambio)
+  const alOcupar = useRef(onOcupada) // onOcupada(true/false) es opcional: avisa si está comprimiendo o subiendo
   useEffect(() => {
     alCambiar.current = onCambio
+    alOcupar.current = onOcupada
   })
   useEffect(() => {
     montado.current = true
@@ -56,6 +58,9 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId }) {
   }, [vistaPrevia])
 
   const ocupada = estado === 'comprimiendo' || estado === 'subiendo'
+  useEffect(() => {
+    alOcupar.current?.(ocupada)
+  }, [ocupada])
 
   async function subir(archivo) {
     setEstado('subiendo')
