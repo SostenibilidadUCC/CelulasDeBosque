@@ -2,9 +2,10 @@
 // Archivo compartido: solo se AGREGAN funciones, nunca se borran las de otra persona.
 
 export class ErrorApi extends Error {
-  constructor(mensaje, estado) {
+  constructor(mensaje, estado, datos = null) {
     super(mensaje)
     this.estado = estado // 400, 401, 403, 404, 409, 500, o 0 si no hay conexión
+    this.datos = datos // cuerpo de la respuesta de error (por ejemplo { error, registroId } en un 409), o null
   }
 }
 
@@ -37,7 +38,7 @@ export async function pedir(ruta, { cuerpo, headers, ...opciones } = {}) {
     if (respuesta.status === 401 && ruta !== '/login') {
       window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA))
     }
-    throw new ErrorApi(datos?.error ?? 'Ocurrió un error inesperado. Probá de nuevo.', respuesta.status)
+    throw new ErrorApi(datos?.error ?? 'Ocurrió un error inesperado. Probá de nuevo.', respuesta.status, datos)
   }
   return datos
 }
@@ -73,6 +74,15 @@ export const obtenerCelula = (id) => pedir(`/celulas/${id}`)
 // T14: carga mensual. Devuelve { celula, periodoActual, actual, anterior }:
 // actual es el registro de este mes (o null) y anterior el último de un mes anterior (o null).
 export const obtenerUltimoRegistro = (celulaId) => pedir(`/celulas/${celulaId}/ultimo-registro`)
+// T14: guardar el registro. datos = { fecha, fotoId, observaciones, individuos } (ver pages/Carga/pedido.js).
+// Las dos responden { id }. Si ya hay registro de ese mes, crearRegistro falla con un ErrorApi 409
+// y el id del existente viene en error.datos?.registroId.
+export const crearRegistro = (celulaId, datos) =>
+  pedir(`/celulas/${celulaId}/registros`, { method: 'POST', cuerpo: datos })
+export const modificarRegistro = (registroId, datos) =>
+  pedir(`/registros/${registroId}`, { method: 'PUT', cuerpo: datos })
+// T14: la próxima célula de la misma isleta que falta cargar: { celula: { id, codigo } } o { celula: null }.
+export const obtenerSiguientePendiente = (celulaId) => pedir(`/celulas/${celulaId}/siguiente-pendiente`)
 
 // T13: sube una foto a POST /api/fotos y devuelve { id }.
 // Usa XMLHttpRequest en vez de fetch porque fetch no avisa cuánto lleva subido,
