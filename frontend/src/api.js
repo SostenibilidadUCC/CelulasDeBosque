@@ -123,3 +123,13 @@ export function subirFoto(archivo, alProgresar = () => {}) {
     xhr.send(formulario)
   })
 }
+
+// T18: resultados. filtros: { lugar, isleta, desde, hasta, forma }. Los vacíos no se mandan.
+export const obtenerMetricas = (filtros = {}) => {
+  const parametros = new URLSearchParams()
+  for (const [nombre, valor] of Object.entries(filtros)) {
+    if (valor) parametros.set(nombre, valor)
+  }
+  const texto = parametros.toString()
+  return pedir(`/metricas${texto ? `?${texto}` : ''}`)
+}
