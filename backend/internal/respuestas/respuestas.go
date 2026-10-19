@@ -13,6 +13,11 @@ func JSON(w http.ResponseWriter, datos any) {
 	escribir(w, http.StatusOK, datos)
 }
 
+// Creado responde con estado 201 y los datos codificados como JSON (se creó algo nuevo).
+func Creado(w http.ResponseWriter, datos any) {
+	escribir(w, http.StatusCreated, datos)
+}
+
 // Error responde {"error": mensaje} con el código de estado indicado (400, 404, 500…).
 // El mensaje se muestra al usuario, así que va en español y sin detalles técnicos.
 func Error(w http.ResponseWriter, codigo int, mensaje string) {

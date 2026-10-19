@@ -65,6 +65,9 @@ func main() {
 	mux.HandleFunc("GET /api/celulas/{id}/ultimo-registro", a.RequiereSesion(handlers.UltimoRegistro(pool)))
 	mux.HandleFunc("GET /api/celulas/{id}/siguiente-pendiente", a.RequiereSesion(handlers.SiguientePendiente(pool)))
 
+	// T16: usuarios. Pedir acceso es público (sin sesión); la cuenta queda pendiente hasta que un admin la aprueba.
+	mux.HandleFunc("POST /api/solicitar-acceso", handlers.SolicitarAcceso(pool))
+
 	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
 	// El orden de registro no importa: el mux siempre elige la ruta más específica.
 	mux.HandleFunc("/api/", apiNoExiste)
