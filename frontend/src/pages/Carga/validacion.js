@@ -22,12 +22,19 @@ export function errorDeIndividuo(individuo) {
   return null
 }
 
-// Si se puede guardar: la fecha sin error, los 4 individuos bien y las observaciones dentro del largo.
-// La usa el paso de guardar (T14 paso 5), por ejemplo:
-//   const valido = esFormularioValido({ errorFecha, individuos, observaciones })
-export function esFormularioValido({ errorFecha, individuos, observaciones }) {
+// RN-07: la foto es obligatoria. Devuelve el mensaje si falta (null o vacío), o null si está.
+export function errorDeFoto(fotoId) {
+  return fotoId == null || fotoId === '' ? 'Falta la foto de la célula.' : null
+}
+
+// Si se puede guardar: la fecha sin error, la foto, los 4 individuos bien y las observaciones
+// dentro del largo. La usa el paso de guardar (T14 paso 6), por ejemplo:
+//   const valido = esFormularioValido({ errorFecha, fotoId, individuos, observaciones })
+// El aviso de cambio brusco de altura y las alturas sin cambio NO cuentan acá: no son errores.
+export function esFormularioValido({ errorFecha, fotoId, individuos, observaciones }) {
   return (
     !errorFecha &&
+    errorDeFoto(fotoId) === null &&
     individuos.length === 4 &&
     individuos.every((individuo) => errorDeIndividuo(individuo) === null) &&
     observaciones.length <= OBSERVACIONES_MAX

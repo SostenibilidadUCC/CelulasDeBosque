@@ -5,6 +5,7 @@ import Boton from '../../components/Boton.jsx'
 import CampoTexto from '../../components/CampoTexto.jsx'
 import Cargando from '../../components/Cargando.jsx'
 import CodigoCelula from '../../components/CodigoCelula.jsx'
+import Foto from '../../components/Foto.jsx'
 import Icono from '../../components/Icono.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
 import Modal from '../../components/Modal.jsx'
@@ -17,7 +18,7 @@ import EncabezadoCarga from './EncabezadoCarga.jsx'
 import { hoyEnCordoba, periodoDeFecha, rangoDeFechas, validarFecha } from './fechas.js'
 import { alturaAnterior, estabaMuerto, individuoMuerto, individuoNuevo, individuosIniciales } from './individuos.js'
 import { puedeCargarEnLugar } from './permisos.js'
-import { errorDeIndividuo } from './validacion.js'
+import { errorDeFoto, errorDeIndividuo } from './validacion.js'
 
 // Pantalla de carga mensual (T14). Ruta: /cargar/:celulaId.
 // Paso 2: encabezado y fecha de medición. Los pasos siguientes suman los 4 individuos,
@@ -152,7 +153,14 @@ function FormularioCarga({ datos }) {
   const [observaciones, setObservaciones] = useState(actual?.observaciones ?? '')
   // La confirmación abierta: { tipo: 'muerto' | 'reposicion', formaDeVida }, o null si no hay ninguna.
   const [confirmacion, setConfirmacion] = useState(null)
-  // TODO T14 paso 4: estado de la foto (fotoId).
+  // RN-07: el id de la foto de este mes. Editando, la guardada; nuevo, null (nunca la del mes anterior).
+  const [fotoId, setFotoId] = useState(actual?.fotoId ?? null)
+  // TODO T14 paso 6: Mientras Foto comprime o sube, fotoId es null; el paso de guardar tiene que evitar
+  // mostrar 'Falta la foto' en ese momento (Foto no avisa que está ocupada).
+  // Si ya se intentó guardar: recién ahí se muestra "Falta la foto de la célula".
+  // TODO T14 paso 6: agregar el setter (const [mostrarErrores, setMostrarErrores]) y llamarlo desde Guardar.
+  const [mostrarErrores] = useState(false)
+  const errorFoto = errorDeFoto(fotoId)
 
   // Reemplaza el individuo de esa forma de vida por otro (los demás quedan igual).
   function reemplazarIndividuo(formaDeVida, nuevo) {
@@ -203,7 +211,21 @@ function FormularioCarga({ datos }) {
         error={errorFecha}
       />
 
-      {/* TODO T14 paso 4: la foto va acá, arriba de los individuos. */}
+      {/* RN-07: la foto es obligatoria. Foto (components/) se encarga de comprimir, subir y reintentar;
+          acá solo se guarda el id que devuelve. La del mes anterior se muestra al lado como referencia
+          de encuadre, pero nunca se usa como la de este mes. */}
+      <section className="flex flex-col gap-3">
+        <Titulo nivel="sm" como="h2">
+          Foto de la célula
+        </Titulo>
+        <Foto fotoId={fotoId} onCambio={setFotoId} fotoAnteriorId={anterior?.fotoId ?? undefined} />
+        {mostrarErrores && errorFoto && (
+          <p role="alert" className="flex items-center gap-1 text-body-sm text-error">
+            <Icono nombre="error" tamano="chip" />
+            {errorFoto}
+          </p>
+        )}
+      </section>
 
       {/* Los 4 bloques, en el orden de formasDeVida (1 a 4). 16 px entre bloques. */}
       <div className="flex flex-col gap-4">
@@ -232,9 +254,11 @@ function FormularioCarga({ datos }) {
 
       <CampoObservaciones valor={observaciones} onChange={setObservaciones} />
 
-      {/* TODO T14 paso 5: botón "Guardar registro", habilitado solo si
-          esFormularioValido({ errorFecha, individuos, observaciones }) (validacion.js).
+      {/* TODO T14 paso 6: botón "Guardar registro". Al tocarlo, setMostrarErrores(true) y guardar solo si
+          esFormularioValido({ errorFecha, fotoId, individuos, observaciones }) (validacion.js).
+          El pedido tiene que mandar fotoId (RN-07) junto con fecha, individuos y observaciones.
           Las observaciones se mandan con observacionesParaGuardar (vacío o espacios → null).
+          Al guardar, unificar también los errores de fecha e individuos con mostrarErrores.
           CAR-08: antes de guardar, si alturasSinCambio(individuos, anterior) no está vacía, pedir
           confirmación ("La altura quedó igual que el mes anterior en: …"). No es un error. */}
 
