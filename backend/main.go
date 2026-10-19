@@ -41,6 +41,9 @@ func main() {
 	mux.HandleFunc("GET /api/lugares", a.RequiereSesion(handlers.Lugares(pool)))
 	mux.HandleFunc("GET /api/lugares/{id}/celulas", a.RequiereSesion(handlers.CelulasDeLugar(pool)))
 
+	// T18: resultados y métricas
+	mux.HandleFunc("GET /api/metricas", a.RequiereSesion(handlers.ObtenerMetricas(pool)))
+
 	// T13: fotos. Si faltan las variables de R2 el servidor arranca igual,
 	// pero las rutas de fotos responden 500 hasta que se configuren.
 	var fotos almacen.Almacen // nil = sin configurar
