@@ -76,7 +76,11 @@ export default function BloqueIndividuo({
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-borde bg-superficie p-4 shadow-nivel-1">
+    // data-error: FormularioCarga lo busca para llevar la vista y el foco al primer bloque con error.
+    <section
+      data-error={error ? 'true' : undefined}
+      className="flex flex-col gap-3 rounded-2xl border border-borde bg-superficie p-4 shadow-nivel-1"
+    >
       <Titulo nivel="sm" como="h3" className="flex items-center gap-2">
         <Icono nombre={forma.icono} className="text-bosque-hover" />
         {forma.nombre}

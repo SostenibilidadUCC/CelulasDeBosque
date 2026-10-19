@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { obtenerUltimoRegistro } from '../../api.js'
+import { crearRegistro, modificarRegistro, obtenerUltimoRegistro } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import CampoTexto from '../../components/CampoTexto.jsx'
 import Cargando from '../../components/Cargando.jsx'
@@ -13,14 +13,16 @@ import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
 import BloqueIndividuo from './BloqueIndividuo.jsx'
 import CampoObservaciones from './CampoObservaciones.jsx'
+import ConfirmacionGuardado from './ConfirmacionGuardado.jsx'
 import EncabezadoCarga from './EncabezadoCarga.jsx'
-import { hoyEnCordoba, periodoDeFecha, rangoDeFechas, validarFecha } from './fechas.js'
+import { mensajeDeGuardado } from './errores.js'
+import { hoyEnCordoba, mesEnMinuscula, periodoDeFecha, rangoDeFechas, validarFecha } from './fechas.js'
 import { alturaAnterior, estabaMuerto, individuoMuerto, individuoNuevo, individuosIniciales } from './individuos.js'
-import { errorDeFoto, errorDeIndividuo } from './validacion.js'
+import { armarPedido } from './pedido.js'
+import { alturasSinCambio, errorDeFoto, errorDeIndividuo, esFormularioValido } from './validacion.js'
 
 // Pantalla de carga mensual (T14). Ruta: /cargar/:celulaId.
-// Paso 2: encabezado y fecha de medición. Los pasos siguientes suman los 4 individuos,
-// la foto y el guardado dentro de FormularioCarga (ver los TODO de abajo).
+// Fecha, foto, los 4 individuos, observaciones y el guardado, todo dentro de FormularioCarga.
 export default function Carga() {
   const { celulaId } = useParams()
 
@@ -130,14 +132,14 @@ function CargaDeCelula({ celulaId }) {
     )
   }
 
-  return <FormularioCarga datos={carga.datos} />
+  // onRecargar vuelve a pedir los datos: el formulario se desmonta y se arma de nuevo con lo guardado.
+  return <FormularioCarga datos={carga.datos} onRecargar={reintentar} />
 }
 
 // El formulario de carga. Se monta recién cuando llegaron los datos, así el estado inicial
 // (la fecha) puede salir de la respuesta sin un useEffect.
-// Acá vive todo el estado del registro: los pasos siguientes (individuos, foto y guardado)
-// lo leen y lo cambian desde acá.
-function FormularioCarga({ datos }) {
+// Acá vive todo el estado del registro: fecha, foto, individuos, observaciones y el guardado.
+function FormularioCarga({ datos, onRecargar }) {
   const { celula, formasDeVida, periodoActual, actual, anterior } = datos
 
   // "hoy" se calcula una sola vez al abrir la pantalla.
@@ -153,12 +155,42 @@ function FormularioCarga({ datos }) {
   const [confirmacion, setConfirmacion] = useState(null)
   // RN-07: el id de la foto de este mes. Editando, la guardada; nuevo, null (nunca la del mes anterior).
   const [fotoId, setFotoId] = useState(actual?.fotoId ?? null)
-  // TODO T14 paso 6: Mientras Foto comprime o sube, fotoId es null; el paso de guardar tiene que evitar
-  // mostrar 'Falta la foto' en ese momento (Foto no avisa que está ocupada).
-  // Si ya se intentó guardar: recién ahí se muestra "Falta la foto de la célula".
-  // TODO T14 paso 6: agregar el setter (const [mostrarErrores, setMostrarErrores]) y llamarlo desde Guardar.
-  const [mostrarErrores] = useState(false)
+  // Mientras Foto comprime o sube, fotoId es null: con esto no se muestra "Falta la foto" en ese
+  // momento y no se deja guardar hasta que termine (Foto lo avisa con onOcupada).
+  const [fotoOcupada, setFotoOcupada] = useState(false)
+  // Recién después del primer intento de guardar se muestran los errores de foto e individuos
+  // (el de la fecha se muestra al momento).
+  const [mostrarErrores, setMostrarErrores] = useState(false)
   const errorFoto = errorDeFoto(fotoId)
+
+  // ---------- Guardado ----------
+  const [guardando, setGuardando] = useState(false) // para el botón ("Guardando…")
+  // Para cortar un segundo envío en el acto. "guardando" es estado de React y se actualiza recién en
+  // el próximo render: dos toques muy seguidos lo verían todavía en false. Un ref cambia al instante.
+  const enviando = useRef(false)
+  const [errorGuardado, setErrorGuardado] = useState(null) // { texto, verRegistroDelMes } o null
+  const [confirmarSinCambio, setConfirmarSinCambio] = useState(null) // formas de vida con la altura igual, o null
+  const [guardado, setGuardado] = useState(false) // true cuando el backend respondió bien
+  // Cada vez que falla la validación se suma 1: el useEffect de abajo lleva la vista al primer error.
+  const [pedidoDeFoco, setPedidoDeFoco] = useState(0)
+  const formulario = useRef(null)
+
+  useEffect(() => {
+    if (pedidoDeFoco === 0) return
+    // Corre después del render, cuando los errores ya están en pantalla. Se busca el primero en el
+    // orden de la página: un campo marcado (aria-invalid) o un bloque con error (data-error).
+    const primero = formulario.current?.querySelector('[aria-invalid="true"], [data-error="true"]')
+    if (!primero) return
+    primero.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    // El foco va al campo mismo, o al primer control del bloque (el desplegable de altura, o
+    // Vivo/Muerto si falta elegir, o el botón de la cámara si falta la foto). Los <input hidden> de
+    // Foto (cámara y galería) no se pueden enfocar, por eso se saltean.
+    const controles = 'select, textarea, input:not([hidden])'
+    const campo = primero.matches(controles)
+      ? primero
+      : (primero.querySelector(controles) ?? primero.querySelector('button:not([disabled])'))
+    campo?.focus({ preventScroll: true })
+  }, [pedidoDeFoco])
 
   // Reemplaza el individuo de esa forma de vida por otro (los demás quedan igual).
   function reemplazarIndividuo(formaDeVida, nuevo) {
@@ -194,10 +226,65 @@ function FormularioCarga({ datos }) {
   // si ese mes ya tenía registro, lo resuelve el paso de guardar (el backend responde 409 con el
   // registroId y el front abre la edición, RN-04).
   const editando = actual != null
+  const formularioValido = esFormularioValido({ errorFecha, fotoId, individuos, observaciones })
+
+  // Al tocar Guardar: valida y, si las alturas quedaron igual que el mes anterior, pide confirmarlo (CAR-08).
+  function intentarGuardar() {
+    if (enviando.current) return // ya hay un guardado en curso
+    setMostrarErrores(true)
+    setErrorGuardado(null)
+    if (!formularioValido) {
+      setPedidoDeFoco((n) => n + 1)
+      return
+    }
+    const sinCambio = alturasSinCambio(individuos, anterior)
+    if (sinCambio.length > 0) {
+      setConfirmarSinCambio(sinCambio)
+      return
+    }
+    guardar()
+  }
+
+  // Manda el registro. Si falla, no se toca nada de lo cargado: solo se muestra el error.
+  async function guardar() {
+    if (enviando.current) return // corta un segundo envío aunque el botón todavía no se haya deshabilitado
+    enviando.current = true
+    setConfirmarSinCambio(null)
+    setGuardando(true)
+    setErrorGuardado(null)
+    const pedido = armarPedido({ fecha, fotoId, observaciones, individuos })
+    try {
+      if (editando) await modificarRegistro(actual.id, pedido)
+      else await crearRegistro(celula.id, pedido)
+      setGuardado(true)
+    } catch (error) {
+      // TODO T17: un 401 (sesión vencida) manda al login y lo cargado se pierde: falta el borrador.
+      setErrorGuardado(mensajeDeGuardado(error, { fechaEsDelMesActual: periodo === periodoActual }))
+    } finally {
+      enviando.current = false
+      setGuardando(false)
+    }
+  }
+
+  if (guardado) {
+    return (
+      <Pagina>
+        <ConfirmacionGuardado celula={celula} actualizado={editando} onEditarDeNuevo={onRecargar} />
+      </Pagina>
+    )
+  }
 
   return (
-    <Pagina>
+    <Pagina refContenedor={formulario}>
       <EncabezadoCarga celula={celula} periodo={periodo} periodoActual={periodoActual} editando={editando} />
+
+      {mostrarErrores && !formularioValido && (
+        <p role="alert" className="flex items-center gap-2 rounded-2xl bg-error-fondo p-4 text-body-md font-medium text-error-texto">
+          <Icono nombre="error" tamano="chico" />
+          Revisá los campos marcados.
+        </p>
+      )}
+
 
       <CampoTexto
         etiqueta="Fecha de medición"
@@ -212,12 +299,17 @@ function FormularioCarga({ datos }) {
       {/* RN-07: la foto es obligatoria. Foto (components/) se encarga de comprimir, subir y reintentar;
           acá solo se guarda el id que devuelve. La del mes anterior se muestra al lado como referencia
           de encuadre, pero nunca se usa como la de este mes. */}
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3" data-error={mostrarErrores && errorFoto && !fotoOcupada ? 'true' : undefined}>
         <Titulo nivel="sm" como="h2">
           Foto de la célula
         </Titulo>
-        <Foto fotoId={fotoId} onCambio={setFotoId} fotoAnteriorId={anterior?.fotoId ?? undefined} />
-        {mostrarErrores && errorFoto && (
+        <Foto
+          fotoId={fotoId}
+          onCambio={setFotoId}
+          onOcupada={setFotoOcupada}
+          fotoAnteriorId={anterior?.fotoId ?? undefined}
+        />
+        {mostrarErrores && errorFoto && !fotoOcupada && (
           <p role="alert" className="flex items-center gap-1 text-body-sm text-error">
             <Icono nombre="error" tamano="chip" />
             {errorFoto}
@@ -240,7 +332,7 @@ function FormularioCarga({ datos }) {
               individuo={individuo}
               estabaMuerto={estabaMuerto(anterior, formaDeVida)}
               referencia={referencia}
-              error={errorDeIndividuo(individuo)}
+              error={mostrarErrores ? errorDeIndividuo(individuo) : null}
               onCambiar={(cambios) => cambiarIndividuo(formaDeVida, cambios)}
               onElegirVivo={() => revivir(formaDeVida)}
               onPedirMuerto={() => setConfirmacion({ tipo: 'muerto', formaDeVida })}
@@ -252,13 +344,58 @@ function FormularioCarga({ datos }) {
 
       <CampoObservaciones valor={observaciones} onChange={setObservaciones} />
 
-      {/* TODO T14 paso 6: botón "Guardar registro". Al tocarlo, setMostrarErrores(true) y guardar solo si
-          esFormularioValido({ errorFecha, fotoId, individuos, observaciones }) (validacion.js).
-          El pedido tiene que mandar fotoId (RN-07) junto con fecha, individuos y observaciones.
-          Las observaciones se mandan con observacionesParaGuardar (vacío o espacios → null).
-          Al guardar, unificar también los errores de fecha e individuos con mostrarErrores.
-          CAR-08: antes de guardar, si alturasSinCambio(individuos, anterior) no está vacía, pedir
-          confirmación ("La altura quedó igual que el mes anterior en: …"). No es un error. */}
+      {/* Error del guardado. Lo cargado sigue en pantalla para corregir o reintentar. */}
+      {errorGuardado && (
+        <div role="alert" className="flex flex-col gap-3 rounded-2xl bg-error-fondo p-4 text-error-texto">
+          <p className="flex items-start gap-2 text-body-md font-medium">
+            <Icono nombre="error" tamano="chico" className="mt-0.5" />
+            {errorGuardado.texto}
+          </p>
+          {errorGuardado.verRegistroDelMes && (
+            <Boton variante="secundario" icono="history" onClick={onRecargar}>
+              Ver lo guardado (se descarta lo que cargaste ahora)
+            </Boton>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2">
+        <Boton
+          icono="save"
+          cargando={guardando}
+          disabled={fotoOcupada}
+          onClick={intentarGuardar}
+        >
+          {editando ? 'Guardar cambios' : `Guardar registro de ${mesEnMinuscula(periodo)}`}
+        </Boton>
+        {fotoOcupada && (
+          <p role="status" className="flex items-center gap-2 text-body-md text-texto-2">
+            <Icono nombre="hourglass_top" tamano="chico" />
+            Esperá a que termine de subir la foto.
+          </p>
+        )}
+      </div>
+
+      {/* CAR-08: confirmación si alguna altura quedó igual que el mes anterior. No es un error. */}
+      <Modal
+        abierto={confirmarSinCambio != null}
+        titulo="La altura quedó igual que el mes anterior, ¿es correcto?"
+        onCerrar={() => setConfirmarSinCambio(null)}
+      >
+        {confirmarSinCambio && (
+          <div className="flex flex-col gap-4">
+            <p className="text-body-lg text-texto-2">
+              Sin cambios en: {confirmarSinCambio.map((forma) => nombreDeForma(formasDeVida, forma)).join(', ')}.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row-reverse">
+              <Boton onClick={guardar}>Sí, es correcto</Boton>
+              <Boton variante="secundario" onClick={() => setConfirmarSinCambio(null)}>
+                Revisar
+              </Boton>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         abierto={confirmacion != null}
@@ -314,6 +451,11 @@ function SinCelula() {
 }
 
 // Marco común de la pantalla: separación entre bloques.
-function Pagina({ children }) {
-  return <div className="flex flex-col gap-6 py-4">{children}</div>
+// refContenedor (opcional) deja buscar adentro, por ejemplo el primer campo con error.
+function Pagina({ children, refContenedor }) {
+  return (
+    <div ref={refContenedor} className="flex flex-col gap-6 py-4">
+      {children}
+    </div>
+  )
 }
