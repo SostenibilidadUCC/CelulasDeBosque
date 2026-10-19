@@ -67,6 +67,8 @@ func main() {
 
 	// T16: usuarios. Pedir acceso es público (sin sesión); la cuenta queda pendiente hasta que un admin la aprueba.
 	mux.HandleFunc("POST /api/solicitar-acceso", handlers.SolicitarAcceso(pool))
+	mux.HandleFunc("GET /api/usuarios", a.RequiereSesion(handlers.ListarUsuarios(pool)))
+	mux.HandleFunc("PUT /api/usuarios/{id}", a.RequiereSesion(handlers.EditarUsuario(pool)))
 
 	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
 	// El orden de registro no importa: el mux siempre elige la ruta más específica.
