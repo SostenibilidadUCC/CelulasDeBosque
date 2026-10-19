@@ -11,13 +11,11 @@ import MensajeError from '../../components/MensajeError.jsx'
 import Modal from '../../components/Modal.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
-import { useSesion } from '../../sesion/useSesion.js'
 import BloqueIndividuo from './BloqueIndividuo.jsx'
 import CampoObservaciones from './CampoObservaciones.jsx'
 import EncabezadoCarga from './EncabezadoCarga.jsx'
 import { hoyEnCordoba, periodoDeFecha, rangoDeFechas, validarFecha } from './fechas.js'
 import { alturaAnterior, estabaMuerto, individuoMuerto, individuoNuevo, individuosIniciales } from './individuos.js'
-import { puedeCargarEnLugar } from './permisos.js'
 import { errorDeFoto, errorDeIndividuo } from './validacion.js'
 
 // Pantalla de carga mensual (T14). Ruta: /cargar/:celulaId.
@@ -36,7 +34,6 @@ export default function Carga() {
 // Pide los datos de la célula y decide qué mostrar: cargando, error, no existe,
 // sin permiso, dada de baja o el formulario.
 function CargaDeCelula({ celulaId }) {
-  const { usuario } = useSesion() // RutaPrivada ya garantiza que hay usuario
   const navigate = useNavigate()
 
   const [carga, setCarga] = useState({ cargando: true })
@@ -91,11 +88,12 @@ function CargaDeCelula({ celulaId }) {
     )
   }
 
-  const { celula } = carga.datos
+  const { celula, puedeEditar } = carga.datos
   const volverALaFicha = () => navigate(`/celulas/${celula.id}`)
 
-  // EXP-04: solo lectura. Ocultar la carga es solo experiencia de uso: el backend también lo valida.
-  if (!puedeCargarEnLugar(usuario, celula.lugarId)) {
+  // EXP-04: solo lectura. puedeEditar lo calcula el backend con auth.PuedeEditarLugar (igual que
+  // Células e Isleta). Ocultar la carga es solo experiencia de uso: el backend también valida al guardar.
+  if (!puedeEditar) {
     return (
       <Pagina>
         <div className="flex flex-wrap items-center gap-2">

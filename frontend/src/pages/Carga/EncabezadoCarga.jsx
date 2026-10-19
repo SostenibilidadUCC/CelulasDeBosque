@@ -27,9 +27,11 @@ export default function EncabezadoCarga({ celula, periodo, periodoActual, editan
             Registro de <span className="font-semibold text-texto">{periodoEnTexto(periodo)}</span>
           </p>
         </div>
-        {/* "Cambiar" lleva a la lista de células del lugar (Células lee ?lugar= de la URL). */}
+        {/* "Cambiar" lleva al plano de la isleta de la célula: desde ahí se elige otra y se toca Cargar.
+            TODO T17: hoy, si hay datos cargados, se pierden al cambiar de célula (el borrador en el
+            celular es el ticket T17). */}
         <div className="w-32 shrink-0">
-          <Boton variante="secundario" icono="swap_horiz" onClick={() => navigate(`/celulas?lugar=${celula.lugarId}`)}>
+          <Boton variante="secundario" icono="swap_horiz" onClick={() => navigate(`/isletas/${celula.isletaId}`)}>
             Cambiar
           </Boton>
         </div>
