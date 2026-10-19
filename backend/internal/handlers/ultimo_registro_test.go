@@ -236,6 +236,28 @@ func TestUltimoRegistroConBase(t *testing.T) {
 		}
 	})
 
+	t.Run("trae las 4 formas de vida en orden, con nombre e ícono", func(t *testing.T) {
+		_, datos := pedir(lector, celulaID)
+		formas, _ := datos["formasDeVida"].([]any)
+		if len(formas) != 4 {
+			t.Fatalf("llegaron %d formas de vida, se esperaban 4", len(formas))
+		}
+		// Los nombres se comparan con la tabla, no con texto escrito acá (el de la 3 va a cambiar en T28).
+		for i, crudo := range formas {
+			forma := crudo.(map[string]any)
+			var nombre, icono string
+			if err := pool.QueryRow(ctx, `SELECT nombre, icono FROM formas_de_vida WHERE id = $1`, i+1).Scan(&nombre, &icono); err != nil {
+				t.Fatalf("no se pudo leer la forma de vida %d: %v", i+1, err)
+			}
+			if forma["formaDeVida"] != float64(i+1) {
+				t.Errorf("posición %d: formaDeVida = %v, se esperaba %d (orden 1 a 4)", i, forma["formaDeVida"], i+1)
+			}
+			if forma["nombre"] != nombre || forma["icono"] != icono || nombre == "" || icono == "" {
+				t.Errorf("forma de vida %d: llegó %v, se esperaba nombre %q e ícono %q", i+1, forma, nombre, icono)
+			}
+		}
+	})
+
 	// El anterior válido es el del día 15 del mes pasado. Además se crean:
 	// - uno de hace dos meses (más viejo: no tiene que ganar),
 	// - uno anulado del mes pasado con fecha más reciente (RN-12: no tiene que aparecer).

@@ -50,13 +50,22 @@ type registroDeCarga struct {
 	Individuos    []individuoDeCarga `json:"individuos"`
 }
 
+// formaDeVidaDeCarga es una forma de vida del catálogo, para que el front muestre el nombre
+// y el ícono de cada bloque sin escribirlos a mano.
+type formaDeVidaDeCarga struct {
+	FormaDeVida int    `json:"formaDeVida"`
+	Nombre      string `json:"nombre"`
+	Icono       string `json:"icono"` // nombre del ícono de Material Symbols
+}
+
 // respuestaUltimoRegistro es lo que devuelve GET /api/celulas/{id}/ultimo-registro.
 // Actual y Anterior son punteros: si no hay registro, salen como null.
 type respuestaUltimoRegistro struct {
-	Celula        celulaDeCarga    `json:"celula"`
-	PeriodoActual string           `json:"periodoActual"` // "2026-11"
-	Actual        *registroDeCarga `json:"actual"`
-	Anterior      *registroDeCarga `json:"anterior"`
+	Celula        celulaDeCarga        `json:"celula"`
+	FormasDeVida  []formaDeVidaDeCarga `json:"formasDeVida"` // siempre las 4, de 1 a 4
+	PeriodoActual string               `json:"periodoActual"` // "2026-11"
+	Actual        *registroDeCarga     `json:"actual"`
+	Anterior      *registroDeCarga     `json:"anterior"`
 }
 
 // ---------- PARTE B: consultas ----------
@@ -190,6 +199,24 @@ func UltimoRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 		respuesta.Anterior, err = buscarRegistro(ctx, pool, consultaRegistroAnterior, id, periodoTexto)
 		if err != nil {
 			log.Printf("ultimo-registro: no se pudo leer el registro anterior de la célula %d: %v", id, err)
+			respuestas.Error(w, http.StatusInternalServerError, mensajeError)
+			return
+		}
+
+		// 4. El catálogo de formas de vida (nombre e ícono), en orden de 1 a 4.
+		filas, err := pool.Query(ctx, `SELECT id, nombre, icono FROM formas_de_vida ORDER BY id`)
+		if err != nil {
+			log.Printf("ultimo-registro: no se pudieron leer las formas de vida: %v", err)
+			respuestas.Error(w, http.StatusInternalServerError, mensajeError)
+			return
+		}
+		respuesta.FormasDeVida, err = pgx.CollectRows(filas, func(f pgx.CollectableRow) (formaDeVidaDeCarga, error) {
+			var forma formaDeVidaDeCarga
+			err := f.Scan(&forma.FormaDeVida, &forma.Nombre, &forma.Icono)
+			return forma, err
+		})
+		if err != nil {
+			log.Printf("ultimo-registro: no se pudieron leer las formas de vida: %v", err)
 			respuestas.Error(w, http.StatusInternalServerError, mensajeError)
 			return
 		}
