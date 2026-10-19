@@ -70,6 +70,10 @@ export const obtenerCelulasDeLugar = (lugarId, filtros = {}) => {
 // T15: ficha de la célula (datos, 4 individuos y todos sus registros)
 export const obtenerCelula = (id) => pedir(`/celulas/${id}`)
 
+// T14: carga mensual. Devuelve { celula, periodoActual, actual, anterior }:
+// actual es el registro de este mes (o null) y anterior el último de un mes anterior (o null).
+export const obtenerUltimoRegistro = (celulaId) => pedir(`/celulas/${celulaId}/ultimo-registro`)
+
 // T13: sube una foto a POST /api/fotos y devuelve { id }.
 // Usa XMLHttpRequest en vez de fetch porque fetch no avisa cuánto lleva subido,
 // y sin eso no hay barra de progreso. alProgresar(porcentaje) recibe un número de 0 a 100.
