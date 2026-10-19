@@ -3,7 +3,15 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { individuoMuerto, individuoNuevo } from './individuos.js'
-import { alturasSinCambio, errorDeFoto, esFormularioValido } from './validacion.js'
+import { alturasSinCambio, errorDeFoto, errorDeIndividuoConCampo, esFormularioValido } from './validacion.js'
+
+test('errorDeIndividuoConCampo: dice qué campo tiene el error', () => {
+  assert.equal(errorDeIndividuoConCampo({ formaDeVida: 1, vivo: null }).campo, 'vivo')
+  assert.equal(errorDeIndividuoConCampo(individuoNuevo(1, null)).campo, 'alturaCm')
+  assert.equal(errorDeIndividuoConCampo({ ...individuoNuevo(1, 80), flores: null }).campo, 'flores')
+  assert.equal(errorDeIndividuoConCampo(individuoNuevo(1, 80)), null)
+  assert.equal(errorDeIndividuoConCampo(individuoMuerto(1)), null)
+})
 
 const anterior = {
   periodo: '2026-09',

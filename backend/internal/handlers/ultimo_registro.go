@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/auth"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/estados"
 	"github.com/SostenibilidadUCC/CelulasDeBosque/backend/internal/respuestas"
 	"github.com/jackc/pgx/v5"
@@ -22,6 +23,7 @@ type celulaDeCarga struct {
 	Codigo          string `json:"codigo"` // A-1-45, se calcula (no se guarda)
 	LugarID         int64  `json:"lugarId"`
 	Lugar           string `json:"lugar"`
+	IsletaID        int64  `json:"isletaId"`
 	Isleta          int    `json:"isleta"`
 	FechaPlantacion string `json:"fechaPlantacion"` // "2026-10-20"
 	DadaDeBaja      bool   `json:"dadaDeBaja"`
@@ -62,7 +64,8 @@ type formaDeVidaDeCarga struct {
 // Actual y Anterior son punteros: si no hay registro, salen como null.
 type respuestaUltimoRegistro struct {
 	Celula        celulaDeCarga        `json:"celula"`
-	FormasDeVida  []formaDeVidaDeCarga `json:"formasDeVida"` // siempre las 4, de 1 a 4
+	PuedeEditar   bool                 `json:"puedeEditar"`   // si el usuario puede cargar registros en este lugar
+	FormasDeVida  []formaDeVidaDeCarga `json:"formasDeVida"`  // siempre las 4, de 1 a 4
 	PeriodoActual string               `json:"periodoActual"` // "2026-11"
 	Actual        *registroDeCarga     `json:"actual"`
 	Anterior      *registroDeCarga     `json:"anterior"`
@@ -165,13 +168,13 @@ func UltimoRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 		)
 		c := &respuesta.Celula
 		err = pool.QueryRow(ctx, `
-			SELECT c.id, c.numero, i.numero, l.id, l.letra, l.nombre,
+			SELECT c.id, c.numero, i.id, i.numero, l.id, l.letra, l.nombre,
 			       to_char(c.fecha_plantacion, 'YYYY-MM-DD'), c.estado = 'baja'
 			FROM celulas c
 			JOIN isletas i ON i.id = c.isleta_id
 			JOIN lugares l ON l.id = i.lugar_id
 			WHERE c.id = $1 AND l.activo`, id).
-			Scan(&c.ID, &numeroCelula, &numeroIsleta, &c.LugarID, &letra, &c.Lugar, &c.FechaPlantacion, &c.DadaDeBaja)
+			Scan(&c.ID, &numeroCelula, &c.IsletaID, &numeroIsleta, &c.LugarID, &letra, &c.Lugar, &c.FechaPlantacion, &c.DadaDeBaja)
 		if errors.Is(err, pgx.ErrNoRows) {
 			respuestas.Error(w, http.StatusNotFound, "No existe esa célula")
 			return
@@ -183,6 +186,9 @@ func UltimoRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 		c.Codigo = codigoCelula(letra, numeroIsleta, numeroCelula)
 		c.Isleta = numeroIsleta
+		// Si el usuario puede cargar en este lugar, con la misma regla que Células e Isleta.
+		// Solo mira el lugar: que la célula esté dada de baja lo dice dadaDeBaja.
+		respuesta.PuedeEditar = auth.PuedeEditarLugar(auth.UsuarioActual(r), c.LugarID)
 
 		// 2. El período en curso, en hora de Córdoba.
 		periodo := estados.PeriodoActual(time.Now())

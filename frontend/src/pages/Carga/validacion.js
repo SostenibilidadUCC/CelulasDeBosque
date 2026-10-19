@@ -8,18 +8,25 @@ function enRango(valor, minimo, maximo) {
   return Number.isInteger(valor) && valor >= minimo && valor <= maximo
 }
 
-// El error de un individuo, o null si está bien (RN-08).
+// El primer error de un individuo con el campo al que corresponde, o null si está bien (RN-08):
+// { campo: 'vivo' | 'alturaCm' | 'flores' | 'frutos' | 'plantulasNuevas', texto }.
 // Vivo/muerto siempre es obligatorio; si está vivo, también los otros 4 datos.
-export function errorDeIndividuo(individuo) {
-  if (individuo.vivo == null) return 'Elegí si está vivo o muerto.'
+// El campo sirve para mostrar el error pegado a su control (por ejemplo, debajo del selector de altura).
+export function errorDeIndividuoConCampo(individuo) {
+  if (individuo.vivo == null) return { campo: 'vivo', texto: 'Elegí si está vivo o muerto.' }
   if (individuo.vivo === false) return null
   if (!enRango(individuo.alturaCm, ALTURA_MIN, ALTURA_MAX)) {
-    return `Elegí la altura (de ${ALTURA_MIN} a ${ALTURA_MAX} cm).`
+    return { campo: 'alturaCm', texto: `Elegí la altura (de ${ALTURA_MIN} a ${ALTURA_MAX} cm).` }
   }
-  if (!enRango(individuo.flores, FLORES_MIN, FLORES_MAX)) return 'Elegí la cantidad de flores.'
-  if (individuo.frutos == null) return 'Elegí si tiene frutos.'
-  if (individuo.plantulasNuevas == null) return 'Elegí si hay nuevas plántulas.'
+  if (!enRango(individuo.flores, FLORES_MIN, FLORES_MAX)) return { campo: 'flores', texto: 'Elegí la cantidad de flores.' }
+  if (individuo.frutos == null) return { campo: 'frutos', texto: 'Elegí si tiene frutos.' }
+  if (individuo.plantulasNuevas == null) return { campo: 'plantulasNuevas', texto: 'Elegí si hay nuevas plántulas.' }
   return null
+}
+
+// El texto del error de un individuo, o null si está bien.
+export function errorDeIndividuo(individuo) {
+  return errorDeIndividuoConCampo(individuo)?.texto ?? null
 }
 
 // RN-07: la foto es obligatoria. Devuelve el mensaje si falta (null o vacío), o null si está.

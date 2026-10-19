@@ -19,7 +19,7 @@ import { mensajeDeGuardado } from './errores.js'
 import { hoyEnCordoba, mesEnMinuscula, periodoDeFecha, rangoDeFechas, validarFecha } from './fechas.js'
 import { alturaAnterior, estabaMuerto, individuoMuerto, individuoNuevo, individuosIniciales } from './individuos.js'
 import { armarPedido } from './pedido.js'
-import { alturasSinCambio, errorDeFoto, errorDeIndividuo, esFormularioValido } from './validacion.js'
+import { alturasSinCambio, errorDeFoto, errorDeIndividuoConCampo, esFormularioValido } from './validacion.js'
 
 // Pantalla de carga mensual (T14). Ruta: /cargar/:celulaId.
 // Fecha, foto, los 4 individuos, observaciones y el guardado, todo dentro de FormularioCarga.
@@ -182,13 +182,16 @@ function FormularioCarga({ datos, onRecargar }) {
     const primero = formulario.current?.querySelector('[aria-invalid="true"], [data-error="true"]')
     if (!primero) return
     primero.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    // El foco va al campo mismo, o al primer control del bloque (el desplegable de altura, o
-    // Vivo/Muerto si falta elegir, o el botón de la cámara si falta la foto). Los <input hidden> de
-    // Foto (cámara y galería) no se pueden enfocar, por eso se saltean.
+    // El foco va al campo mismo; si es un bloque, al control con el error (data-campo-error, el botón
+    // de SelectorCentrado para altura o flores); si no, al primer control del bloque (Vivo/Muerto si
+    // falta elegir, o el botón de la cámara si falta la foto). Los <input hidden> de Foto (cámara y
+    // galería) no se pueden enfocar, por eso se saltean.
     const controles = 'select, textarea, input:not([hidden])'
     const campo = primero.matches(controles)
       ? primero
-      : (primero.querySelector(controles) ?? primero.querySelector('button:not([disabled])'))
+      : (primero.querySelector('[data-campo-error="true"]') ??
+        primero.querySelector(controles) ??
+        primero.querySelector('button:not([disabled])'))
     campo?.focus({ preventScroll: true })
   }, [pedidoDeFoco])
 
@@ -332,7 +335,7 @@ function FormularioCarga({ datos, onRecargar }) {
               individuo={individuo}
               estabaMuerto={estabaMuerto(anterior, formaDeVida)}
               referencia={referencia}
-              error={mostrarErrores ? errorDeIndividuo(individuo) : null}
+              error={mostrarErrores ? errorDeIndividuoConCampo(individuo) : null}
               onCambiar={(cambios) => cambiarIndividuo(formaDeVida, cambios)}
               onElegirVivo={() => revivir(formaDeVida)}
               onPedirMuerto={() => setConfirmacion({ tipo: 'muerto', formaDeVida })}

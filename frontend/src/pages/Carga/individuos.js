@@ -10,6 +10,26 @@ export const ALTURA_MAX = 999
 export const FLORES_MIN = 0
 export const FLORES_MAX = 100
 
+// ---------- Selector de altura y flores (SelectorCentrado.jsx) ----------
+
+// Todos los valores enteros del rango, en orden: valoresDelRango(0, 3) → [0, 1, 2, 3].
+export function valoresDelRango(min, max) {
+  return Array.from({ length: max - min + 1 }, (_, i) => min + i)
+}
+
+// El valor que se deja en el medio de la lista al abrirla: el elegido; si no hay, la referencia
+// (la altura del mes anterior); si tampoco, el primero del rango (la lista arranca desde arriba).
+export function valorACentrar(valor, referencia, min) {
+  return valor ?? referencia ?? min
+}
+
+// El scrollTop que deja la fila número "indice" en el medio de la lista. Todas las filas miden
+// lo mismo, así que la posición de la fila es indice × alto. Nunca negativo (arriba de todo es 0);
+// si se pasa del final, el navegador lo recorta solo.
+export function scrollParaCentrar(indice, altoFila, altoLista) {
+  return Math.max(0, indice * altoFila - altoLista / 2 + altoFila / 2)
+}
+
 // CAR-10: umbrales del aviso de cambio brusco de altura. Propuesta, a confirmar con la clienta.
 // Solo avisa: nunca bloquea el guardado ni cuenta como error.
 export const UMBRAL_BAJA_PORCENTAJE = 20 // avisa si la altura baja MÁS de un 20 %

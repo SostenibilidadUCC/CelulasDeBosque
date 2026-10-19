@@ -236,6 +236,44 @@ func TestUltimoRegistroConBase(t *testing.T) {
 		}
 	})
 
+	t.Run("trae el id de la isleta de la célula", func(t *testing.T) {
+		var isletaID int64
+		if err := pool.QueryRow(ctx, `SELECT isleta_id FROM celulas WHERE id = $1`, celulaID).Scan(&isletaID); err != nil {
+			t.Fatalf("no se pudo leer la isleta de la célula: %v", err)
+		}
+		_, datos := pedir(lector, celulaID)
+		celula := datos["celula"].(map[string]any)
+		if celula["isletaId"] != float64(isletaID) {
+			t.Errorf("isletaId = %v, se esperaba %d", celula["isletaId"], isletaID)
+		}
+	})
+
+	t.Run("puedeEditar según el rol y el lugar", func(t *testing.T) {
+		admin := iniciarSesion("admin@celulas.test")
+		cargador := iniciarSesion("cargador@celulas.test") // cargador del lugar A
+		casos := []struct {
+			nombre   string
+			cookie   *http.Cookie
+			celula   int64
+			esperado bool
+		}{
+			{"admin", admin, celulaID, true},
+			{"cargador en su lugar", cargador, celulaID, true},
+			{"cargador en otro lugar", cargador, celulaBaja, false}, // la C-1-10 es del lugar C
+			{"lector", lector, celulaID, false},
+		}
+		for _, caso := range casos {
+			codigo, datos := pedir(caso.cookie, caso.celula)
+			if codigo != http.StatusOK {
+				t.Errorf("%s: código = %d, se esperaba 200", caso.nombre, codigo)
+				continue
+			}
+			if datos["puedeEditar"] != caso.esperado {
+				t.Errorf("%s: puedeEditar = %v, se esperaba %v", caso.nombre, datos["puedeEditar"], caso.esperado)
+			}
+		}
+	})
+
 	t.Run("trae las 4 formas de vida en orden, con nombre e ícono", func(t *testing.T) {
 		_, datos := pedir(lector, celulaID)
 		formas, _ := datos["formasDeVida"].([]any)

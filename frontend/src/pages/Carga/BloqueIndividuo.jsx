@@ -3,7 +3,6 @@ import BotonesSiNo from '../../components/BotonesSiNo.jsx'
 import BotonesVivoMuerto from '../../components/BotonesVivoMuerto.jsx'
 import ChipEstado from '../../components/ChipEstado.jsx'
 import Icono from '../../components/Icono.jsx'
-import SelectorNumero from '../../components/SelectorNumero.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import { mesEnMinuscula, nombreDelMes } from './fechas.js'
 import {
@@ -16,21 +15,15 @@ import {
   avisoDeAltura,
   diferenciaDeAltura,
 } from './individuos.js'
-
-// Opciones de los desplegables. La altura tiene además "Elegí" (sin valor) para el registro inicial,
-// cuando todavía no hay altura del mes anterior. SelectorNumero acepta opciones { valor, texto }.
-const OPCIONES_ALTURA = [
-  { valor: '', texto: 'Elegí' },
-  ...Array.from({ length: ALTURA_MAX - ALTURA_MIN + 1 }, (_, i) => ALTURA_MIN + i),
-]
-const OPCIONES_FLORES = Array.from({ length: FLORES_MAX - FLORES_MIN + 1 }, (_, i) => FLORES_MIN + i)
+import SelectorCentrado from './SelectorCentrado.jsx'
 
 // Bloque de un individuo en la carga mensual (T14). No guarda datos propios: todo viene por props.
 // - forma: { formaDeVida, nombre, icono }, del catálogo que manda el backend.
 // - individuo: { formaDeVida, vivo, alturaCm, flores, frutos, plantulasNuevas } (vivo null = sin elegir).
 // - estabaMuerto: si en el registro anterior figuraba muerto (solo ahí aparece la reposición).
 // - referencia: { periodo, alturaCm } del registro anterior, o null si no hay altura anterior.
-// - error: el mensaje de validación, o null.
+// - error: { campo, texto } de errorDeIndividuoConCampo (validacion.js), o null. Los errores de altura
+//   y de flores se muestran debajo de su selector; los demás, al final del bloque.
 // - onCambiar(cambios): cambia uno o más datos del individuo vivo.
 // - onElegirVivo(): pasa de "sin elegir" o "muerto" a vivo con los valores iniciales.
 // - onPedirMuerto() y onPedirReposicion(): abren la confirmación (el Modal vive en FormularioCarga).
@@ -75,6 +68,11 @@ export default function BloqueIndividuo({
     else if (individuo.vivo !== true) onElegirVivo()
   }
 
+  // El texto del error va pegado a su control si es de altura o de flores.
+  const errorAltura = error?.campo === 'alturaCm' ? error.texto : null
+  const errorFlores = error?.campo === 'flores' ? error.texto : null
+  const errorDelBloque = error && !errorAltura && !errorFlores ? error.texto : null
+
   return (
     // data-error: FormularioCarga lo busca para llevar la vista y el foco al primer bloque con error.
     <section
@@ -90,20 +88,26 @@ export default function BloqueIndividuo({
 
       {individuo.vivo === true && (
         <>
-          <SelectorNumero
-            etiqueta="Altura (cm)"
+          <SelectorCentrado
+            etiqueta="Altura"
             icono="height"
             valor={individuo.alturaCm}
-            opciones={OPCIONES_ALTURA}
-            onChange={(valor) => onCambiar({ alturaCm: valor === '' ? null : valor })}
+            min={ALTURA_MIN}
+            max={ALTURA_MAX}
+            unidad="cm"
+            referencia={referencia?.alturaCm ?? null}
+            onCambiar={(valor) => onCambiar({ alturaCm: valor })}
+            error={errorAltura}
           />
           <ReferenciaAltura referencia={referencia} alturaCm={individuo.alturaCm} />
-          <SelectorNumero
+          <SelectorCentrado
             etiqueta="Cantidad de flores"
             icono="filter_vintage"
             valor={individuo.flores}
-            opciones={OPCIONES_FLORES}
-            onChange={(valor) => onCambiar({ flores: valor })}
+            min={FLORES_MIN}
+            max={FLORES_MAX}
+            onCambiar={(valor) => onCambiar({ flores: valor })}
+            error={errorFlores}
           />
           <BotonesSiNo
             etiqueta="Presencia de frutos"
@@ -120,10 +124,10 @@ export default function BloqueIndividuo({
         </>
       )}
 
-      {error && (
+      {errorDelBloque && (
         <p role="alert" className="flex items-center gap-1 text-body-sm text-error">
           <Icono nombre="error" tamano="chip" />
-          {error}
+          {errorDelBloque}
         </p>
       )}
     </section>
@@ -140,8 +144,7 @@ function textoDiferencia(diferencia) {
 
 // CAR-07 y CAR-10: debajo del selector de altura, la altura del mes anterior con la diferencia
 // ("Septiembre: 173 cm · +12") y, si el cambio es brusco, un aviso que no bloquea.
-// No usa el prop "ayuda" de SelectorNumero porque ahí el color es texto-3 fijo, y esta línea se
-// tiene que leer a pleno sol (texto-2).
+// Va en texto-2 (no texto-3) porque se tiene que leer a pleno sol.
 function ReferenciaAltura({ referencia, alturaCm }) {
   const diferencia = diferenciaDeAltura(alturaCm, referencia?.alturaCm ?? null)
   if (diferencia == null) {

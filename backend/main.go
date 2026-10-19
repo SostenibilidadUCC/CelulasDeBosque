@@ -63,6 +63,7 @@ func main() {
 
 	// T14: carga mensual (datos para precargar el formulario)
 	mux.HandleFunc("GET /api/celulas/{id}/ultimo-registro", a.RequiereSesion(handlers.UltimoRegistro(pool)))
+	mux.HandleFunc("GET /api/celulas/{id}/siguiente-pendiente", a.RequiereSesion(handlers.SiguientePendiente(pool)))
 
 	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
 	// El orden de registro no importa: el mux siempre elige la ruta más específica.
