@@ -123,3 +123,23 @@ export function subirFoto(archivo, alProgresar = () => {}) {
     xhr.send(formulario)
   })
 }
+
+// T16: usuarios
+// Pedir acceso es público (sin sesión). datos = { nombre, email, contrasena, institucion }. Responde { id, estado }.
+// Si el email ya existe falla con un ErrorApi 409.
+export const solicitarAcceso = (datos) => pedir('/solicitar-acceso', { method: 'POST', cuerpo: datos })
+// Solo administrador. filtros opcionales: { rol, lugarId, estado, q }. Los vacíos no se mandan.
+// Responde { usuarios: [{ id, nombre, email, rol, estado, institucion, lugar, creadoEn }] } con los pendientes primero.
+export const listarUsuarios = (filtros = {}) => {
+  const parametros = new URLSearchParams()
+  for (const [nombre, valor] of Object.entries(filtros)) {
+    if (valor) parametros.set(nombre, valor)
+  }
+  const texto = parametros.toString()
+  return pedir(`/usuarios${texto ? `?${texto}` : ''}`)
+}
+// Solo administrador. datos = { nombre?, rol, lugarId, estado, reemplazarCargador? } y responde el usuario actualizado.
+// estado es "activo" o "deshabilitado". lugarId es obligatorio si el rol es "cargador".
+// Si el lugar ya tiene otro cargador activo falla con un ErrorApi 409 y error.datos?.cargadorActual = { id, nombre }:
+// se reenvía el mismo pedido con reemplazarCargador: true para que ese cargador pase a lector.
+export const editarUsuario = (id, datos) => pedir(`/usuarios/${id}`, { method: 'PUT', cuerpo: datos })
