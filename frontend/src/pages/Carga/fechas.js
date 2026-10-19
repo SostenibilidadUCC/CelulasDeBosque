@@ -29,6 +29,18 @@ export function periodoEnTexto(periodo) {
   return `${formatoMesLargo.format(new Date(anio, mes - 1, 1))} ${anio}`
 }
 
+// "2026-09" → "septiembre" (para usar dentro de una frase).
+export function mesEnMinuscula(periodo) {
+  const [anio, mes] = periodo.split('-').map(Number)
+  return formatoMesLargo.format(new Date(anio, mes - 1, 1))
+}
+
+// "2026-09" → "Septiembre" (al principio de una línea, como en "Septiembre: 173 cm").
+export function nombreDelMes(periodo) {
+  const mes = mesEnMinuscula(periodo)
+  return mes.charAt(0).toUpperCase() + mes.slice(1)
+}
+
 // "2026-10-18" → "18/10/2026" (formato de fechas en formularios).
 export function fechaEnTexto(fecha) {
   const [anio, mes, dia] = fecha.split('-')

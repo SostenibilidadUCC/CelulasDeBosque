@@ -210,12 +210,16 @@ function FormularioCarga({ datos }) {
         {formasDeVida.map((forma, i) => {
           const individuo = individuos[i]
           const { formaDeVida } = forma
+          // CAR-07: la altura del registro anterior, o null si no hay (sin anterior, muerto o reposición).
+          const alturaPrevia = alturaAnterior(anterior, formaDeVida)
+          const referencia = alturaPrevia != null ? { periodo: anterior.periodo, alturaCm: alturaPrevia } : null
           return (
             <BloqueIndividuo
               key={formaDeVida}
               forma={forma}
               individuo={individuo}
               estabaMuerto={estabaMuerto(anterior, formaDeVida)}
+              referencia={referencia}
               error={errorDeIndividuo(individuo)}
               onCambiar={(cambios) => cambiarIndividuo(formaDeVida, cambios)}
               onElegirVivo={() => revivir(formaDeVida)}
@@ -230,7 +234,9 @@ function FormularioCarga({ datos }) {
 
       {/* TODO T14 paso 5: botón "Guardar registro", habilitado solo si
           esFormularioValido({ errorFecha, individuos, observaciones }) (validacion.js).
-          Las observaciones se mandan con observacionesParaGuardar (vacío o espacios → null). */}
+          Las observaciones se mandan con observacionesParaGuardar (vacío o espacios → null).
+          CAR-08: antes de guardar, si alturasSinCambio(individuos, anterior) no está vacía, pedir
+          confirmación ("La altura quedó igual que el mes anterior en: …"). No es un error. */}
 
       <Modal
         abierto={confirmacion != null}

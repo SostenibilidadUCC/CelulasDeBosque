@@ -10,6 +10,30 @@ export const ALTURA_MAX = 999
 export const FLORES_MIN = 0
 export const FLORES_MAX = 100
 
+// CAR-10: umbrales del aviso de cambio brusco de altura. Propuesta, a confirmar con la clienta.
+// Solo avisa: nunca bloquea el guardado ni cuenta como error.
+export const UMBRAL_BAJA_PORCENTAJE = 20 // avisa si la altura baja MÁS de un 20 %
+export const UMBRAL_SUBA_CM = 50 // avisa si la altura sube MÁS de 50 cm
+
+// Diferencia entre la altura elegida y la anterior (CAR-07): 185 y 173 → +12.
+// Devuelve null si falta alguna de las dos (no hay con qué comparar).
+export function diferenciaDeAltura(alturaCm, alturaAnteriorCm) {
+  if (alturaCm == null || alturaAnteriorCm == null) return null
+  return alturaCm - alturaAnteriorCm
+}
+
+// Aviso de cambio brusco (CAR-10): 'bajo', 'subio' o null.
+// Justo en el límite (bajó exactamente un 20 % o subió exactamente 50 cm) no avisa.
+// La baja se compara multiplicando ("(anterior − actual) × 100 > 20 × anterior") en vez de
+// dividir, así todo queda en números enteros y no hay errores de redondeo con decimales.
+export function avisoDeAltura(alturaCm, alturaAnteriorCm) {
+  const diferencia = diferenciaDeAltura(alturaCm, alturaAnteriorCm)
+  if (diferencia == null) return null
+  if (-diferencia * 100 > UMBRAL_BAJA_PORCENTAJE * alturaAnteriorCm) return 'bajo'
+  if (diferencia > UMBRAL_SUBA_CM) return 'subio'
+  return null
+}
+
 // Un individuo vivo con los valores iniciales: la altura que se le pase (la del mes anterior, o
 // null si no hay, y entonces es obligatoria), 0 flores, sin frutos y sin plántulas nuevas.
 export function individuoNuevo(formaDeVida, alturaCm = null) {

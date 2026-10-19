@@ -5,7 +5,17 @@ import ChipEstado from '../../components/ChipEstado.jsx'
 import Icono from '../../components/Icono.jsx'
 import SelectorNumero from '../../components/SelectorNumero.jsx'
 import Titulo from '../../components/Titulo.jsx'
-import { ALTURA_MAX, ALTURA_MIN, FLORES_MAX, FLORES_MIN } from './individuos.js'
+import { mesEnMinuscula, nombreDelMes } from './fechas.js'
+import {
+  ALTURA_MAX,
+  ALTURA_MIN,
+  FLORES_MAX,
+  FLORES_MIN,
+  UMBRAL_BAJA_PORCENTAJE,
+  UMBRAL_SUBA_CM,
+  avisoDeAltura,
+  diferenciaDeAltura,
+} from './individuos.js'
 
 // Opciones de los desplegables. La altura tiene además "Elegí" (sin valor) para el registro inicial,
 // cuando todavía no hay altura del mes anterior. SelectorNumero acepta opciones { valor, texto }.
@@ -19,6 +29,7 @@ const OPCIONES_FLORES = Array.from({ length: FLORES_MAX - FLORES_MIN + 1 }, (_, 
 // - forma: { formaDeVida, nombre, icono }, del catálogo que manda el backend.
 // - individuo: { formaDeVida, vivo, alturaCm, flores, frutos, plantulasNuevas } (vivo null = sin elegir).
 // - estabaMuerto: si en el registro anterior figuraba muerto (solo ahí aparece la reposición).
+// - referencia: { periodo, alturaCm } del registro anterior, o null si no hay altura anterior.
 // - error: el mensaje de validación, o null.
 // - onCambiar(cambios): cambia uno o más datos del individuo vivo.
 // - onElegirVivo(): pasa de "sin elegir" o "muerto" a vivo con los valores iniciales.
@@ -27,6 +38,7 @@ export default function BloqueIndividuo({
   forma,
   individuo,
   estabaMuerto,
+  referencia,
   error,
   onCambiar,
   onElegirVivo,
@@ -81,6 +93,7 @@ export default function BloqueIndividuo({
             opciones={OPCIONES_ALTURA}
             onChange={(valor) => onCambiar({ alturaCm: valor === '' ? null : valor })}
           />
+          <ReferenciaAltura referencia={referencia} alturaCm={individuo.alturaCm} />
           <SelectorNumero
             etiqueta="Cantidad de flores"
             icono="filter_vintage"
@@ -110,5 +123,50 @@ export default function BloqueIndividuo({
         </p>
       )}
     </section>
+  )
+}
+
+// Ícono y texto de la diferencia: nunca solo color (frontend/CLAUDE.md). "−" es el signo menos
+// tipográfico, que se lee mejor que el guion.
+function textoDiferencia(diferencia) {
+  if (diferencia > 0) return { icono: 'arrow_upward', texto: `+${diferencia}` }
+  if (diferencia < 0) return { icono: 'arrow_downward', texto: `−${-diferencia}` }
+  return { icono: 'drag_handle', texto: 'sin cambios' }
+}
+
+// CAR-07 y CAR-10: debajo del selector de altura, la altura del mes anterior con la diferencia
+// ("Septiembre: 173 cm · +12") y, si el cambio es brusco, un aviso que no bloquea.
+// No usa el prop "ayuda" de SelectorNumero porque ahí el color es texto-3 fijo, y esta línea se
+// tiene que leer a pleno sol (texto-2).
+function ReferenciaAltura({ referencia, alturaCm }) {
+  const diferencia = diferenciaDeAltura(alturaCm, referencia?.alturaCm ?? null)
+  if (diferencia == null) {
+    // No hay anterior, el individuo no tenía altura (muerto o reposición), o falta elegir la altura.
+    return <p className="-mt-2 text-right text-body-sm text-texto-2">Sin altura anterior</p>
+  }
+
+  const { icono, texto } = textoDiferencia(diferencia)
+  const aviso = avisoDeAltura(alturaCm, referencia.alturaCm)
+  const mes = mesEnMinuscula(referencia.periodo)
+
+  return (
+    <>
+      <p className="-mt-2 flex items-center justify-end gap-1 text-body-sm text-texto-2 tabular-nums">
+        {nombreDelMes(referencia.periodo)}: {referencia.alturaCm} cm ·
+        <Icono nombre={icono} tamano="chip" />
+        {texto}
+      </p>
+      {aviso && (
+        <p
+          role="status"
+          className="flex items-start gap-2 rounded-xl border border-pendiente-borde bg-pendiente p-3 text-body-md text-pendiente-texto"
+        >
+          <Icono nombre="warning" tamano="chico" className="mt-0.5" />
+          {aviso === 'bajo'
+            ? `La altura bajó más de un ${UMBRAL_BAJA_PORCENTAJE} % respecto de ${mes}. Revisá que esté bien.`
+            : `La altura subió más de ${UMBRAL_SUBA_CM} cm respecto de ${mes}. Revisá que esté bien.`}
+        </p>
+      )}
+    </>
   )
 }

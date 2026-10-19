@@ -1,6 +1,6 @@
 // Validaciones de la carga mensual (T14). El backend vuelve a validar todo al guardar:
 // esto es para avisar en pantalla antes de mandar.
-import { ALTURA_MAX, ALTURA_MIN, FLORES_MAX, FLORES_MIN } from './individuos.js'
+import { ALTURA_MAX, ALTURA_MIN, FLORES_MAX, FLORES_MIN, alturaAnterior } from './individuos.js'
 
 export const OBSERVACIONES_MAX = 500
 
@@ -32,6 +32,19 @@ export function esFormularioValido({ errorFecha, individuos, observaciones }) {
     individuos.every((individuo) => errorDeIndividuo(individuo) === null) &&
     observaciones.length <= OBSERVACIONES_MAX
   )
+}
+
+// CAR-08: las formas de vida de los individuos VIVOS cuya altura quedó igual a la del registro
+// anterior (por ejemplo [1, 4]). Los que no tienen altura anterior (no hay anterior, estaban muertos
+// o son una reposición) no se cuentan. No es un error: el paso de guardar pide confirmarlo.
+export function alturasSinCambio(individuos, anterior) {
+  return individuos
+    .filter((individuo) => {
+      if (individuo.vivo !== true || individuo.alturaCm == null) return false
+      const previa = alturaAnterior(anterior, individuo.formaDeVida)
+      return previa != null && previa === individuo.alturaCm
+    })
+    .map((individuo) => individuo.formaDeVida)
 }
 
 // Lo que se manda al backend en "observaciones": un texto vacío o solo de espacios es null.
