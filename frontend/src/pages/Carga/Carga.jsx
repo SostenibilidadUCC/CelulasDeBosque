@@ -7,12 +7,17 @@ import Cargando from '../../components/Cargando.jsx'
 import CodigoCelula from '../../components/CodigoCelula.jsx'
 import Icono from '../../components/Icono.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
+import Modal from '../../components/Modal.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
 import { useSesion } from '../../sesion/useSesion.js'
+import BloqueIndividuo from './BloqueIndividuo.jsx'
+import CampoObservaciones from './CampoObservaciones.jsx'
 import EncabezadoCarga from './EncabezadoCarga.jsx'
 import { hoyEnCordoba, periodoDeFecha, rangoDeFechas, validarFecha } from './fechas.js'
+import { alturaAnterior, estabaMuerto, individuoMuerto, individuoNuevo, individuosIniciales } from './individuos.js'
 import { puedeCargarEnLugar } from './permisos.js'
+import { errorDeIndividuo } from './validacion.js'
 
 // Pantalla de carga mensual (T14). Ruta: /cargar/:celulaId.
 // Paso 2: encabezado y fecha de medición. Los pasos siguientes suman los 4 individuos,
@@ -134,14 +139,40 @@ function CargaDeCelula({ celulaId }) {
 // Acá vive todo el estado del registro: los pasos siguientes (individuos, foto y guardado)
 // lo leen y lo cambian desde acá.
 function FormularioCarga({ datos }) {
-  const { celula, periodoActual, actual } = datos
+  const { celula, formasDeVida, periodoActual, actual, anterior } = datos
 
   // "hoy" se calcula una sola vez al abrir la pantalla.
   const [hoy] = useState(hoyEnCordoba)
   // Si ya hay registro de este mes, se edita: la fecha arranca en la guardada. Si no, en hoy.
   const [fecha, setFecha] = useState(actual?.fecha ?? hoy)
-  // TODO T14 paso 3: estado de los 4 individuos, precargado desde datos.anterior (RN-09).
-  // TODO T14 paso 4: estado de la foto (fotoId) y las observaciones.
+  // Los 4 individuos, en el orden de formasDeVida. Ver individuosIniciales para la precarga (RN-09).
+  // Con una función, useState la corre solo la primera vez (no en cada render).
+  const [individuos, setIndividuos] = useState(() => individuosIniciales(datos))
+  // CAR-13: un solo texto del registro. Editando, el guardado; nuevo, vacío (no se copia el del mes anterior).
+  const [observaciones, setObservaciones] = useState(actual?.observaciones ?? '')
+  // La confirmación abierta: { tipo: 'muerto' | 'reposicion', formaDeVida }, o null si no hay ninguna.
+  const [confirmacion, setConfirmacion] = useState(null)
+  // TODO T14 paso 4: estado de la foto (fotoId).
+
+  // Reemplaza el individuo de esa forma de vida por otro (los demás quedan igual).
+  function reemplazarIndividuo(formaDeVida, nuevo) {
+    setIndividuos((lista) => lista.map((ind) => (ind.formaDeVida === formaDeVida ? nuevo : ind)))
+  }
+  // Cambia uno o más datos del individuo (por ejemplo { alturaCm: 120 }).
+  function cambiarIndividuo(formaDeVida, cambios) {
+    setIndividuos((lista) => lista.map((ind) => (ind.formaDeVida === formaDeVida ? { ...ind, ...cambios } : ind)))
+  }
+  // Vivo con los valores iniciales: altura del mes anterior (si hay), 0 flores, sin frutos ni plántulas.
+  function revivir(formaDeVida) {
+    reemplazarIndividuo(formaDeVida, individuoNuevo(formaDeVida, alturaAnterior(anterior, formaDeVida)))
+  }
+  function confirmar() {
+    const { tipo, formaDeVida } = confirmacion
+    if (tipo === 'muerto') reemplazarIndividuo(formaDeVida, individuoMuerto(formaDeVida))
+    else revivir(formaDeVida) // reposición: en la base sigue siendo el mismo individuo
+    setConfirmacion(null)
+  }
+  const cerrarConfirmacion = () => setConfirmacion(null)
 
   // RN-06: qué fechas se pueden elegir y si la elegida está bien.
   const reglasFecha = { fechaPlantacion: celula.fechaPlantacion, registroEditado: actual, hoy }
@@ -172,16 +203,67 @@ function FormularioCarga({ datos }) {
         error={errorFecha}
       />
 
-      {/* TODO T14 paso 3: reemplazar este recuadro por los 4 bloques de individuos. */}
-      <div className="flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-niebla bg-superficie px-4 py-8 text-center">
-        <Icono nombre="park" tamano="grande" className="text-placeholder" />
-        <p className="text-body-md text-texto-2">Acá van los 4 individuos (paso 3).</p>
+      {/* TODO T14 paso 4: la foto va acá, arriba de los individuos. */}
+
+      {/* Los 4 bloques, en el orden de formasDeVida (1 a 4). 16 px entre bloques. */}
+      <div className="flex flex-col gap-4">
+        {formasDeVida.map((forma, i) => {
+          const individuo = individuos[i]
+          const { formaDeVida } = forma
+          return (
+            <BloqueIndividuo
+              key={formaDeVida}
+              forma={forma}
+              individuo={individuo}
+              estabaMuerto={estabaMuerto(anterior, formaDeVida)}
+              error={errorDeIndividuo(individuo)}
+              onCambiar={(cambios) => cambiarIndividuo(formaDeVida, cambios)}
+              onElegirVivo={() => revivir(formaDeVida)}
+              onPedirMuerto={() => setConfirmacion({ tipo: 'muerto', formaDeVida })}
+              onPedirReposicion={() => setConfirmacion({ tipo: 'reposicion', formaDeVida })}
+            />
+          )
+        })}
       </div>
 
-      {/* TODO T14 paso 4: foto y observaciones. */}
-      {/* TODO T14 paso 5: botón "Guardar registro" (deshabilitado si hay errorFecha). */}
+      <CampoObservaciones valor={observaciones} onChange={setObservaciones} />
+
+      {/* TODO T14 paso 5: botón "Guardar registro", habilitado solo si
+          esFormularioValido({ errorFecha, individuos, observaciones }) (validacion.js).
+          Las observaciones se mandan con observacionesParaGuardar (vacío o espacios → null). */}
+
+      <Modal
+        abierto={confirmacion != null}
+        titulo={confirmacion?.tipo === 'reposicion' ? '¿Se repuso este individuo?' : '¿Marcar como muerto?'}
+        onCerrar={cerrarConfirmacion}
+      >
+        {confirmacion && (
+          <div className="flex flex-col gap-4">
+            <p className="text-body-lg text-texto-2">
+              {nombreDeForma(formasDeVida, confirmacion.formaDeVida)}:{' '}
+              {confirmacion.tipo === 'reposicion'
+                ? 'se empieza a cargar uno nuevo.'
+                : 'no se carga nada más para este individuo.'}
+            </p>
+            {/* En celular, el primario arriba; en computadora, a la derecha. */}
+            <div className="flex flex-col gap-2 sm:flex-row-reverse">
+              <Boton onClick={confirmar}>
+                {confirmacion.tipo === 'reposicion' ? 'Cargar uno nuevo' : 'Marcar como muerto'}
+              </Boton>
+              <Boton variante="secundario" onClick={cerrarConfirmacion}>
+                Cancelar
+              </Boton>
+            </div>
+          </div>
+        )}
+      </Modal>
     </Pagina>
   )
+}
+
+// El nombre de una forma de vida, del catálogo que manda el backend (nunca escrito a mano).
+function nombreDeForma(formasDeVida, formaDeVida) {
+  return formasDeVida.find((f) => f.formaDeVida === formaDeVida)?.nombre ?? ''
 }
 
 // /cargar sin célula: se elige la célula desde Células.
