@@ -19,15 +19,18 @@ export default function BarraNavegacion() {
   const itemsVisibles = items.filter((item) => !item.destacado || puedeCargar)
 
   return (
-    <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-superficie">
-      <ul className="mx-auto flex max-w-[1120px] items-end justify-around">
+    <nav
+      aria-label="Navegación principal"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-superficie/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+    >
+      <ul className="mx-auto flex max-w-[1120px] items-end justify-around px-1">
         {itemsVisibles.map((item) => (
           <li key={item.a} className="flex-1">
             <NavLink
               to={item.a}
               end={item.a === '/'}
               className={({ isActive }) =>
-                `flex min-h-16 flex-col items-center justify-center gap-1 text-label-sm font-semibold focus-visible:outline-2 focus-visible:outline-bosque-hover ${
+                `flex min-h-[72px] flex-col items-center justify-center gap-1 text-label-sm font-semibold focus-visible:outline-2 focus-visible:outline-bosque-hover ${
                   isActive ? 'text-bosque' : 'text-texto-2'
                 }`
               }
@@ -35,11 +38,18 @@ export default function BarraNavegacion() {
               {({ isActive }) => (
                 <>
                   {item.destacado ? (
-                    <span className="-mt-7 flex size-14 items-center justify-center rounded-full bg-bosque text-white shadow-nivel-2">
+                    <span className="-mt-8 flex size-14 items-center justify-center rounded-full bg-bosque text-white shadow-nivel-2 ring-4 ring-superficie">
                       <Icono nombre={item.icono} />
                     </span>
                   ) : (
-                    <Icono nombre={item.icono} relleno={isActive} />
+                    // El ítem activo lleva una pastilla verde suave detrás del ícono, además del color.
+                    <span
+                      className={`flex h-8 w-14 items-center justify-center rounded-full transition duration-150 ease-out ${
+                        isActive ? 'bg-brote' : ''
+                      }`}
+                    >
+                      <Icono nombre={item.icono} relleno={isActive} />
+                    </span>
                   )}
                   {item.texto}
                 </>
