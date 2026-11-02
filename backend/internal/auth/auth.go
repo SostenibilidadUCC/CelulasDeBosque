@@ -27,7 +27,7 @@ func Nuevo(pool *pgxpool.Pool) *Auth {
 type filaUsuario struct {
 	Usuario
 	passwordHash *string // NULL si el usuario está invitado y todavía no definió contraseña
-	estado       string  // 'invitado', 'activo' o 'deshabilitado'
+	estado       string  // 'invitado', 'pendiente', 'activo' o 'deshabilitado'
 }
 
 // Columnas y JOIN comunes para leer un usuario con su lugar.

@@ -66,8 +66,13 @@ func (a *Auth) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Recién con la contraseña correcta se avisa que el acceso está pausado (D8).
-	if fila.estado == "deshabilitado" {
+	// Recién con la contraseña correcta se avisa por qué no puede entrar (D8).
+	// Solo el estado "activo" entra: cualquier otro queda bloqueado.
+	if fila.estado == "pendiente" {
+		respuestas.Error(w, http.StatusForbidden, MensajePendiente)
+		return
+	}
+	if fila.estado != "activo" {
 		respuestas.Error(w, http.StatusForbidden, MensajeDeshabilitado)
 		return
 	}
