@@ -4,6 +4,7 @@ import Cargando from '../../components/Cargando.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
+import { BlurFade } from '../../components/ui/blur-fade.jsx'
 import { useSesion } from '../../sesion/useSesion.js'
 import TarjetaCargaDelMes from './TarjetaCargaDelMes.jsx'
 import TarjetaLugar from './TarjetaLugar.jsx'
@@ -39,17 +40,12 @@ export default function Inicio() {
   }
 
   // Mostrar u ocultar cosas es solo experiencia de uso: el permiso real lo valida el backend.
-  const esLector = usuario.rol === 'lector'
   const miLugarId = usuario.rol === 'cargador' ? usuario.lugar?.id : null
 
   return (
     <div className="flex flex-col gap-6 py-4">
-      {/* INI-01: saludo */}
-      <header className="flex flex-col gap-1">
-        <Titulo className="font-titulo">Hola, {usuario.nombre}</Titulo>
-        {/* INI-07: aviso de solo lectura */}
-        {esLector && <p className="text-body-md text-texto-2">Podés ver los datos, pero no cargar.</p>}
-      </header>
+      {/* INI-01: saludo. El lector no ve un aviso de solo lectura: simplemente no tiene botones de carga. */}
+      <Titulo className="font-titulo">Hola, {usuario.nombre}</Titulo>
 
       <Contenido carga={carga} reintentar={reintentar} miLugarId={miLugarId} />
     </div>
@@ -73,14 +69,15 @@ function Contenido({ carga, reintentar, miLugarId }) {
     )
   }
 
-  // INI-04: el lugar del cargador va primero; los demás siguen en el orden del backend (por letra).
+  // BlurFade (Magic UI): una sola entrada suave por bloque, no tarjeta por tarjeta.
+  // Si el teléfono pide menos movimiento, aparece directo.
   const miLugar = lugares.find((l) => l.id === miLugarId)
-  const ordenados = miLugar ? [miLugar, ...lugares.filter((l) => l.id !== miLugarId)] : lugares
 
-  return (
-    <>
-      {/* INI-02: solo el cargador ve el avance, y solo el de su lugar. */}
-      {miLugar && (
+  // INI-02: el cargador ve solo la carga de su lugar. Los otros lugares no le sirven para su
+  // tarea del mes, y siguen a mano desde la pestaña Células.
+  if (miLugar) {
+    return (
+      <BlurFade className="flex flex-col gap-4">
         <TarjetaCargaDelMes
           lugarId={miLugar.id}
           cargadas={miLugar.avance.cargadas}
@@ -88,20 +85,25 @@ function Contenido({ carga, reintentar, miLugarId }) {
           periodo={periodo}
           diasHastaVencimiento={diasHastaVencimiento}
         />
-      )}
+        {/* Su lugar, con la marca "Tu lugar". Toda la tarjeta lleva a sus células. */}
+        <TarjetaLugar lugar={miLugar} esMio />
+      </BlurFade>
+    )
+  }
 
-      <section className="flex flex-col gap-3">
-        <Titulo nivel="md" className="font-titulo">
-          Lugares
-        </Titulo>
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {ordenados.map((lugar) => (
-            <li key={lugar.id}>
-              <TarjetaLugar lugar={lugar} esMio={lugar.id === miLugarId} />
-            </li>
-          ))}
-        </ul>
-      </section>
-    </>
+  // INI-04: el admin y el lector ven la lista de lugares (en el orden del backend, por letra).
+  return (
+    <BlurFade className="flex flex-col gap-3">
+      <Titulo nivel="md" className="font-titulo">
+        Lugares
+      </Titulo>
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {lugares.map((lugar) => (
+          <li key={lugar.id}>
+            <TarjetaLugar lugar={lugar} />
+          </li>
+        ))}
+      </ul>
+    </BlurFade>
   )
 }

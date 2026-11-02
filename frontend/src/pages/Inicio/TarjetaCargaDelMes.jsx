@@ -4,6 +4,10 @@ import { obtenerCelulasDeLugar } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import Icono from '../../components/Icono.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
+import { DotPattern } from '../../components/ui/dot-pattern.jsx'
+import { NumberTicker } from '../../components/ui/number-ticker.jsx'
+import { ShineBorder } from '../../components/ui/shine-border.jsx'
+import { buscarProximaCelula } from '../Carga/proximaCelula.js'
 import BarraAvance from './BarraAvance.jsx'
 import { nombreDelPeriodo } from './avance.js'
 
@@ -26,21 +30,16 @@ export default function TarjetaCargaDelMes({ lugarId, cargadas, total, periodo, 
   const [error, setError] = useState(null)
 
   const mes = nombreDelPeriodo(periodo).split(' ')[0] // "octubre"
-  const mesConMayuscula = mes.charAt(0).toUpperCase() + mes.slice(1)
   const faltan = total - cargadas
 
-  // Busca la primera célula pendiente del lugar (el backend las ordena por isleta y número).
-  // Si no hay, busca una sin registro inicial, que también hay que cargar.
+  // Lleva directo a la próxima célula para cargar (la misma búsqueda que el botón Cargar de la barra).
   async function seguirCargando() {
     setBuscando(true)
     setError(null)
     try {
-      let { celulas } = await obtenerCelulasDeLugar(lugarId, { estado: 'pendiente' })
-      if (celulas.length === 0) {
-        ;({ celulas } = await obtenerCelulasDeLugar(lugarId, { estado: 'sin-registro' }))
-      }
-      if (celulas.length > 0) {
-        navigate(`/cargar/${celulas[0].id}`)
+      const celulaId = await buscarProximaCelula(lugarId, obtenerCelulasDeLugar)
+      if (celulaId != null) {
+        navigate(`/cargar/${celulaId}`)
         return
       }
       setError({ message: 'No encontramos células para cargar. Probá de nuevo en un rato.' })
@@ -50,39 +49,90 @@ export default function TarjetaCargaDelMes({ lugarId, cargadas, total, periodo, 
     setBuscando(false)
   }
 
-  // Prueba de estilo: tarjeta en verde bosque, puntas casi rectas y el número grande en la
-  // tipografía de títulos, para que sea lo primero que se ve.
+  // Tarjeta en verde bosque con el número grande en la tipografía de títulos,
+  // para que sea lo primero que se ve.
   if (faltan <= 0) {
     return (
-      <div className="flex items-center gap-3 rounded-sm bg-bosque p-5 text-white">
-        <Icono nombre="task_alt" className="text-brote" />
-        <p className="font-titulo text-headline-md font-semibold">¡Listo! Cargaste todas las células de {mes}.</p>
+      <div className="relative overflow-hidden rounded-2xl bg-bosque p-5 text-white shadow-nivel-2 sm:p-6">
+        <Textura />
+        <div className="relative flex items-center gap-3">
+          <Icono nombre="task_alt" className="text-brote" />
+          <p className="font-titulo text-headline-md font-semibold">¡Listo! Cargaste todas las células de {mes}.</p>
+        </div>
       </div>
     )
   }
 
+  // ShineBorder (Magic UI): un brillo verde suave recorre el borde mientras quedan células por
+  // cargar. Es lento (14 s por vuelta) y se apaga si el teléfono pide menos movimiento.
   return (
-    <div className="flex flex-col gap-4 rounded-sm bg-bosque p-5 text-white">
-      <p className="text-label-md font-medium tracking-wide text-brote uppercase">{mesConMayuscula}</p>
-      <p className="flex items-baseline gap-3">
-        <span className="font-titulo text-[56px]/none font-bold tabular-nums">{numero.format(faltan)}</span>
-        <span className="text-body-lg">{faltan === 1 ? 'célula te falta cargar' : 'células te faltan cargar'}</span>
+    <div className="relative overflow-hidden rounded-2xl bg-bosque p-5 text-white shadow-nivel-2 sm:p-6">
+      <Textura />
+      <ShineBorder borderWidth={2} shineColor={['var(--color-hoja-suave)', 'var(--color-brote)']} />
+      <div className="relative flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <p className="flex items-center gap-2 text-label-lg font-medium text-brote">
+          <Icono nombre="eco" />
+          Carga de {mes}
+        </p>
+        <p className="flex items-center gap-1 text-body-md text-brote">
+          <Icono nombre="schedule" className="text-[20px]" />
+          {textoCierre(diasHastaVencimiento)}
+        </p>
+      </div>
+
+      {/* El número cuenta hacia arriba una sola vez al entrar (NumberTicker de Magic UI).
+          El texto completo queda en sr-only para que el lector de pantalla no lea la animación. */}
+      <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="sr-only">
+          {numero.format(faltan)} {faltan === 1 ? 'célula te falta cargar' : 'células te faltan cargar'}
+        </span>
+        <NumberTicker
+          aria-hidden="true"
+          value={faltan}
+          className="font-titulo text-[64px]/none font-bold"
+        />
+        <span aria-hidden="true" className="text-headline-sm font-medium">
+          {faltan === 1 ? 'célula te falta cargar' : 'células te faltan cargar'}
+        </span>
       </p>
-      <BarraAvance cargadas={cargadas} total={total} etiqueta={`Avance de carga de ${mes}`} />
-      <p className="text-body-md text-brote">{textoCierre(diasHastaVencimiento)}</p>
+
+      {/* Solo la barra: "Cargaste X de Y" repetía lo mismo que el número grande. */}
+      <BarraAvance
+        cargadas={cargadas}
+        total={total}
+        etiqueta={`Avance de carga de ${mes}`}
+        claseRiel="bg-bosque-hover"
+      />
+
       {error ? (
         <MensajeError mensaje={error.message} onReintentar={seguirCargando} />
       ) : (
         <Boton
           variante="secundario"
-          className="rounded-sm! border-0!"
+          className="border-0!"
           cargando={buscando}
           textoCargando="Buscando…"
           onClick={seguirCargando}
         >
-          Seguir cargando
+          {/* "Seguir" solo tiene sentido si ya cargó alguna este mes. */}
+          {cargadas === 0 ? 'Empezar a cargar' : 'Seguir cargando'}
         </Boton>
       )}
+      </div>
     </div>
+  )
+}
+
+// DotPattern (Magic UI): puntitos blancos muy tenues, que se desvanecen hacia la izquierda
+// para que el texto quede sobre fondo liso. Es solo textura: no se mueve ni dice nada.
+function Textura() {
+  return (
+    <DotPattern
+      width={18}
+      height={18}
+      cr={1.2}
+      className="text-white/15 [mask-image:linear-gradient(to_left,white,transparent_75%)]"
+    />
   )
 }
