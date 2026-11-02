@@ -59,8 +59,9 @@ func (a *Auth) RequiereSesion(siguiente http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// 3. Un usuario deshabilitado pierde todas sus sesiones en su próximo pedido (D9).
-		if fila.estado == "deshabilitado" {
+		// 3. Un usuario que no está activo (deshabilitado, o pendiente que no debería tener sesión)
+		// pierde todas sus sesiones en su próximo pedido (D9).
+		if fila.estado != "activo" {
 			if _, err := a.pool.Exec(r.Context(), `DELETE FROM sesiones WHERE usuario_id = $1`, fila.ID); err != nil {
 				log.Printf("auth: no se pudieron borrar las sesiones del usuario %d: %v", fila.ID, err)
 			}

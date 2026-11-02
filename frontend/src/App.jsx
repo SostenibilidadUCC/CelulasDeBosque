@@ -14,6 +14,7 @@ import Datos from './pages/Datos/Datos.jsx'
 import Usuarios from './pages/Usuarios/Usuarios.jsx'
 import Lugares from './pages/Lugares/Lugares.jsx'
 import Mas from './pages/Mas/Mas.jsx'
+import PedirAcceso from './pages/PedirAcceso/PedirAcceso.jsx'
 import Prueba from './pages/Prueba/Prueba.jsx'
 import NoEncontrada from './pages/NoEncontrada/NoEncontrada.jsx'
 
@@ -25,6 +26,7 @@ export default function App() {
         {/* Pantallas sin barra de navegación */}
         <Route path="/login" element={<Login />} />
         <Route path="/publico/:letra" element={<Publico />} />
+        <Route path="/pedir-acceso" element={<PedirAcceso />} />
 
         {/* Pantallas internas, con barra de navegación */}
         <Route element={<RutaPrivada><Layout /></RutaPrivada>}>
