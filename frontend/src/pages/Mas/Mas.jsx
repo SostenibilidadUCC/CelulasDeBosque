@@ -21,13 +21,13 @@ export default function Mas() {
     try {
       await cerrarSesion()
     } catch {
-      // Si falla el pedido, igual se limpia la sesión de la pantalla y se va al login.
+      // Si falla el pedido, igual se limpia la sesión de la pantalla y se va a la presentación.
     }
-    // Se recarga la app directo en el login, en lugar de navegar con React Router:
+    // Se recarga la app directo en la presentación ("/"), en lugar de navegar con React Router:
     // - arranca de cero, sin datos de la sesión anterior en memoria (importa en celulares compartidos);
     // - evita que RutaPrivada anote "desde: /mas" y el próximo login caiga en Más en vez del Inicio.
     // replace (y no assign) hace que el botón "atrás" no vuelva a esta pantalla.
-    window.location.replace('/login')
+    window.location.replace('/')
   }
 
   return (
