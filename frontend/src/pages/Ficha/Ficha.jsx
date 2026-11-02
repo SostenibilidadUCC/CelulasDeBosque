@@ -54,7 +54,7 @@ export default function Ficha() {
   if (carga.error?.estado === 404) {
     return (
       <Vacio icono="search_off" titulo="No existe esa célula" mensaje="Revisá el enlace o volvé al inicio.">
-        <Boton variante="secundario" onClick={() => navigate('/')}>
+        <Boton variante="secundario" onClick={() => navigate('/inicio')}>
           Volver al inicio
         </Boton>
       </Vacio>

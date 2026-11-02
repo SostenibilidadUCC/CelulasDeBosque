@@ -21,7 +21,7 @@ export default function Login() {
 
   // Si ya hay sesión, vuelve a la pantalla a la que quería entrar (la guarda RutaPrivada en "desde").
   // Es el único lugar que navega después del login: si también navegara enviar(), los dos podrían pisarse.
-  if (usuario) return <Navigate to={location.state?.desde ?? '/'} replace />
+  if (usuario) return <Navigate to={location.state?.desde ?? '/inicio'} replace />
 
   async function enviar(e) {
     e.preventDefault()
@@ -105,8 +105,8 @@ export default function Login() {
         Pedí acceso
       </Boton>
 
-      <Boton variante="texto" onClick={() => navigate('/publico/A')}>
-        Ver resultados del Campus UCC
+      <Boton variante="texto" icono="arrow_back" onClick={() => navigate('/')}>
+        Volver a la presentación
       </Boton>
     </main>
   )

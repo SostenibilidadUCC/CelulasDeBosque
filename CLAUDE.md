@@ -42,7 +42,7 @@ Somos tres estudiantes con poca experiencia. Cada semana, cada persona hace una 
 ## Stack
 
 - **Backend:** Go 1.25+, `net/http` de la librería estándar (sin framework), `pgx` para PostgreSQL, `goose` para migraciones, `bcrypt` para contraseñas, `excelize` para Excel, `aws-sdk-go-v2` para fotos en Cloudflare R2.
-- **Frontend:** React + Vite en JavaScript, React Router, Tailwind CSS, Recharts, `browser-image-compression`, `qrcode`.
+- **Frontend:** React + Vite en JavaScript, React Router, Tailwind CSS, shadcn/ui (componentes en `src/components/ui`), Magic UI (solo `blur-fade` y `number-ticker`), Recharts, `browser-image-compression`, `qrcode`.
 - **Base de datos:** PostgreSQL 16 (Docker en desarrollo, Neon en producción).
 - **Deploy:** un solo servicio en Render (plan gratuito), armado con el `Dockerfile` de la raíz. **El servidor Go también entrega el build de React**: cualquier ruta que no empiece con `/api` devuelve `frontend/dist`. En desarrollo, Vite hace proxy de `/api` al servidor Go. No hay CORS.
 
@@ -199,7 +199,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exact
 
 - No agregar funciones fuera del alcance: datos de ensayos científicos, datos de invernadero, tratamientos, carga por alumnos, autogestión de usuarios por institución, rankings.
 - No usar un ORM ni un framework web.
-- No agregar librerías de UI (Material, Bootstrap, etc.): se usa Tailwind con los componentes propios.
+- No agregar librerías de UI fuera de shadcn/ui y Magic UI (nada de Material, Bootstrap, etc.). Los componentes de shadcn se agregan con `npx shadcn@latest add <nombre>` y se usan envueltos en los componentes propios de `components/`.
 - No usar TypeScript salvo que el equipo lo decida.
 - No inventar valores de negocio: si algo no está en los requerimientos, preguntá.
 

@@ -35,8 +35,8 @@ Usá **solo** estos tokens. Nunca escribas un hexadecimal suelto en un component
 | Token | Hex | Uso |
 |---|---|---|
 | `texto` | `#1e293b` | Texto principal. |
-| `texto-2` | `#475569` | Texto secundario, etiquetas, ítems inactivos. |
-| `texto-3` | `#64748b` | Ayudas, fechas, texto de Muerto. |
+| `texto-2` | `#334155` | Texto secundario, etiquetas, ítems inactivos. |
+| `texto-3` | `#475569` | Ayudas, fechas, texto de Muerto. |
 | `placeholder` | `#94a3b8` | Placeholders e íconos deshabilitados. |
 | `borde` | `#e2e8f0` | Borde de tarjetas. |
 | `gris-suave` | `#f1f5f9` | Fondo del chip Muerto y de celdas sin célula. |
@@ -83,16 +83,16 @@ Estos colores se usan **solo** para distinguir formas de vida (líneas de gráfi
 | `headline-md` | 20/28 | 600 | Títulos de sección y de tarjetas grandes. |
 | `headline-sm` | 18/24 | 600 | Títulos de tarjetas y bloques del formulario. |
 | `body-lg` | 16/24 | 400 | Texto normal, explicaciones, **todos los inputs**. |
-| `body-md` | 14/20 | 400 | Texto secundario dentro de tarjetas. |
-| `body-sm` | 12/16 | 400 | Fechas, ayudas y notas. Es el mínimo. |
-| `label-lg` | 16/24 | 500 | Texto de botones. |
-| `label-md` | 14/20 | 500 | Etiquetas de campos, pestañas. |
-| `label-sm` | 12/16, tracking 0.02em | 600 | Chips y leyendas. |
-| `code-tag` | 13/16, tracking 0.06em, mayúsculas | 600 | Códigos `A-1-45`. |
+| `body-md` | 16/24 | 400 | Texto secundario dentro de tarjetas. |
+| `body-sm` | 14/20 | 400 | Fechas, ayudas y notas. Es el mínimo. |
+| `label-lg` | 17/24 | 500 | Texto de botones. |
+| `label-md` | 15/22 | 500 | Etiquetas de campos, pestañas. |
+| `label-sm` | 14/18 | 600 | Chips y leyendas. |
+| `code-tag` | 14/18, tracking 0.06em, mayúsculas | 600 | Códigos `A-1-45`. |
 
 **Reglas:**
 
-- Nada de texto menor a 12 px.
+- Nada de texto menor a 14 px: la app la usa gente mayor.
 - Los inputs siempre en 16 px: con menos, iPhone hace zoom automático al tocarlos.
 - Máximo tres tamaños de texto distintos por tarjeta.
 - Negrita (600–700) solo en títulos, números clave y etiquetas; no para resaltar frases enteras.
@@ -167,7 +167,7 @@ Nada de sombras fuertes ni degradados llamativos.
 
 ## Componentes
 
-Todos viven en `src/components/`. Antes de crear uno nuevo, revisá si ya existe.
+Todos viven en `src/components/`. Antes de crear uno nuevo, revisá si ya existe. Por dentro usan shadcn/ui (`src/components/ui/`): las pantallas usan siempre los componentes propios (`Boton`, `Tarjeta`, `Modal`…), no los de `ui/` directo. Para juntar clases usá `cn()` de `src/lib/utils.js`.
 
 ### Botones
 
@@ -336,10 +336,10 @@ Transiciones de 150–200 ms con `ease-out`, solo en: apertura de paneles y moda
 - Colores hexadecimales sueltos en componentes.
 - Rojo para plantas muertas.
 - Más de un botón primario por pantalla.
-- Texto menor a 12 px o inputs menores a 16 px.
+- Texto menor a 14 px o inputs menores a 16 px.
 - Modo oscuro (por ahora no está en el alcance, aunque Stitch lo configure).
 - Fotos de stock o de ejemplo en producción.
-- Librerías de componentes (Material UI, Bootstrap, shadcn): usamos Tailwind con componentes propios.
+- Librerías de componentes fuera de shadcn/ui y Magic UI (Material UI, Bootstrap…). De Magic UI, solo efectos suaves (`blur-fade`, `number-ticker`) que respeten "reducir movimiento".
 - Estilos en línea (`style={{...}}`) salvo para valores calculados, como la posición de una celda en el plano.
 
 ## Configuración de Tailwind
@@ -369,8 +369,8 @@ Para Tailwind v4, en `src/index.css`. Si el proyecto usa Tailwind v3, los mismos
 
   /* Texto y neutros */
   --color-texto: #1e293b;
-  --color-texto-2: #475569;
-  --color-texto-3: #64748b;
+  --color-texto-2: #334155;
+  --color-texto-3: #475569;
   --color-placeholder: #94a3b8;
   --color-borde: #e2e8f0;
   --color-gris-suave: #f1f5f9;
@@ -397,12 +397,12 @@ Para Tailwind v4, en `src/index.css`. Si el proyecto usa Tailwind v3, los mismos
   --text-headline-md: 20px;   --text-headline-md--line-height: 28px;
   --text-headline-sm: 18px;   --text-headline-sm--line-height: 24px;
   --text-body-lg: 16px;       --text-body-lg--line-height: 24px;
-  --text-body-md: 14px;       --text-body-md--line-height: 20px;
-  --text-body-sm: 12px;       --text-body-sm--line-height: 16px;
-  --text-label-lg: 16px;      --text-label-lg--line-height: 24px;
-  --text-label-md: 14px;      --text-label-md--line-height: 20px;
-  --text-label-sm: 12px;      --text-label-sm--line-height: 16px;
-  --text-code-tag: 13px;      --text-code-tag--line-height: 16px;
+  --text-body-md: 16px;       --text-body-md--line-height: 24px;
+  --text-body-sm: 14px;       --text-body-sm--line-height: 20px;
+  --text-label-lg: 17px;      --text-label-lg--line-height: 24px;
+  --text-label-md: 15px;      --text-label-md--line-height: 22px;
+  --text-label-sm: 14px;      --text-label-sm--line-height: 18px;
+  --text-code-tag: 14px;      --text-code-tag--line-height: 18px;
 
   /* Sombras */
   --shadow-nivel-1: 0 2px 8px -2px rgb(27 67 50 / 0.05), 0 1px 4px -1px rgb(0 0 0 / 0.03);
