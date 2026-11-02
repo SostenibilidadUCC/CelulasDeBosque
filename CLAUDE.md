@@ -193,7 +193,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exact
 - Contraseñas solo con bcrypt. Nunca en texto plano ni en logs.
 - La sesión es un token al azar en una cookie `HttpOnly`, `Secure` y `SameSite=Lax`, guardado en la tabla `sesiones`.
 - Al subir una foto, eliminá la ubicación GPS de los metadatos.
-- Puede haber menores en las fotos de colegios: la foto se pide solo de la célula desde arriba, sin personas.
+- La foto se pide solo de la célula desde arriba (PRI-05).
 
 ## Qué no hacer
 

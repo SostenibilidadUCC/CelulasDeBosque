@@ -146,7 +146,7 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId, onOcupada }) {
 
       <p className="flex items-start gap-2 text-body-sm text-texto-2">
         <Icono nombre="info" tamano="chico" />
-        Sacá la foto de la célula desde arriba, sin personas.
+        Sacá la foto de la célula desde arriba.
       </p>
 
       <div className="grid grid-cols-2 gap-2">
