@@ -4,6 +4,7 @@ import CampoTexto from '../../components/CampoTexto.jsx'
 import Icono from '../../components/Icono.jsx'
 import PanelInferior from '../../components/PanelInferior.jsx'
 import Selector from '../Celulas/Selector.jsx'
+import GenerarContrasena from './GenerarContrasena.jsx'
 import { opcionesDePermiso } from './textos.js'
 
 // Panel para elegir qué puede hacer una persona. Sirve para aprobar un pedido (aprobando = true)
@@ -73,6 +74,13 @@ export default function PanelPermisos({ usuario, lugares, aprobando, guardando, 
           {aprobando ? 'Aprobar y dar acceso' : 'Guardar cambios'}
         </Boton>
       </form>
+
+      {/* Fuera del formulario: generar la contraseña no guarda los cambios de permisos, y al revés. */}
+      {!aprobando && usuario.estado === 'activo' && (
+        <div className="mt-6">
+          <GenerarContrasena usuario={usuario} />
+        </div>
+      )}
     </PanelInferior>
   )
 }
