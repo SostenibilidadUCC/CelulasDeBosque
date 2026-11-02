@@ -180,8 +180,9 @@ func TestVerFoto(t *testing.T) {
 	// (el pool se cierra en t.Cleanup, después de restaurar los datos)
 
 	// El seed reparte las mismas 10 fotos entre todos los registros, así que una foto del seed
-	// también puede ser de un lugar público. Para tener una foto SOLO del lugar B (privado)
+	// también puede ser del lugar A. Para tener una foto SOLO del lugar B (un colegio)
 	// se crea una nueva y se la asigna a un registro de B; al terminar se deja todo como estaba.
+	// (Las variables siguen llamándose "Privada" por historia: desde 00005 todos los lugares son públicos.)
 	var idPublica, idPrivada, registroB, fotoOriginalB int64
 	var rutaPublica string
 	err = pool.QueryRow(ctx, `
@@ -243,7 +244,18 @@ func TestVerFoto(t *testing.T) {
 			t.Errorf("código %d y cuerpo %q, se esperaba 200 con la foto", r.Code, r.Body.String())
 		}
 	})
-	t.Run("visitante no ve la foto de un lugar privado (404, no 403)", func(t *testing.T) {
+	// Migración 00005: todos los lugares activos son públicos (antes solo los marcados con es_publico).
+	t.Run("visitante ve la foto de un colegio (lugar B)", func(t *testing.T) {
+		if r := pedir(visitante, idPrivada); r.Code != http.StatusOK || r.Body.String() != "foto-privada" {
+			t.Errorf("código %d y cuerpo %q, se esperaba 200 con la foto", r.Code, r.Body.String())
+		}
+	})
+	// Para ocultar un lugar se lo deshabilita (LUG-03): sus fotos dejan de ser públicas.
+	t.Run("visitante no ve la foto de un lugar deshabilitado (404, no 403)", func(t *testing.T) {
+		if _, err := pool.Exec(ctx, `UPDATE lugares SET activo = false WHERE letra = 'B'`); err != nil {
+			t.Fatalf("no se pudo deshabilitar el lugar B: %v", err)
+		}
+		defer pool.Exec(ctx, `UPDATE lugares SET activo = true WHERE letra = 'B'`)
 		if r := pedir(visitante, idPrivada); r.Code != http.StatusNotFound {
 			t.Errorf("código = %d, se esperaba 404", r.Code)
 		}

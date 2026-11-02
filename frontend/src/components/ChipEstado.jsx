@@ -14,6 +14,10 @@ const estados = {
   'fuera-de-termino': { texto: 'Fuera de término', icono: 'check_circle', clases: 'border-pendiente-borde bg-brote text-bosque', colorIcono: 'text-bosque-hover' },
   baja: { texto: 'Dada de baja', icono: 'block', clases: 'border-gris-borde bg-gris-suave text-texto-3 line-through', colorIcono: '' },
   'sin-datos': { texto: 'Sin datos', icono: 'help', clases: 'border-gris-borde bg-gris-suave text-texto-3', colorIcono: '' },
+  // T16: estado de una cuenta de usuario, en palabras simples para el administrador.
+  'esperando-aprobacion': { texto: 'Esperando aprobación', icono: 'schedule', clases: 'border-pendiente-borde bg-pendiente text-pendiente-texto', colorIcono: '' },
+  'con-acceso': { texto: 'Con acceso', icono: 'check_circle', clases: 'border-brote-borde bg-brote text-bosque', colorIcono: 'text-bosque-hover' },
+  'sin-acceso': { texto: 'Sin acceso', icono: 'block', clases: 'border-gris-borde bg-gris-suave text-texto-2', colorIcono: 'text-texto-3' },
 }
 
 export default function ChipEstado({ estado }) {

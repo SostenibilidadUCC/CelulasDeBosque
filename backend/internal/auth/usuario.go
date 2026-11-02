@@ -14,6 +14,9 @@ const EmailContacto = "sostenible@ucc.edu.ar" // TODO: confirmar con la clienta
 // MensajeDeshabilitado es lo que ve un usuario deshabilitado al intentar entrar.
 const MensajeDeshabilitado = "Tu acceso está pausado. Para volver a ingresar, escribí a " + EmailContacto
 
+// MensajePendiente es lo que ve quien pidió acceso y todavía no fue aprobado por un administrador.
+const MensajePendiente = "Tu cuenta todavía no fue aprobada. Te avisamos cuando el administrador la habilite."
+
 // Lugar es la institución (universidad o colegio) a la que pertenece un cargador.
 type Lugar struct {
 	ID     int64  `json:"id"`

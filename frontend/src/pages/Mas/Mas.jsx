@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { cerrarSesion } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import Tarjeta from '../../components/Tarjeta.jsx'
@@ -14,6 +15,7 @@ const nombresDeRol = {
 
 export default function Mas() {
   const { usuario } = useSesion()
+  const navigate = useNavigate()
   const [saliendo, setSaliendo] = useState(false)
 
   async function salir() {
@@ -43,6 +45,13 @@ export default function Mas() {
           </p>
         )}
       </Tarjeta>
+
+      {/* Solo para mostrar u ocultar el acceso: el permiso real lo valida el backend. */}
+      {usuario.rol === 'admin' && (
+        <Boton variante="secundario" icono="group" onClick={() => navigate('/usuarios')}>
+          Usuarios
+        </Boton>
+      )}
 
       <Boton variante="secundario" icono="logout" cargando={saliendo} textoCargando="Cerrando sesión…" onClick={salir}>
         Cerrar sesión
