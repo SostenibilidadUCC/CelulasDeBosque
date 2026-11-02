@@ -146,3 +146,13 @@ export const editarUsuario = (id, datos) => pedir(`/usuarios/${id}`, { method: '
 // Solo administrador (AUT-05 simplificado). Genera una contraseña al azar para un usuario activo,
 // cierra sus sesiones y responde { contrasena } una sola vez: el admin se la pasa por WhatsApp.
 export const generarContrasenaNueva = (id) => pedir(`/usuarios/${id}/contrasena-nueva`, { method: 'POST' })
+
+// T18: resultados. filtros: { lugar, isleta, desde, hasta, forma }. Los vacíos no se mandan.
+export const obtenerMetricas = (filtros = {}) => {
+  const parametros = new URLSearchParams()
+  for (const [nombre, valor] of Object.entries(filtros)) {
+    if (valor) parametros.set(nombre, valor)
+  }
+  const texto = parametros.toString()
+  return pedir(`/metricas${texto ? `?${texto}` : ''}`)
+}
