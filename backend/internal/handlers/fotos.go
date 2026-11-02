@@ -185,7 +185,8 @@ func VerFoto(pool *pgxpool.Pool, alm almacen.Almacen, usuarioDe func(*http.Reque
 		if usuarioDe(r) != nil {
 			err = pool.QueryRow(r.Context(), `SELECT ruta_r2 FROM fotos WHERE id = $1`, id).Scan(&ruta)
 		} else {
-			// Sin sesión: la foto tiene que ser de un registro (no anulado) de un lugar público y activo.
+			// Sin sesión: la foto tiene que ser de un registro (no anulado) de un lugar activo.
+			// Todos los lugares son públicos (migración 00005); un lugar deshabilitado no se muestra.
 			err = pool.QueryRow(r.Context(), `
 				SELECT f.ruta_r2
 				FROM fotos f
@@ -196,7 +197,7 @@ func VerFoto(pool *pgxpool.Pool, alm almacen.Almacen, usuarioDe func(*http.Reque
 				      JOIN celulas c ON c.id = r.celula_id
 				      JOIN isletas i ON i.id = c.isleta_id
 				      JOIN lugares l ON l.id = i.lugar_id
-				      WHERE r.foto_id = f.id AND NOT r.anulado AND l.es_publico AND l.activo
+				      WHERE r.foto_id = f.id AND NOT r.anulado AND l.activo
 				  )`, id).Scan(&ruta)
 		}
 		if errors.Is(err, pgx.ErrNoRows) {
