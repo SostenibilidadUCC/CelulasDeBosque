@@ -23,6 +23,7 @@ export default function Ficha() {
   const [carga, setCarga] = useState({ cargando: true })
   const [intento, setIntento] = useState(0)
   const [fotoAmpliada, setFotoAmpliada] = useState(null) // el registro cuya foto se ve grande
+  const [fotoFallo, setFotoFallo] = useState(false) // si la foto del encabezado no cargó, se oculta
 
   useEffect(() => {
     let cancelado = false
@@ -54,7 +55,7 @@ export default function Ficha() {
   if (carga.error?.estado === 404) {
     return (
       <Vacio icono="search_off" titulo="No existe esa célula" mensaje="Revisá el enlace o volvé al inicio.">
-        <Boton variante="secundario" onClick={() => navigate('/')}>
+        <Boton variante="secundario" onClick={() => navigate('/inicio')}>
           Volver al inicio
         </Boton>
       </Vacio>
@@ -71,27 +72,43 @@ export default function Ficha() {
 
   const celula = carga.datos
   const { registros } = celula
-  const cantidadRegistros = registros.length === 1 ? '1 registro' : `${registros.length} registros`
+  const ultimo = registros.at(-1) // el registro más nuevo (vienen del más viejo al más nuevo)
 
   return (
     <div className="flex flex-col gap-6 py-4">
-      {/* FIC-01: encabezado */}
-      <header className="flex flex-col gap-2">
-        <nav aria-label="Migas de pan" className="text-body-md text-texto-2">
-          {celula.lugar.nombre} ›{' '}
-          <Link to={`/isletas/${celula.isleta.id}`} className="text-bosque underline-offset-2 hover:underline">
-            Isleta {celula.isleta.numero}
-          </Link>{' '}
-          › {celula.codigo}
-        </nav>
-        <div className="flex flex-wrap items-center gap-2">
-          <Titulo nivel="lg">Célula</Titulo>
-          <CodigoCelula codigo={celula.codigo} className="text-label-lg" />
-          <ChipEstado estado={celula.estado} />
+      {/* FIC-01: encabezado. Arriba, la foto del último registro (se amplía al tocarla). */}
+      <header className="flex flex-col gap-4 rounded-2xl border border-borde bg-superficie p-4 shadow-nivel-1 sm:p-5 md:grid md:grid-cols-2 md:items-center md:gap-6">
+        {ultimo?.fotoId != null && !fotoFallo && (
+          <button
+            type="button"
+            onClick={() => setFotoAmpliada(ultimo)}
+            aria-label={`Ver más grande la foto del ${fechaCorta(ultimo.fecha)}`}
+            className="relative block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bosque-hover"
+          >
+            <FotoRegistro fotoId={ultimo.fotoId} descripcion={`Foto de la célula ${celula.codigo}, ${fechaCorta(ultimo.fecha)}`}
+              onFallo={() => setFotoFallo(true)}
+            />
+            <span className="absolute bottom-3 left-3 rounded-full bg-superficie/90 px-3 py-1 text-label-sm font-semibold text-texto tabular-nums">
+              {fechaCorta(ultimo.fecha)}
+            </span>
+          </button>
+        )}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Titulo nivel="lg" className="flex">
+              <span className="sr-only">Célula </span>
+              <CodigoCelula codigo={celula.codigo} className="h-8 px-3 font-sans text-label-lg" />
+            </Titulo>
+            <ChipEstado estado={celula.estado} />
+          </div>
+          <nav aria-label="Migas de pan" className="text-body-md text-texto-2">
+            {celula.lugar.nombre} ·{" "}
+            <Link to={`/isletas/${celula.isleta.id}`} className="text-bosque underline underline-offset-2">
+              Isleta {celula.isleta.numero}
+            </Link>
+          </nav>
+          <p className="text-body-md text-texto-2 tabular-nums">Plantada el {fechaCorta(celula.fechaPlantacion)}</p>
         </div>
-        <p className="text-body-md text-texto-2 tabular-nums">
-          Plantada el {fechaCorta(celula.fechaPlantacion)} · {cantidadRegistros}
-        </p>
       </header>
 
       {registros.length === 0 ? (
@@ -121,12 +138,7 @@ export default function Ficha() {
           {/* FIC-04 y FIC-05: registros con foto */}
           <section className="flex flex-col gap-3">
             <Titulo nivel="md">Registros</Titulo>
-            <LineaDeTiempo
-              celulaId={celula.id}
-              individuos={celula.individuos}
-              registros={registros}
-              onAmpliar={setFotoAmpliada}
-            />
+            <LineaDeTiempo celulaId={celula.id} registros={registros} />
           </section>
         </>
       )}

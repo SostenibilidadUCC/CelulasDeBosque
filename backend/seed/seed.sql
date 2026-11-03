@@ -38,10 +38,10 @@ TRUNCATE cambios, sesiones, mediciones, registros, individuos, celulas, isletas,
     RESTART IDENTITY CASCADE;
 
 -- 1. Lugares (coordenadas aproximadas).
-INSERT INTO lugares (letra, nombre, tipo, localidad, latitud, longitud, es_publico) VALUES
-    ('A', 'Campus UCC',             'universidad', 'Córdoba',      -31.486700, -64.244000, true),
-    ('B', 'Colegio de Alta Gracia', 'colegio',     'Alta Gracia',  -31.652900, -64.428300, false),
-    ('C', 'Despeñaderos',           'colegio',     'Despeñaderos', -31.816700, -64.283300, false);
+INSERT INTO lugares (letra, nombre, tipo, localidad, latitud, longitud) VALUES
+    ('A', 'Campus UCC',             'universidad', 'Córdoba',      -31.486700, -64.244000),
+    ('B', 'Colegio de Alta Gracia', 'colegio',     'Alta Gracia',  -31.652900, -64.428300),
+    ('C', 'Despeñaderos',           'colegio',     'Despeñaderos', -31.816700, -64.283300);
 
 -- 2. Usuarios: uno por rol y uno deshabilitado.
 INSERT INTO usuarios (nombre, email, password_hash, rol, estado, lugar_id, institucion) VALUES

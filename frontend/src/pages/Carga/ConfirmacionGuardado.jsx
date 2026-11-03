@@ -1,20 +1,24 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { obtenerSiguientePendiente } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import CodigoCelula from '../../components/CodigoCelula.jsx'
 import Icono from '../../components/Icono.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
 import Titulo from '../../components/Titulo.jsx'
 
-// Lo que se ve después de guardar bien un registro (T14): reemplaza al formulario.
-// - celula: { id, codigo, isletaId, … } de ultimo-registro.
+// Lo que se ve después de guardar bien un registro (T14), solo cuando no se pudo pasar sola a la
+// próxima célula (Carga.jsx lo hace después de cada guardado):
+// - sinPendientes true: no queda ninguna célula por cargar este mes en el lugar.
+// - sinPendientes false: falló la búsqueda de la próxima; se ofrece buscarla de nuevo.
+// Otras props:
+// - celula: { id, codigo, … } de ultimo-registro.
 // - actualizado: true si se editó el registro del mes, false si se creó uno nuevo.
+// - onBuscarSiguiente(): devuelve el id de la próxima célula para cargar, o null si no hay.
 // - onEditarDeNuevo(): vuelve a pedir los datos de la célula y arma el formulario de nuevo.
-export default function ConfirmacionGuardado({ celula, actualizado, onEditarDeNuevo }) {
+export default function ConfirmacionGuardado({ celula, actualizado, sinPendientes, onBuscarSiguiente, onEditarDeNuevo }) {
   const navigate = useNavigate()
   // La búsqueda de la siguiente célula: null (no se pidió), 'buscando', 'sin-pendientes' o { error }.
-  const [busqueda, setBusqueda] = useState(null)
+  const [busqueda, setBusqueda] = useState(sinPendientes ? 'sin-pendientes' : null)
 
   // Al aparecer: la vista vuelve arriba y el foco va al título, así quien usa lector de pantalla
   // escucha que se guardó (el formulario, donde estaba el foco, ya no existe).
@@ -27,8 +31,8 @@ export default function ConfirmacionGuardado({ celula, actualizado, onEditarDeNu
   async function irASiguiente() {
     setBusqueda('buscando')
     try {
-      const { celula: siguiente } = await obtenerSiguientePendiente(celula.id)
-      if (siguiente) navigate(`/cargar/${siguiente.id}`)
+      const siguienteId = await onBuscarSiguiente()
+      if (siguienteId != null) navigate(`/cargar/${siguienteId}`)
       else setBusqueda('sin-pendientes')
     } catch (error) {
       setBusqueda({ error })
@@ -44,36 +48,23 @@ export default function ConfirmacionGuardado({ celula, actualizado, onEditarDeNu
       </div>
 
       {busqueda === 'sin-pendientes' ? (
-        <div className="flex flex-col gap-3">
-          <p role="status" className="flex items-start gap-2 rounded-2xl bg-brote p-4 text-body-md text-bosque">
-            <Icono nombre="task_alt" tamano="chico" className="mt-0.5" />
-            Ya no quedan células pendientes en esta isleta.
+        <>
+          <p role="status" className="rounded-2xl bg-brote p-4 text-center text-body-md text-bosque">
+            No quedan células por cargar este mes.
           </p>
-          <Boton icono="flight" onClick={() => navigate(`/isletas/${celula.isletaId}`)}>
-            Ver el plano de la isleta
-          </Boton>
-        </div>
+          <Boton onClick={() => navigate('/inicio')}>Volver al inicio</Boton>
+        </>
       ) : busqueda?.error ? (
         <MensajeError mensaje={busqueda.error.message} onReintentar={irASiguiente} />
       ) : (
-        <Boton
-          icono="arrow_forward"
-          cargando={busqueda === 'buscando'}
-          textoCargando="Buscando…"
-          onClick={irASiguiente}
-        >
-          Siguiente célula pendiente de la isleta
+        <Boton cargando={busqueda === 'buscando'} textoCargando="Buscando…" onClick={irASiguiente}>
+          Ir a la próxima célula
         </Boton>
       )}
 
-      <div className="flex flex-col gap-3">
-        <Boton variante="secundario" icono="description" onClick={() => navigate(`/celulas/${celula.id}`)}>
-          Volver a la ficha
-        </Boton>
-        <Boton variante="texto" icono="edit_note" onClick={onEditarDeNuevo}>
-          Editar de nuevo
-        </Boton>
-      </div>
+      <Boton variante="texto" onClick={onEditarDeNuevo}>
+        Editar de nuevo
+      </Boton>
     </div>
   )
 }

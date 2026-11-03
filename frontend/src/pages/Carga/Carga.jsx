@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { crearRegistro, modificarRegistro, obtenerUltimoRegistro } from '../../api.js'
+import { toast } from 'sonner'
+import {
+  crearRegistro,
+  modificarRegistro,
+  obtenerCelulasDeLugar,
+  obtenerSiguientePendiente,
+  obtenerUltimoRegistro,
+} from '../../api.js'
+import { buscarProximaCelula } from './proximaCelula.js'
 import Boton from '../../components/Boton.jsx'
 import CampoTexto from '../../components/CampoTexto.jsx'
 import Cargando from '../../components/Cargando.jsx'
@@ -16,7 +24,7 @@ import CampoObservaciones from './CampoObservaciones.jsx'
 import ConfirmacionGuardado from './ConfirmacionGuardado.jsx'
 import EncabezadoCarga from './EncabezadoCarga.jsx'
 import { mensajeDeGuardado } from './errores.js'
-import { hoyEnCordoba, mesEnMinuscula, periodoDeFecha, rangoDeFechas, validarFecha } from './fechas.js'
+import { fechaEnTexto, hoyEnCordoba, mesEnMinuscula, periodoDeFecha, rangoDeFechas, validarFecha } from './fechas.js'
 import { alturaAnterior, estabaMuerto, individuoMuerto, individuoNuevo, individuosIniciales } from './individuos.js'
 import { armarPedido } from './pedido.js'
 import { alturasSinCambio, errorDeFoto, errorDeIndividuoConCampo, esFormularioValido } from './validacion.js'
@@ -146,6 +154,7 @@ function FormularioCarga({ datos, onRecargar }) {
   const [hoy] = useState(hoyEnCordoba)
   // Si ya hay registro de este mes, se edita: la fecha arranca en la guardada. Si no, en hoy.
   const [fecha, setFecha] = useState(actual?.fecha ?? hoy)
+  const [verCampoFecha, setVerCampoFecha] = useState(false)
   // Los 4 individuos, en el orden de formasDeVida. Ver individuosIniciales para la precarga (RN-09).
   // Con una función, useState la corre solo la primera vez (no en cada render).
   const [individuos, setIndividuos] = useState(() => individuosIniciales(datos))
@@ -170,7 +179,10 @@ function FormularioCarga({ datos, onRecargar }) {
   const enviando = useRef(false)
   const [errorGuardado, setErrorGuardado] = useState(null) // { texto, verRegistroDelMes } o null
   const [confirmarSinCambio, setConfirmarSinCambio] = useState(null) // formas de vida con la altura igual, o null
-  const [guardado, setGuardado] = useState(false) // true cuando el backend respondió bien
+  // false hasta guardar. Si al guardar no hay a qué célula pasar: { sinPendientes } (true si no queda
+  // ninguna por cargar en el lugar, false si falló la búsqueda).
+  const [guardado, setGuardado] = useState(false)
+  const navigate = useNavigate()
   // Cada vez que falla la validación se suma 1: el useEffect de abajo lleva la vista al primer error.
   const [pedidoDeFoco, setPedidoDeFoco] = useState(0)
   const formulario = useRef(null)
@@ -259,27 +271,50 @@ function FormularioCarga({ datos, onRecargar }) {
     try {
       if (editando) await modificarRegistro(actual.id, pedido)
       else await crearRegistro(celula.id, pedido)
-      setGuardado(true)
     } catch (error) {
       // TODO T17: un 401 (sesión vencida) manda al login y lo cargado se pierde: falta el borrador.
       setErrorGuardado(mensajeDeGuardado(error, { fechaEsDelMesActual: periodo === periodoActual }))
-    } finally {
       enviando.current = false
       setGuardando(false)
+      return
     }
+
+    // Guardado bien: se pasa sola a la próxima célula que falta cargar, con un aviso corto.
+    // Si no queda ninguna (o la búsqueda falla), se muestra la pantalla de confirmación.
+    let siguienteId
+    try {
+      siguienteId = await buscarSiguienteCelula(celula)
+    } catch {
+      siguienteId = undefined // la confirmación ofrece buscarla de nuevo
+    }
+    enviando.current = false
+    setGuardando(false)
+    if (siguienteId != null) {
+      toast.success(`Registro de ${celula.codigo} guardado`)
+      window.scrollTo({ top: 0 }) // la célula nueva empieza arriba, no donde estaba el botón Guardar
+      navigate(`/cargar/${siguienteId}`)
+      return
+    }
+    setGuardado({ sinPendientes: siguienteId === null })
   }
 
   if (guardado) {
     return (
       <Pagina>
-        <ConfirmacionGuardado celula={celula} actualizado={editando} onEditarDeNuevo={onRecargar} />
+        <ConfirmacionGuardado
+          celula={celula}
+          actualizado={editando}
+          sinPendientes={guardado.sinPendientes}
+          onBuscarSiguiente={() => buscarSiguienteCelula(celula)}
+          onEditarDeNuevo={onRecargar}
+        />
       </Pagina>
     )
   }
 
   return (
     <Pagina refContenedor={formulario}>
-      <EncabezadoCarga celula={celula} periodo={periodo} periodoActual={periodoActual} editando={editando} />
+      <EncabezadoCarga celula={celula} periodo={periodo} editando={editando} />
 
       {mostrarErrores && !formularioValido && (
         <p role="alert" className="flex items-center gap-2 rounded-2xl bg-error-fondo p-4 text-body-md font-medium text-error-texto">
@@ -289,15 +324,31 @@ function FormularioCarga({ datos, onRecargar }) {
       )}
 
 
-      <CampoTexto
-        etiqueta="Fecha de medición"
-        type="date"
-        value={fecha}
-        min={min}
-        max={max}
-        onChange={(evento) => setFecha(evento.target.value)}
-        error={errorFecha}
-      />
+      {/* La fecha casi nunca se cambia (es hoy): se muestra como texto y el campo aparece solo al
+          tocar "Cambiar" (por ejemplo, si se midió en papel y se carga al día siguiente).
+          Si la fecha tiene un error, el campo se muestra siempre para poder corregirla. */}
+      {verCampoFecha || errorFecha ? (
+        <CampoTexto
+          etiqueta="Fecha de medición"
+          type="date"
+          value={fecha}
+          min={min}
+          max={max}
+          onChange={(evento) => setFecha(evento.target.value)}
+          error={errorFecha}
+        />
+      ) : (
+        <p className="-my-2 flex flex-wrap items-center gap-x-1 text-body-md text-texto-2">
+          Medido {fecha === hoy ? `hoy, ${fechaEnTexto(fecha)}` : `el ${fechaEnTexto(fecha)}`}.
+          <button
+            type="button"
+            onClick={() => setVerCampoFecha(true)}
+            className="min-h-12 rounded-xl px-2 font-medium text-bosque underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-bosque-hover"
+          >
+            Cambiar fecha
+          </button>
+        </p>
+      )}
 
       {/* RN-07: la foto es obligatoria. Foto (components/) se encarga de comprimir, subir y reintentar;
           acá solo se guarda el id que devuelve. La del mes anterior se muestra al lado como referencia
@@ -362,7 +413,10 @@ function FormularioCarga({ datos, onRecargar }) {
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
+      {/* Guardar va al final del formulario y NO fijo abajo: aparece cuando ya se recorrió y completó
+          todo. Decisión de Magda (2/11/2026), distinta de frontend/CLAUDE.md, que pedía la barra fija.
+          pb-8: el botón redondo "Cargar" de la barra de navegación sobresale y no debe taparlo. */}
+      <div className="flex flex-col gap-2 pb-8">
         <Boton
           icono="save"
           cargando={guardando}
@@ -390,8 +444,8 @@ function FormularioCarga({ datos, onRecargar }) {
             <p className="text-body-lg text-texto-2">
               Sin cambios en: {confirmarSinCambio.map((forma) => nombreDeForma(formasDeVida, forma)).join(', ')}.
             </p>
-            <div className="flex flex-col gap-2 sm:flex-row-reverse">
-              <Boton onClick={guardar}>Sí, es correcto</Boton>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Boton className="sm:order-2" onClick={guardar}>Sí, es correcto</Boton>
               <Boton variante="secundario" onClick={() => setConfirmarSinCambio(null)}>
                 Revisar
               </Boton>
@@ -413,12 +467,19 @@ function FormularioCarga({ datos, onRecargar }) {
                 ? 'se empieza a cargar uno nuevo.'
                 : 'no se carga nada más para este individuo.'}
             </p>
-            {/* En celular, el primario arriba; en computadora, a la derecha. */}
-            <div className="flex flex-col gap-2 sm:flex-row-reverse">
-              <Boton onClick={confirmar}>
+            {/* En celular, el primario arriba; en computadora, a la derecha (sm:order-2). Con grid y no flex:
+                los botones son w-full y en una fila flex se salían del modal. */}
+            <div className="grid gap-2 sm:grid-cols-2">
+              {/* Al marcar muerto, el verde es Cancelar: lo seguro es no cambiar nada, y "Marcar como
+                  muerto" va en claro para que no se toque sin querer. */}
+              <Boton
+                variante={confirmacion.tipo === 'muerto' ? 'secundario' : 'primario'}
+                className="sm:order-2"
+                onClick={confirmar}
+              >
                 {confirmacion.tipo === 'reposicion' ? 'Cargar uno nuevo' : 'Marcar como muerto'}
               </Boton>
-              <Boton variante="secundario" onClick={cerrarConfirmacion}>
+              <Boton variante={confirmacion.tipo === 'muerto' ? 'primario' : 'secundario'} onClick={cerrarConfirmacion}>
                 Cancelar
               </Boton>
             </div>
@@ -427,6 +488,16 @@ function FormularioCarga({ datos, onRecargar }) {
       </Modal>
     </Pagina>
   )
+}
+
+// La próxima célula para cargar después de guardar: primero la siguiente de la misma isleta (por
+// número, como se recorre caminando); si en la isleta no queda ninguna, la primera del lugar.
+// Devuelve su id, o null si no queda ninguna por cargar.
+async function buscarSiguienteCelula(celula) {
+  const { celula: deLaIsleta } = await obtenerSiguientePendiente(celula.id)
+  if (deLaIsleta) return deLaIsleta.id
+  const delLugar = await buscarProximaCelula(celula.lugarId, obtenerCelulasDeLugar)
+  return delLugar === celula.id ? null : delLugar
 }
 
 // El nombre de una forma de vida, del catálogo que manda el backend (nunca escrito a mano).

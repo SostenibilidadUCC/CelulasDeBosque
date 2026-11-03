@@ -1,22 +1,30 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router'
+import PanelElegirCelula from '../pages/Carga/PanelElegirCelula.jsx'
 import { useSesion } from '../sesion/useSesion.js'
 import Icono from './Icono.jsx'
 
-// Roles que pueden cargar registros. Es solo para mostrar u ocultar el botón: el permiso real lo valida el backend.
-const rolesQueCargan = ['admin', 'cargador']
-
+// El botón Cargar es solo para el cargador, que tiene un lugar: abre el panel "Elegí la célula"
+// con las células de su lugar (las que faltan, en ámbar; las cargadas se pueden editar). El admin no tiene lugar, así que carga desde la tarjeta de cada célula.
+// Es solo para mostrar u ocultar el botón: el permiso real lo valida el backend.
 const items = [
-  { a: '/', texto: 'Inicio', icono: 'home' },
+  { a: '/inicio', texto: 'Inicio', icono: 'home' },
   { a: '/celulas', texto: 'Células', icono: 'grid_view' },
   { a: '/cargar', texto: 'Cargar', icono: 'add', destacado: true },
   { a: '/resultados', texto: 'Resultados', icono: 'insights' },
-  { a: '/mas', texto: 'Más', icono: 'more_horiz' },
+  { a: '/mas', texto: 'Cuenta', icono: 'account_circle' },
 ]
 
 export default function BarraNavegacion() {
   const { usuario } = useSesion()
-  const puedeCargar = rolesQueCargan.includes(usuario?.rol)
-  const itemsVisibles = items.filter((item) => !item.destacado || puedeCargar)
+  const [elegirAbierto, setElegirAbierto] = useState(false)
+  const lugarId = usuario?.rol === 'cargador' ? usuario.lugar?.id : null
+  const itemsVisibles = items.filter((item) => !item.destacado || lugarId != null)
+
+  function abrirElegir(e) {
+    e.preventDefault() // no navega a /cargar: abre el panel
+    setElegirAbierto(true)
+  }
 
   return (
     <nav
@@ -28,7 +36,9 @@ export default function BarraNavegacion() {
           <li key={item.a} className="flex-1">
             <NavLink
               to={item.a}
-              end={item.a === '/'}
+              end={item.a === '/inicio'}
+              onClick={item.destacado ? abrirElegir : undefined}
+              aria-haspopup={item.destacado ? 'dialog' : undefined}
               className={({ isActive }) =>
                 `flex min-h-[72px] flex-col items-center justify-center gap-1 text-label-sm font-semibold focus-visible:outline-2 focus-visible:outline-bosque-hover ${
                   isActive ? 'text-bosque' : 'text-texto-2'
@@ -58,6 +68,9 @@ export default function BarraNavegacion() {
           </li>
         ))}
       </ul>
+      {lugarId != null && (
+        <PanelElegirCelula abierto={elegirAbierto} onCerrar={() => setElegirAbierto(false)} lugarId={lugarId} />
+      )}
     </nav>
   )
 }

@@ -28,3 +28,11 @@ export const colorDeForma = {
   3: 'var(--color-herbacea)',
   4: 'var(--color-rastrera)',
 }
+const formatoMesLargo = new Intl.DateTimeFormat('es-AR', { month: 'long' })
+
+// "2026-11" → "Noviembre 2026" (títulos de la lista de registros).
+export function periodoLargo(periodo) {
+  const [anio, mes] = periodo.split('-').map(Number)
+  const nombre = formatoMesLargo.format(new Date(anio, mes - 1, 1))
+  return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`
+}

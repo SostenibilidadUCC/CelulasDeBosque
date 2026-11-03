@@ -3,7 +3,7 @@ import imageCompression from 'browser-image-compression'
 import { subirFoto } from '../api.js'
 import Boton from './Boton.jsx'
 import Icono from './Icono.jsx'
-import FotoRegistro from '../pages/Ficha/FotoRegistro.jsx'
+import PanelInferior from './PanelInferior.jsx'
 
 // Opciones de compresión (CAR-05): lado mayor 1600 px y hasta 300 KB, siempre en JPEG.
 // useWebWorker hace el trabajo en segundo plano para que la pantalla no se congele.
@@ -14,7 +14,7 @@ const opcionesCompresion = {
   useWebWorker: true,
 }
 
-// Foto del registro (T13, CAR-04 y CAR-05): botones de cámara y galería, compresión en el
+// Foto del registro (T13, CAR-04 y CAR-05): un solo botón que abre las opciones cámara o galería, compresión en el
 // celular, subida con barra de progreso y reintentar si falla.
 // - fotoId: id de la foto ya guardada (por ejemplo, al editar un registro).
 // - onCambio(id): se llama con el id nuevo cuando la foto terminó de subir, y con null al elegir otra.
@@ -113,18 +113,64 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId, onOcupada }) {
     await subir(resultado)
   }
 
+  // Al tocar la foto (o "Cambiar foto") se abre un panel con las dos opciones: cámara o galería.
+  // Así hay un solo botón en la pantalla en lugar de dos grandes.
+  const [opcionesAbiertas, setOpcionesAbiertas] = useState(false)
+  function elegirDesde(entrada) {
+    setOpcionesAbiertas(false)
+    entrada.current?.click()
+  }
+
+  // Si la foto del mes anterior no carga, no se muestra (en vez de un recuadro "no disponible").
+  // Se guarda el id que falló: si llega otra foto anterior, se vuelve a intentar.
+  const [anteriorFallida, setAnteriorFallida] = useState(null)
+  const verAnterior = fotoAnteriorId != null && anteriorFallida !== fotoAnteriorId
+  // Lo mismo con la de este mes ya guardada (al editar): si no carga, se ve el recuadro para subirla.
+  const [actualFallida, setActualFallida] = useState(null)
+  const fotoGuardada = fotoId != null && actualFallida !== fotoId ? fotoId : null
+  const hayFoto = vistaPrevia != null || fotoGuardada != null
+
   return (
     <div className="flex flex-col gap-3">
-      <div className={`grid gap-2 ${fotoAnteriorId ? 'grid-cols-2' : 'grid-cols-1'}`}>
-        {fotoAnteriorId && (
+      {/* Siempre en dos columnas: la foto ocupa media pantalla, no toda. Sin foto anterior, el
+          recuadro va solo a la izquierda. */}
+      <div className="grid grid-cols-2 gap-2">
+        {verAnterior && (
           <figure className="flex flex-col gap-1">
-            <FotoRegistro key={fotoAnteriorId} fotoId={fotoAnteriorId} descripcion="Foto del mes anterior" />
+            <img
+              src={`/api/fotos/${fotoAnteriorId}`}
+              alt="Foto del mes anterior"
+              loading="lazy"
+              onError={() => setAnteriorFallida(fotoAnteriorId)}
+              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover"
+            />
             <figcaption className="text-body-sm text-texto-2">Mes anterior</figcaption>
           </figure>
         )}
         <figure className="flex flex-col gap-1">
-          <FotoActual vistaPrevia={vistaPrevia} fotoId={fotoId} />
-          {fotoAnteriorId && <figcaption className="text-body-sm text-texto-2">Este mes</figcaption>}
+          {vistaPrevia ? (
+            <img src={vistaPrevia} alt="Foto de este mes" className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover" />
+          ) : fotoGuardada ? (
+            <img
+              src={`/api/fotos/${fotoGuardada}`}
+              alt="Foto de este mes"
+              onError={() => setActualFallida(fotoGuardada)}
+              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover"
+            />
+          ) : (
+            // Sin foto: el recuadro mismo es el botón.
+            <button
+              type="button"
+              disabled={ocupada}
+              onClick={() => setOpcionesAbiertas(true)}
+              className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-brote-borde bg-fondo px-3 text-center text-bosque hover:bg-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bosque-hover disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Icono nombre="photo_camera" className="text-bosque-hover" />
+              <span className="text-label-md font-medium">{verAnterior ? 'Foto de este mes' : 'Subí la primera foto'}</span>
+              <span className="text-body-sm text-texto-2">Desde arriba, con las 4 plantas</span>
+            </button>
+          )}
+          {verAnterior && hayFoto && <figcaption className="text-body-sm text-texto-2">Este mes</figcaption>}
         </figure>
       </div>
 
@@ -144,39 +190,26 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId, onOcupada }) {
         </div>
       )}
 
-      <p className="flex items-start gap-2 text-body-sm text-texto-2">
-        <Icono nombre="info" tamano="chico" />
-        Sacá la foto de la célula desde arriba, sin personas.
-      </p>
+      {hayFoto && (
+        <Boton variante="secundario" disabled={ocupada} onClick={() => setOpcionesAbiertas(true)}>
+          Cambiar foto
+        </Boton>
+      )}
 
-      <div className="grid grid-cols-2 gap-2">
-        <Boton variante="tonal" icono="photo_camera" disabled={ocupada} onClick={() => entradaCamara.current?.click()}>
-          Abrir cámara
-        </Boton>
-        <Boton variante="secundario" icono="photo_library" disabled={ocupada} onClick={() => entradaGaleria.current?.click()}>
-          Elegir de galería
-        </Boton>
-      </div>
+      <PanelInferior abierto={opcionesAbiertas} titulo="Foto de la célula" onCerrar={() => setOpcionesAbiertas(false)}>
+        <div className="flex flex-col gap-2">
+          <Boton icono="photo_camera" onClick={() => elegirDesde(entradaCamara)}>
+            Abrir cámara
+          </Boton>
+          <Boton variante="secundario" icono="photo_library" onClick={() => elegirDesde(entradaGaleria)}>
+            Elegir de la galería
+          </Boton>
+        </div>
+      </PanelInferior>
 
       {/* capture="environment" abre directo la cámara trasera en el celular. Sin capture, abre la galería. */}
       <input ref={entradaCamara} type="file" accept="image/*" capture="environment" hidden onChange={alElegir} />
       <input ref={entradaGaleria} type="file" accept="image/*" hidden onChange={alElegir} />
-    </div>
-  )
-}
-
-// Muestra la foto recién elegida o, si no hay, la ya guardada. Si no hay ninguna, un recuadro vacío.
-function FotoActual({ vistaPrevia, fotoId }) {
-  if (vistaPrevia) {
-    return <img src={vistaPrevia} alt="Foto de este mes" className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover" />
-  }
-  if (fotoId) {
-    return <FotoRegistro key={fotoId} fotoId={fotoId} descripcion="Foto de este mes" />
-  }
-  return (
-    <div className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1 rounded-xl border-[1.5px] border-dashed border-gris-borde bg-gris-suave text-texto-3">
-      <Icono nombre="add_a_photo" />
-      <span className="text-body-sm">Falta la foto</span>
     </div>
   )
 }

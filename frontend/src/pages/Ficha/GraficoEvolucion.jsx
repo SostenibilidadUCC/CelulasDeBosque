@@ -23,7 +23,8 @@ function Punto({ cx, cy, stroke, forma }) {
   return <circle cx={cx} cy={cy} r={r} fill={stroke} />
 }
 
-const estiloEjes = { fontSize: 12, fill: 'var(--color-texto-3)' }
+// 14 px: el mínimo de texto de la app (body-sm), porque la usa gente mayor.
+const estiloEjes = { fontSize: 14, fill: 'var(--color-texto-3)' }
 
 // FIC-03: una línea por forma de vida con el valor de cada mes.
 // Un individuo muerto no tiene valor ese mes (null), y la línea se corta ahí.

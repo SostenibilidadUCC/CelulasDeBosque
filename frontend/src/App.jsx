@@ -16,6 +16,7 @@ import Lugares from './pages/Lugares/Lugares.jsx'
 import Mas from './pages/Mas/Mas.jsx'
 import Prueba from './pages/Prueba/Prueba.jsx'
 import NoEncontrada from './pages/NoEncontrada/NoEncontrada.jsx'
+import Presentacion from './pages/Presentacion/Presentacion.jsx'
 
 // Archivo compartido: solo se AGREGAN rutas, nunca se borran las de otra persona.
 export default function App() {
@@ -25,10 +26,12 @@ export default function App() {
         {/* Pantallas sin barra de navegación */}
         <Route path="/login" element={<Login />} />
         <Route path="/publico/:letra" element={<Publico />} />
+        <Route path="/" element={<Presentacion />} />
 
         {/* Pantallas internas, con barra de navegación */}
         <Route element={<RutaPrivada><Layout /></RutaPrivada>}>
-          <Route index element={<Inicio />} />
+          {/* El inicio de cada rol pasó de "/" a "/inicio": "/" es la presentación pública. */}
+          <Route path="inicio" element={<Inicio />} />
           <Route path="celulas" element={<Celulas />} />
           <Route path="celulas/nueva" element={<NuevaCelula />} />
           <Route path="celulas/:id" element={<Ficha />} />

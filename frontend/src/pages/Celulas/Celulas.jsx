@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 import { obtenerCelulasDeLugar, obtenerLugares } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import Cargando from '../../components/Cargando.jsx'
-import Icono from '../../components/Icono.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
@@ -43,8 +42,13 @@ export default function Celulas() {
     ? lugares.find((l) => String(l.id) === lugarEnUrl)
     : (lugares.find((l) => l.id === usuario.lugar?.id) ?? lugares[0])
 
+  // El estado del mes (pendiente, al día) solo lo ve quien carga en este lugar: el admin y el
+  // cargador de ese lugar (la misma regla que auth.PuedeEditarLugar del backend). A los demás no les
+  // sirve, y ver qué lugar está más atrasado se leería como una comparación.
+  const veEstados = Boolean(lugar) && (usuario.rol === 'admin' || (usuario.rol === 'cargador' && usuario.lugar?.id === lugar.id))
+
   const isleta = parametros.get('isleta') ?? ''
-  const estado = parametros.get('estado') ?? ''
+  const estado = veEstados ? (parametros.get('estado') ?? '') : ''
   const q = parametros.get('q') ?? ''
 
   // 3. Las células del lugar con los filtros.
@@ -123,9 +127,15 @@ export default function Celulas() {
 
   return (
     <Pagina>
-      <Filtros lugares={lugares} lugar={lugar} isleta={isleta} estado={estado} q={q} onCambiar={cambiarFiltros} />
-
-      <AccesosPlano isletas={isleta ? lugar.isletas.filter((i) => String(i.id) === isleta) : lugar.isletas} />
+      <Filtros
+        lugares={lugares}
+        lugar={lugar}
+        isleta={isleta}
+        estado={estado}
+        q={q}
+        mostrarEstado={veEstados}
+        onCambiar={cambiarFiltros}
+      />
 
       {cargandoCelulas ? (
         <Cargando filas={3} />
@@ -134,6 +144,7 @@ export default function Celulas() {
       ) : (
         <ListaCelulas
           respuesta={cargaCelulas.datos}
+          veEstados={veEstados}
           hayFiltros={hayFiltros}
           limpiarFiltros={() => cambiarFiltros({ isleta: '', estado: '', q: '' })}
         />
@@ -152,23 +163,9 @@ function Pagina({ children }) {
   )
 }
 
-// Acceso "Ver plano" de cada isleta del lugar (o solo la filtrada).
-function AccesosPlano({ isletas }) {
-  const navigate = useNavigate()
-  if (isletas.length === 0) return null
-  return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      {isletas.map((i) => (
-        <Boton key={i.id} variante="secundario" icono="flight" onClick={() => navigate(`/isletas/${i.id}`)}>
-          Ver plano de la isleta {i.numero}
-        </Boton>
-      ))}
-    </div>
-  )
-}
-
-// La lista de tarjetas con el aviso de solo lectura (EXP-04) y el estado vacío (EXP-05).
-function ListaCelulas({ respuesta, hayFiltros, limpiarFiltros }) {
+// La lista de tarjetas y el estado vacío (EXP-05).
+// Sin aviso de solo lectura (EXP-04): quien no puede cargar simplemente no ve el botón Cargar.
+function ListaCelulas({ respuesta, veEstados, hayFiltros, limpiarFiltros }) {
   const { celulas, puedeEditar } = respuesta
 
   if (celulas.length === 0) {
@@ -185,19 +182,13 @@ function ListaCelulas({ respuesta, hayFiltros, limpiarFiltros }) {
 
   return (
     <>
-      {!puedeEditar && (
-        <p className="flex items-start gap-2 rounded-2xl bg-tonal p-4 text-body-md text-bosque">
-          <Icono nombre="visibility" tamano="chico" className="mt-0.5" />
-          Tenés acceso de solo lectura en este lugar: podés ver las células, pero no cargar registros.
-        </p>
-      )}
-      <p className="text-body-md text-texto-2" aria-live="polite">
+      <p className="text-label-lg font-semibold text-texto" aria-live="polite">
         {celulas.length === 1 ? '1 célula' : `${celulas.length} células`}
       </p>
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {celulas.map((c) => (
           <li key={c.id}>
-            <TarjetaCelula celula={c} puedeEditar={puedeEditar} />
+            <TarjetaCelula celula={c} puedeEditar={puedeEditar} veEstado={veEstados} />
           </li>
         ))}
       </ul>

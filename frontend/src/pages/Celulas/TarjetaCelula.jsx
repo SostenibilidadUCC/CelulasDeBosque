@@ -1,30 +1,35 @@
-import { Link, useNavigate } from 'react-router'
-import Boton from '../../components/Boton.jsx'
+import { useState } from 'react'
+import { Link } from 'react-router'
 import ChipEstado from '../../components/ChipEstado.jsx'
 import CodigoCelula from '../../components/CodigoCelula.jsx'
 import Icono from '../../components/Icono.jsx'
 import { fechaCorta } from './fechas.js'
 
-// Estado de un individuo según su último registro: vivo true, false, o null si nunca se registró.
-function estadoIndividuo(vivo) {
-  if (vivo === true) return 'vivo'
-  if (vivo === false) return 'muerto'
-  return 'sin-datos'
-}
+// Estados del mes en los que todavía falta cargar la célula.
+const faltaCargar = ['pendiente', 'sin-registro']
 
 // EXP-03: tarjeta de una célula. Toda la tarjeta lleva a la ficha (T15 de Fran).
 // Para eso se usa un "enlace estirado": el Link del código tiene un pseudo-elemento ::after
-// invisible que cubre toda la tarjeta (after:absolute after:inset-0). El botón de cargar va
-// "encima" (relative z-10), así se puede tocar sin abrir la ficha. Es mejor que poner un botón
-// adentro de un enlace, que en HTML no es válido.
-export default function TarjetaCelula({ celula, puedeEditar }) {
-  const navigate = useNavigate()
+// invisible que cubre toda la tarjeta (after:absolute after:inset-0).
+// veEstado: el chip del mes (pendiente, al día) solo para quien carga en este lugar.
+// "Dada de baja" se muestra siempre: no es un estado de carga, dice que la célula ya no se sigue.
+export default function TarjetaCelula({ celula, puedeEditar, veEstado }) {
+  // Si la foto no se puede cargar, se oculta (en la lista no sirve un recuadro de "no disponible").
+  const [fotoFallo, setFotoFallo] = useState(false)
   const registro = celula.ultimoRegistro
-  // EXP-04: solo si puede editar el lugar, y nunca en una célula dada de baja.
-  const puedeCargar = puedeEditar && celula.estado !== 'baja'
+  // EXP-04: solo si puede editar el lugar y a la célula le falta el registro del mes.
+  // Si ya está al día, se edita desde la ficha.
+  const puedeCargar = puedeEditar && faltaCargar.includes(celula.estado)
+  // El estado del mes ya no va en un chip: lo dice el pie de la tarjeta ("Falta el registro
+  // del mes" o "Registro del mes cargado"). Solo queda el chip de "Dada de baja".
+  const cargadaEsteMes = veEstado && ['al-dia', 'fuera-de-termino'].includes(celula.estado)
+
+  // Los 4 individuos en una sola línea: "4 de 4 vivos" y, si hay muertos, cuáles.
+  const vivos = celula.individuos.filter((ind) => ind.vivo === true).length
+  const muertos = celula.individuos.filter((ind) => ind.vivo === false).map((ind) => ind.nombre)
 
   return (
-    <article className="relative flex h-full flex-col gap-3 rounded-2xl border border-borde bg-superficie p-4 shadow-nivel-1 transition duration-150 ease-out hover:border-niebla">
+    <article className="relative flex h-full flex-col gap-3 rounded-2xl border border-borde bg-superficie p-4 shadow-nivel-1 transition duration-150 ease-out hover:border-bosque-hover">
       <div className="flex items-center justify-between gap-2">
         <Link
           to={`/celulas/${celula.id}`}
@@ -33,36 +38,49 @@ export default function TarjetaCelula({ celula, puedeEditar }) {
         >
           <CodigoCelula codigo={celula.codigo} />
         </Link>
-        <ChipEstado estado={celula.estado} />
+        {celula.estado === 'baja' && <ChipEstado estado="baja" />}
       </div>
 
-      {/* TODO (T13 de Magda): mostrar la foto del último registro con /api/fotos/{fotoId}. */}
-      <div className="flex aspect-[4/3] items-center justify-center rounded-xl bg-gris-suave">
-        <Icono nombre="photo_camera" tamano="grande" className="text-placeholder" />
-        <span className="sr-only">
-          {registro ? 'La foto todavía no se puede mostrar' : 'Todavía no tiene foto'}
-        </span>
-      </div>
+      {/* La foto del último registro (GET /api/fotos/{id}, que revisa permisos). Si la célula
+          todavía no tiene registros, no se muestra un recuadro vacío: la tarjeta queda más corta. */}
+      {registro?.fotoId != null && !fotoFallo && (
+        <img
+          src={`/api/fotos/${registro.fotoId}`}
+          alt={`Foto de la célula ${celula.codigo}, ${fechaCorta(registro.fecha)}`}
+          loading="lazy"
+          onError={() => setFotoFallo(true)}
+          className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover"
+        />
+      )}
 
+      {/* Sin la isleta: ya está en el código (A-1-45 es la isleta 1) y en el filtro. */}
       <p className="text-body-md text-texto-2">
-        Isleta {celula.isleta.numero} ·{' '}
         {registro ? `Último registro: ${fechaCorta(registro.fecha)}` : 'Sin registros'}
       </p>
 
-      <ul className="flex flex-col gap-2">
-        {celula.individuos.map((ind) => (
-          <li key={ind.formaDeVida} className="flex items-center gap-2">
-            <Icono nombre={ind.icono} tamano="chico" className="text-bosque-hover" />
-            <span className="flex-1 text-body-md text-texto">{ind.nombre}</span>
-            <ChipEstado estado={estadoIndividuo(ind.vivo)} />
-          </li>
-        ))}
-      </ul>
+      {/* Sin registros no hay nada que decir de los individuos (ya lo dice la línea de arriba). */}
+      {registro && (
+        <p className="flex items-center gap-1.5 text-body-md text-texto">
+          <Icono nombre="eco" tamano="chico" className="text-bosque-hover" />
+          {vivos} de {celula.individuos.length} vivos
+          {muertos.length > 0 && <span className="text-texto-3">· Muerto: {muertos.join(', ')}</span>}
+        </p>
+      )}
 
+      {/* Ya no hay botón de cargar acá: se carga desde el botón Cargar de la barra (o el plano).
+          Queda el aviso de que falta, con color, ícono y texto. */}
       {puedeCargar && (
-        <Boton variante="tonal" icono="edit_note" className="relative z-10 mt-auto" onClick={() => navigate(`/cargar/${celula.id}`)}>
-          Cargar registro del mes
-        </Boton>
+        <p className="mt-auto flex min-h-12 items-center justify-center gap-1.5 rounded-xl border border-pendiente-borde bg-pendiente text-label-md font-medium text-pendiente-texto">
+          <Icono nombre="schedule" tamano="chico" />
+          Falta el registro del mes
+        </p>
+      )}
+      {/* Estado "Al día" con ícono y texto (nunca solo color), en el mismo lugar que el botón. */}
+      {cargadaEsteMes && (
+        <p className="mt-auto flex min-h-12 items-center justify-center gap-1.5 rounded-xl bg-brote text-label-md font-medium text-bosque">
+          <Icono nombre="check_circle" tamano="chico" className="text-bosque-hover" />
+          Registro del mes cargado
+        </p>
       )}
     </article>
   )

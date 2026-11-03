@@ -111,7 +111,7 @@ Usá siempre estas palabras, en el código y en la interfaz:
 - **RN-09:** un individuo muerto se ve en gris, sin controles, y no se le carga nada. Al marcar Muerto se pide confirmación. Si se repuso, el botón "Cargar uno nuevo (reposición)" lo habilita como vivo; ese botón solo aparece si el registro anterior lo tenía muerto. En la base sigue siendo el mismo individuo.
 - **RN-10:** un lugar tiene como máximo un cargador activo.
 - **RN-12 y RN-13:** nunca se borran registros ni usuarios; se anulan o deshabilitan.
-- **RN-15:** un lugar solo es visible sin sesión si está marcado como público (al inicio, solo el Campus UCC).
+- **RN-15:** todo lugar activo es visible sin sesión. Para ocultar un lugar se lo deshabilita (LUG-03). La columna `es_publico` se eliminó en la migración 00005.
 - **RN-17:** los tratamientos (maceta, bioestimulante, fertilizante) no se registran.
 
 ## Variables por individuo
@@ -138,7 +138,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exact
 | **Administrador** | Todo. |
 | **Cargador** | Ver todos los lugares. Crear células y cargar o editar registros **solo en su lugar**. |
 | **Lector** | Ver todo. No carga ni edita nada. |
-| **Público** (sin sesión) | Solo `GET /api/publico/{letra}` de lugares públicos. |
+| **Público** (sin sesión) | Solo `GET /api/publico/{letra}` de lugares activos. |
 
 - **Los permisos se validan siempre en el backend.** Ocultar un botón en React no alcanza.
 - Usá el middleware `auth.RequiereSesion` y las funciones `auth.EsAdmin(usuario)` y `auth.PuedeEditarLugar(usuario, lugarID)`. No reescribas esa lógica en cada handler.
@@ -193,7 +193,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exact
 - Contraseñas solo con bcrypt. Nunca en texto plano ni en logs.
 - La sesión es un token al azar en una cookie `HttpOnly`, `Secure` y `SameSite=Lax`, guardado en la tabla `sesiones`.
 - Al subir una foto, eliminá la ubicación GPS de los metadatos.
-- Puede haber menores en las fotos de colegios: la foto se pide solo de la célula desde arriba, sin personas.
+- La foto se pide solo de la célula desde arriba (PRI-05).
 
 ## Qué no hacer
 
