@@ -22,8 +22,8 @@ func (a *Auth) UsuarioOpcional(r *http.Request) *Usuario {
 		 JOIN usuarios u ON u.id = s.usuario_id
 		 LEFT JOIN lugares l ON l.id = u.lugar_id
 		 WHERE s.token = $1`, hashToken(cookie.Value)), &expira)
-	if err != nil || !expira.After(time.Now()) || fila.estado == "deshabilitado" {
-		return nil // sin sesión, vencida, deshabilitada o error de la base: se trata como visitante
+	if err != nil || !expira.After(time.Now()) || fila.estado != "activo" {
+		return nil // sin sesión, vencida, usuario no activo o error de la base: se trata como visitante
 	}
 	return &fila.Usuario
 }

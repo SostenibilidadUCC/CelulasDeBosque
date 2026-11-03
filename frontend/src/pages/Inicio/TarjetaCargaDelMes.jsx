@@ -1,4 +1,5 @@
 import Icono from '../../components/Icono.jsx'
+import { DotPattern } from '../../components/ui/dot-pattern.jsx'
 import { NumberTicker } from '../../components/ui/number-ticker.jsx'
 import { ShineBorder } from '../../components/ui/shine-border.jsx'
 import BarraAvance from './BarraAvance.jsx'
@@ -27,6 +28,7 @@ export default function TarjetaCargaDelMes({ cargadas, total, periodo, diasHasta
   if (faltan <= 0) {
     return (
       <div className="relative overflow-hidden rounded-2xl bg-bosque p-5 text-white shadow-nivel-2 sm:p-6">
+        <Textura />
         <div className="relative flex items-center gap-3">
           <Icono nombre="task_alt" className="text-brote" />
           <p className="font-titulo text-headline-md font-semibold">¡Listo! Cargaste todas las células de {mes}.</p>
@@ -39,6 +41,7 @@ export default function TarjetaCargaDelMes({ cargadas, total, periodo, diasHasta
   // cargar. Es lento (14 s por vuelta) y se apaga si el teléfono pide menos movimiento.
   return (
     <div className="relative overflow-hidden rounded-2xl bg-bosque p-5 text-white shadow-nivel-2 sm:p-6">
+      <Textura />
       <ShineBorder borderWidth={2} shineColor={['var(--color-hoja-suave)', 'var(--color-brote)']} />
       <div className="relative flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -81,3 +84,16 @@ export default function TarjetaCargaDelMes({ cargadas, total, periodo, diasHasta
   )
 }
 
+
+// DotPattern (Magic UI): puntitos blancos muy tenues, que se desvanecen hacia la izquierda
+// para que el texto quede sobre fondo liso. Es solo textura: no se mueve ni dice nada.
+function Textura() {
+  return (
+    <DotPattern
+      width={18}
+      height={18}
+      cr={1.2}
+      className="text-white/15 [mask-image:linear-gradient(to_left,white,transparent_75%)]"
+    />
+  )
+}

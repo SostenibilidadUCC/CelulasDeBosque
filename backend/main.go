@@ -41,6 +41,9 @@ func main() {
 	mux.HandleFunc("GET /api/lugares", a.RequiereSesion(handlers.Lugares(pool)))
 	mux.HandleFunc("GET /api/lugares/{id}/celulas", a.RequiereSesion(handlers.CelulasDeLugar(pool)))
 
+	// T18: resultados y métricas
+	mux.HandleFunc("GET /api/metricas", a.RequiereSesion(handlers.ObtenerMetricas(pool)))
+
 	// T13: fotos. Si faltan las variables de R2 el servidor arranca igual,
 	// pero las rutas de fotos responden 500 hasta que se configuren.
 	var fotos almacen.Almacen // nil = sin configurar
@@ -64,6 +67,12 @@ func main() {
 	// T14: carga mensual (datos para precargar el formulario)
 	mux.HandleFunc("GET /api/celulas/{id}/ultimo-registro", a.RequiereSesion(handlers.UltimoRegistro(pool)))
 	mux.HandleFunc("GET /api/celulas/{id}/siguiente-pendiente", a.RequiereSesion(handlers.SiguientePendiente(pool)))
+
+	// T16: usuarios. Pedir acceso es público (sin sesión); la cuenta queda pendiente hasta que un admin la aprueba.
+	mux.HandleFunc("POST /api/solicitar-acceso", handlers.SolicitarAcceso(pool))
+	mux.HandleFunc("GET /api/usuarios", a.RequiereSesion(handlers.ListarUsuarios(pool)))
+	mux.HandleFunc("PUT /api/usuarios/{id}", a.RequiereSesion(handlers.EditarUsuario(pool)))
+	mux.HandleFunc("POST /api/usuarios/{id}/contrasena-nueva", a.RequiereSesion(handlers.GenerarContrasenaNueva(pool)))
 
 	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
 	// El orden de registro no importa: el mux siempre elige la ruta más específica.

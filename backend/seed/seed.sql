@@ -10,6 +10,7 @@
 --   cargador@celulas.test       Cargador del Campus UCC (lugar A)
 --   lector@celulas.test         Lector
 --   deshabilitado@celulas.test  Lector deshabilitado (para probar AUT-03)
+--   pendiente@celulas.test      Pidió acceso y espera aprobación (T16): no puede iniciar sesión
 --
 -- Las fechas son relativas al día en que se corre el seed: las células se plantaron hace 3 meses
 -- y tienen registros de los 3 meses anteriores; el mes actual está cargado solo en 2 de cada 3
@@ -43,12 +44,14 @@ INSERT INTO lugares (letra, nombre, tipo, localidad, latitud, longitud) VALUES
     ('B', 'Colegio de Alta Gracia', 'colegio',     'Alta Gracia',  -31.652900, -64.428300),
     ('C', 'Despeñaderos',           'colegio',     'Despeñaderos', -31.816700, -64.283300);
 
--- 2. Usuarios: uno por rol y uno deshabilitado.
+-- 2. Usuarios: uno por rol, uno deshabilitado y uno pendiente de aprobación.
 INSERT INTO usuarios (nombre, email, password_hash, rol, estado, lugar_id, institucion) VALUES
     ('Admin de Prueba',       'admin@celulas.test',         crypt('bosque1234', gen_salt('bf', 10)), 'admin',    'activo',        NULL,                                     'UCC Sostenible'),
     ('Cargador del Campus',   'cargador@celulas.test',      crypt('bosque1234', gen_salt('bf', 10)), 'cargador', 'activo',        (SELECT id FROM lugares WHERE letra = 'A'), 'Campus UCC'),
     ('Lector de Prueba',      'lector@celulas.test',        crypt('bosque1234', gen_salt('bf', 10)), 'lector',   'activo',        NULL,                                     'Colegio de Alta Gracia'),
-    ('Usuario Deshabilitado', 'deshabilitado@celulas.test', crypt('bosque1234', gen_salt('bf', 10)), 'lector',   'deshabilitado', NULL,                                     NULL);
+    ('Usuario Deshabilitado', 'deshabilitado@celulas.test', crypt('bosque1234', gen_salt('bf', 10)), 'lector',   'deshabilitado', NULL,                                     NULL),
+    -- Un pedido de acceso (T16): rol "lector" es solo de relleno hasta que el admin lo apruebe.
+    ('Usuario Pendiente',     'pendiente@celulas.test',     crypt('bosque1234', gen_salt('bf', 10)), 'lector',   'pendiente',     NULL,                                     'Colegio de Despeñaderos');
 
 -- 3. Fotos: 5 planos (uno por isleta) y 10 fotos de células que se reparten entre los registros.
 INSERT INTO fotos (ruta_r2, subida_por)

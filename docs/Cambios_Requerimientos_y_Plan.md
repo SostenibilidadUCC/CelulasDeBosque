@@ -31,7 +31,7 @@ Afecta al Plan:
 |---|---|
 | T20 · Lugares, isletas, planos (Persona A) | El formulario de lugar no pide "público". |
 | T22 · Página pública y QR (Persona C) | `GET /api/publico/{letra}` responde para cualquier lugar activo. Evaluar un endpoint que liste los lugares para elegir uno, sin mostrar avances uno al lado del otro (sin rankings). |
-| Migración 00005 | Hecho: borra la columna `es_publico`. Es 00005 porque la 00004 es de `t16-usuarios` (estado pendiente de usuarios): esa rama tiene que entrar a `main` antes que esta. |
+| Migración 00005 | Hecho: borra la columna `es_publico`. Es 00005 porque la 00004 es de T16 (estado pendiente de usuarios, PR #21): ese PR tiene que entrar a `main` antes que este. |
 
 Código cambiado: `backend/internal/handlers/fotos.go` (se sacó el filtro `l.es_publico`), `fotos_test.go`, `backend/seed/seed.sql`, `CLAUDE.md` (RN-15 y rol Público).
 
@@ -56,7 +56,7 @@ la exportación a Excel/CSV, la ficha completa, el plano de las isletas y el map
 
 ## 3. Página de presentación pública
 
-**Estado:** Hecho en la rama `ui-inicio-prueba`. Es un requerimiento nuevo: no está en los PDF.
+**Estado:** Hecho en la rama `ui-base-y-presentacion`. Es un requerimiento nuevo: no está en los PDF.
 
 - Ruta `/`: presentación para cualquier persona, con o sin sesión. Explica qué es una célula de bosque y cómo se
   sigue su crecimiento, con fotos de la plantación (galería de https://ucc.edu.ar/celulas-de-bosques).
@@ -68,7 +68,7 @@ la exportación a Excel/CSV, la ficha completa, el plano de las isletas y el map
 
 ## 4. Inicio según el rol
 
-**Estado:** Hecho en la rama `ui-inicio-prueba`. Objetivo: menos información y menos idas y vueltas.
+**Estado:** Hecho en la rama `ui-base-y-presentacion`. Objetivo: menos información y menos idas y vueltas.
 
 | Requerimiento | Cambio |
 |---|---|
@@ -79,7 +79,7 @@ la exportación a Excel/CSV, la ficha completa, el plano de las isletas y el map
 
 ## 5. Usuarios (T16): pedir acceso en lugar de invitaciones
 
-**Estado:** Hecho en la rama `t16-usuarios` (todavía no subida).
+**Estado:** Hecho en T16 (PR #21).
 
 | Requerimiento | Cambio |
 |---|---|
