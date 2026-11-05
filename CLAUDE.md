@@ -35,7 +35,7 @@ Somos tres estudiantes con poca experiencia. Cada semana, cada persona hace una 
 
 ## Documentación
 
-- `docs/Requerimientos_Celulas_de_Bosque_v5.pdf`: especificación completa. Cada requerimiento tiene un ID (AUT-01, CAR-06, RN-04…). Si un ticket nombra un ID, los criterios de aceptación están ahí.
+- `docs/Requerimientos_Celulas_de_Bosque_v6.md`: especificación completa (reemplaza a la v5 en PDF). Cada requerimiento tiene un ID (AUT-01, CAR-06, RN-04…). Si un ticket nombra un ID, los criterios de aceptación están ahí.
 - `docs/Plan_de_Trabajo_Equipo_v4.pdf`: tickets (T01 a T27), calendario y lista de endpoints.
 - `diseno/`: pantallas exportadas de Stitch (`code.html` + `screen.png`) y `DESIGN.md` con colores y tipografía.
 
@@ -112,7 +112,7 @@ Usá siempre estas palabras, en el código y en la interfaz:
 - **RN-10:** un lugar tiene como máximo un cargador activo.
 - **RN-12 y RN-13:** nunca se borran registros ni usuarios; se anulan o deshabilitan.
 - **RN-15:** todo lugar activo es visible sin sesión. Para ocultar un lugar se lo deshabilita (LUG-03). La columna `es_publico` se eliminó en la migración 00005.
-- **RN-17:** los tratamientos (maceta, bioestimulante, fertilizante) no se registran.
+- **Fuera de alcance (antes RN-17):** los tratamientos (maceta, bioestimulante, fertilizante) no se registran.
 
 ## Variables por individuo
 
@@ -193,7 +193,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exact
 - Contraseñas solo con bcrypt. Nunca en texto plano ni en logs.
 - La sesión es un token al azar en una cookie `HttpOnly`, `Secure` y `SameSite=Lax`, guardado en la tabla `sesiones`.
 - Al subir una foto, eliminá la ubicación GPS de los metadatos.
-- La foto se pide solo de la célula desde arriba (PRI-05).
+- La foto se pide solo de la célula desde arriba (PRI-03).
 
 ## Qué no hacer
 
@@ -205,20 +205,20 @@ Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exact
 
 ## Decisiones pendientes con la clienta
 
-Si un cambio depende de alguna de estas, avisá antes de asumir un valor:
+Si un cambio depende de alguna de estas, avisá antes de asumir un valor. Los números son los de la sección 13 de `docs/Requerimientos_Celulas_de_Bosque_v6.md`, donde está la lista completa:
 
-1. Si cada individuo tiene especie.
-3. Si hay señal de internet en los lotes (define si hace falta carga sin conexión).
-4. Qué 3 o 4 métricas se muestran en el resumen.
-5. Si la supervivencia principal es sobre los 4 individuos o solo el árbol.
-6. Si el cargador puede editar meses anteriores (por ahora, solo el admin).
-19. Cómo se mide el crecimiento de un individuo repuesto (propuesta: guardar una marca "repuesto" y medir desde la reposición).
+- Pregunta 2: si cada individuo tiene especie.
+- Pregunta 5: si hay señal de internet en los lotes (define si hace falta carga sin conexión).
+- Pendiente 4 (lo envía la clienta): qué 3 o 4 métricas se muestran en el resumen.
+- Pregunta 7: si la supervivencia principal es sobre los 4 individuos o solo el árbol.
+- Pregunta 9: si el cargador puede editar meses anteriores (por ahora, solo el admin).
+- Pregunta 19: cómo se mide el crecimiento de un individuo repuesto (propuesta: guardar una marca "repuesto" y medir desde la reposición).
 
 Ya respondidas:
 
 - La cuarta forma de vida es **Rastrera** y en ella se mide la **altura**. La tercera es **Gramínea** (antes Herbácea).
-- 2: un individuo muerto que se repone se habilita como vivo con "Cargar uno nuevo (reposición)" y sigue siendo el mismo individuo en la base (ver RN-09).
-- 7: la altura es un desplegable de 1 a 999 que arranca en la altura del mes anterior.
-- 8: las flores se cuentan de 0 a 100, con un desplegable de números exactos.
-- 9: nuevas plántulas es un campo simple Sí/No y no se carga si el individuo está muerto.
-- 10: diámetro y polinizadores se descartaron.
+- Un individuo muerto que se repone se habilita como vivo con "Cargar uno nuevo (reposición)" y sigue siendo el mismo individuo en la base (ver RN-09).
+- La altura es un desplegable de 1 a 999 que arranca en la altura del mes anterior.
+- Las flores se cuentan de 0 a 100, con un desplegable de números exactos.
+- Nuevas plántulas es un campo simple Sí/No y no se carga si el individuo está muerto.
+- Diámetro y polinizadores se descartaron.
