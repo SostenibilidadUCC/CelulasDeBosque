@@ -4,6 +4,7 @@ import { iniciarSesion } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import CampoTexto from '../../components/CampoTexto.jsx'
 import Icono from '../../components/Icono.jsx'
+import Tarjeta from '../../components/Tarjeta.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import { useSesion } from '../../sesion/useSesion.js'
 
@@ -40,65 +41,73 @@ export default function Login() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-6 px-4 py-8">
-      <header className="flex flex-col gap-2">
-        <Titulo nivel="lg">Ingresá a Células de Bosque</Titulo>
-        <p className="text-body-lg text-texto-2">
-          UCC Sostenible registra mes a mes cómo crecen las células de bosque del Campus y de los colegios.
-        </p>
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-6 px-4 py-10">
+      <header className="flex flex-col items-center gap-4 text-center">
+        <span className="flex size-16 items-center justify-center rounded-full bg-bosque text-white shadow-nivel-2">
+          <Icono nombre="park" tamano="grande" relleno />
+        </span>
+        <div className="flex flex-col gap-2">
+          <Titulo nivel="lg">Células de Bosque</Titulo>
+          <p className="text-body-lg text-texto-2">
+            UCC Sostenible registra mes a mes cómo crecen las células de bosque del Campus y de los colegios.
+          </p>
+        </div>
       </header>
 
-      <form onSubmit={enviar} className="flex flex-col gap-4">
-        <CampoTexto
-          etiqueta="Email"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+      <Tarjeta className="p-5 sm:p-6">
+        <form onSubmit={enviar} className="flex flex-col gap-4">
+          <h2 className="text-headline-sm font-semibold text-texto">Ingresá con tu cuenta</h2>
+          <CampoTexto
+            etiqueta="Email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            <CampoTexto
-              etiqueta="Contraseña"
-              type={verContrasena ? 'text' : 'password'}
-              autoComplete="current-password"
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
-              required
-            />
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <CampoTexto
+                etiqueta="Contraseña"
+                type={verContrasena ? 'text' : 'password'}
+                autoComplete="current-password"
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                required
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setVerContrasena((v) => !v)}
+              aria-label={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              className="flex size-12 shrink-0 items-center justify-center rounded-xl text-bosque hover:bg-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bosque-hover"
+            >
+              <Icono nombre={verContrasena ? 'visibility_off' : 'visibility'} />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setVerContrasena((v) => !v)}
-            aria-label={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-            className="flex size-12 shrink-0 items-center justify-center rounded-xl text-bosque hover:bg-tonal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bosque-hover"
-          >
-            <Icono nombre={verContrasena ? 'visibility_off' : 'visibility'} />
-          </button>
-        </div>
 
-        {/* Un 403 no es una equivocación de la persona: la cuenta espera aprobación o está pausada.
-            Se muestra como aviso (no como error) con el texto que manda el backend. */}
-        {error &&
-          (estadoError === 403 ? (
-            <p role="alert" className="flex items-start gap-2 rounded-xl bg-tonal p-3 text-body-md text-bosque">
-              <Icono nombre="schedule" className="shrink-0" />
-              {error}
-            </p>
-          ) : (
-            <p role="alert" className="flex items-center gap-2 rounded-xl bg-error-fondo p-3 text-body-md text-error-texto">
-              <Icono nombre="error" />
-              {error}
-            </p>
-          ))}
+          {/* Un 403 no es una equivocación de la persona: la cuenta espera aprobación o está pausada.
+              Se muestra como aviso (no como error) con el texto que manda el backend. */}
+          {error &&
+            (estadoError === 403 ? (
+              <p role="alert" className="flex items-start gap-2 rounded-xl bg-tonal p-3 text-body-md text-bosque">
+                <Icono nombre="schedule" className="shrink-0" />
+                {error}
+              </p>
+            ) : (
+              <p role="alert" className="flex items-center gap-2 rounded-xl bg-error-fondo p-3 text-body-md text-error-texto">
+                <Icono nombre="error" />
+                {error}
+              </p>
+            ))}
 
-        <Boton type="submit" cargando={enviando} textoCargando="Ingresando…">
-          Ingresar
-        </Boton>
-      </form>
+          <Boton type="submit" cargando={enviando} textoCargando="Ingresando…">
+            Ingresar
+          </Boton>
+        </form>
+      </Tarjeta>
 
       <p className="text-center text-body-md text-texto-2">¿No tenés cuenta?</p>
       <Boton variante="secundario" onClick={() => navigate('/pedir-acceso')}>

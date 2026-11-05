@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useId, useRef, useState } from 'react'
 import Icono from '../../components/Icono.jsx'
 import PanelInferior from '../../components/PanelInferior.jsx'
 import { scrollParaCentrar, valorACentrar, valoresDelRango } from './individuos.js'
@@ -60,12 +60,27 @@ export default function SelectorCentrado({ etiqueta, icono, valor, min, max, uni
   // se centra el valor calculando el scrollTop. No se usa scrollIntoView porque también movería la
   // página de atrás. La cuenta es exacta aunque las filas no estén dibujadas: todas reservan 48 px.
   // La fila del valor v es la número v − min (la lista arranca en min).
-  useEffect(() => {
-    if (!abierto || !lista.current) return
-    lista.current.focus({ preventScroll: true })
-    const indice = Math.max(aCentrar.current - min, 0)
-    lista.current.scrollTop = scrollParaCentrar(indice, ALTO_FILA, lista.current.clientHeight)
-  }, [abierto, min])
+  //
+  // Se hace en un "callback ref" (React lo llama cuando la lista aparece en la página) y no en un
+  // useEffect: el panel (Drawer de shadcn) monta la lista un momento después de abrirse, así que el
+  // useEffect la encontraba vacía y la lista quedaba arriba de todo, en 1 cm. Se repite en el
+  // próximo cuadro (requestAnimationFrame) por si la animación de apertura todavía no le dio alto.
+  // useCallback: que sea siempre la misma función; si no, React la llamaría en cada render y la
+  // lista volvería al centro cada vez que se mueve la fila activa con las flechas.
+  const alMontarLista = useCallback(
+    (nodo) => {
+      lista.current = nodo
+      if (!nodo) return
+      const centrar = () => {
+        const indice = Math.max(aCentrar.current - min, 0)
+        nodo.scrollTop = scrollParaCentrar(indice, ALTO_FILA, nodo.clientHeight)
+      }
+      nodo.focus({ preventScroll: true })
+      centrar()
+      requestAnimationFrame(centrar)
+    },
+    [min],
+  )
 
   // Mueve la fila activa y, si quedó fuera de la vista, scrollea lo justo para mostrarla.
   function moverA(indice) {
@@ -135,7 +150,7 @@ export default function SelectorCentrado({ etiqueta, icono, valor, min, max, uni
 
       <PanelInferior abierto={abierto} titulo={etiqueta} onCerrar={cerrar}>
         <ul
-          ref={lista}
+          ref={alMontarLista}
           id={idLista}
           role="listbox"
           tabIndex={0}

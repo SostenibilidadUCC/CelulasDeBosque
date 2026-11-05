@@ -4,7 +4,7 @@ import BotonesVivoMuerto from '../../components/BotonesVivoMuerto.jsx'
 import ChipEstado from '../../components/ChipEstado.jsx'
 import Icono from '../../components/Icono.jsx'
 import Titulo from '../../components/Titulo.jsx'
-import { mesEnMinuscula, nombreDelMes } from './fechas.js'
+import { mesEnMinuscula } from './fechas.js'
 import {
   ALTURA_MAX,
   ALTURA_MIN,
@@ -55,8 +55,8 @@ export default function BloqueIndividuo({
             Cargar uno nuevo (reposición)
           </Boton>
         ) : (
-          <Boton variante="texto" icono="undo" onClick={onElegirVivo}>
-            Cambiar a Vivo
+          <Boton variante="secundario" onClick={onElegirVivo}>
+            Volver a Vivo
           </Boton>
         )}
       </section>
@@ -79,18 +79,19 @@ export default function BloqueIndividuo({
       data-error={error ? 'true' : undefined}
       className="flex flex-col gap-3 rounded-2xl border border-borde bg-superficie p-4 shadow-nivel-1"
     >
-      <Titulo nivel="sm" como="h3" className="flex items-center gap-2">
-        <Icono nombre={forma.icono} className="text-bosque-hover" />
-        {forma.nombre}
-      </Titulo>
-
-      <BotonesVivoMuerto vivo={individuo.vivo} onChange={cambiarVivo} />
+      {/* Vivo / Muerto va chico, a la derecha del nombre: lo importante son los datos de abajo. */}
+      <div className="flex items-center justify-between gap-2">
+        <Titulo nivel="sm" como="h3" className="flex min-w-0 items-center gap-2">
+          <Icono nombre={forma.icono} className="text-bosque-hover" />
+          {forma.nombre}
+        </Titulo>
+        <BotonesVivoMuerto vivo={individuo.vivo} onChange={cambiarVivo} />
+      </div>
 
       {individuo.vivo === true && (
         <>
           <SelectorCentrado
             etiqueta="Altura"
-            icono="height"
             valor={individuo.alturaCm}
             min={ALTURA_MIN}
             max={ALTURA_MAX}
@@ -102,7 +103,6 @@ export default function BloqueIndividuo({
           <ReferenciaAltura referencia={referencia} alturaCm={individuo.alturaCm} />
           <SelectorCentrado
             etiqueta="Cantidad de flores"
-            icono="filter_vintage"
             valor={individuo.flores}
             min={FLORES_MIN}
             max={FLORES_MAX}
@@ -111,13 +111,11 @@ export default function BloqueIndividuo({
           />
           <BotonesSiNo
             etiqueta="Presencia de frutos"
-            icono="nutrition"
             valor={individuo.frutos}
             onChange={(valor) => onCambiar({ frutos: valor })}
           />
           <BotonesSiNo
             etiqueta="Nuevas plántulas"
-            icono="psychiatry"
             valor={individuo.plantulasNuevas}
             onChange={(valor) => onCambiar({ plantulasNuevas: valor })}
           />
@@ -134,34 +132,25 @@ export default function BloqueIndividuo({
   )
 }
 
-// Ícono y texto de la diferencia: nunca solo color (frontend/CLAUDE.md). "−" es el signo menos
-// tipográfico, que se lee mejor que el guion.
-function textoDiferencia(diferencia) {
-  if (diferencia > 0) return { icono: 'arrow_upward', texto: `+${diferencia}` }
-  if (diferencia < 0) return { icono: 'arrow_downward', texto: `−${-diferencia}` }
-  return { icono: 'drag_handle', texto: 'sin cambios' }
-}
-
-// CAR-07 y CAR-10: debajo del selector de altura, la altura del mes anterior con la diferencia
-// ("Septiembre: 173 cm · +12") y, si el cambio es brusco, un aviso que no bloquea.
+// CAR-07 y CAR-10: debajo del selector de altura, solo la altura del mes anterior
+// ("En septiembre: 173 cm"), sin la diferencia: la cuenta la hace cada uno mirando los dos números
+// (decisión de Magda, 2/11/2026). Si el cambio es brusco, además aparece un aviso que no bloquea.
 // Va en texto-2 (no texto-3) porque se tiene que leer a pleno sol.
 function ReferenciaAltura({ referencia, alturaCm }) {
   const diferencia = diferenciaDeAltura(alturaCm, referencia?.alturaCm ?? null)
   if (diferencia == null) {
-    // No hay anterior, el individuo no tenía altura (muerto o reposición), o falta elegir la altura.
-    return <p className="-mt-2 text-right text-body-sm text-texto-2">Sin altura anterior</p>
+    // No hay anterior, el individuo no tenía altura (muerto o reposición), o falta elegir la altura:
+    // no se muestra nada (un "Sin altura anterior" es un dato más para leer que no aporta).
+    return null
   }
 
-  const { icono, texto } = textoDiferencia(diferencia)
   const aviso = avisoDeAltura(alturaCm, referencia.alturaCm)
   const mes = mesEnMinuscula(referencia.periodo)
 
   return (
     <>
-      <p className="-mt-2 flex items-center justify-end gap-1 text-body-sm text-texto-2 tabular-nums">
-        {nombreDelMes(referencia.periodo)}: {referencia.alturaCm} cm ·
-        <Icono nombre={icono} tamano="chip" />
-        {texto}
+      <p className="-mt-2 text-right text-body-sm text-texto-2 tabular-nums">
+        En {mes}: {referencia.alturaCm} cm
       </p>
       {aviso && (
         <p

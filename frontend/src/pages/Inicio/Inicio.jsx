@@ -44,8 +44,9 @@ export default function Inicio() {
 
   return (
     <div className="flex flex-col gap-6 py-4">
-      {/* INI-01: saludo. El lector no ve un aviso de solo lectura: simplemente no tiene botones de carga. */}
-      <Titulo className="font-titulo">Hola, {usuario.nombre}</Titulo>
+      {/* INI-01: el cargador ve el nombre de su lugar como título (así la tarjeta verde no lo repite);
+          el admin y el lector, el saludo. El lector no tiene botones de carga ni aviso de solo lectura. */}
+      <Titulo className="font-titulo">{usuario.lugar?.nombre && miLugarId ? usuario.lugar.nombre : `Hola, ${usuario.nombre}`}</Titulo>
 
       <Contenido carga={carga} reintentar={reintentar} miLugarId={miLugarId} />
     </div>
@@ -79,14 +80,11 @@ function Contenido({ carga, reintentar, miLugarId }) {
     return (
       <BlurFade className="flex flex-col gap-4">
         <TarjetaCargaDelMes
-          lugarId={miLugar.id}
           cargadas={miLugar.avance.cargadas}
           total={miLugar.avance.total}
           periodo={periodo}
           diasHastaVencimiento={diasHastaVencimiento}
         />
-        {/* Su lugar, con la marca "Tu lugar". Toda la tarjeta lleva a sus células. */}
-        <TarjetaLugar lugar={miLugar} esMio />
       </BlurFade>
     )
   }

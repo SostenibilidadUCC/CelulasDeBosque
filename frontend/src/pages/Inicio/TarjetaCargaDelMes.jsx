@@ -1,13 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { obtenerCelulasDeLugar } from '../../api.js'
-import Boton from '../../components/Boton.jsx'
 import Icono from '../../components/Icono.jsx'
-import MensajeError from '../../components/MensajeError.jsx'
 import { DotPattern } from '../../components/ui/dot-pattern.jsx'
 import { NumberTicker } from '../../components/ui/number-ticker.jsx'
 import { ShineBorder } from '../../components/ui/shine-border.jsx'
-import { buscarProximaCelula } from '../Carga/proximaCelula.js'
 import BarraAvance from './BarraAvance.jsx'
 import { nombreDelPeriodo } from './avance.js'
 
@@ -23,31 +17,11 @@ function textoCierre(dias) {
 }
 
 // INI-02: avance de carga del mes del lugar del cargador, con un solo dato (lo que falta)
-// y el botón que lleva directo a la próxima célula para cargar.
-export default function TarjetaCargaDelMes({ lugarId, cargadas, total, periodo, diasHastaVencimiento }) {
-  const navigate = useNavigate()
-  const [buscando, setBuscando] = useState(false)
-  const [error, setError] = useState(null)
+// Sin botón para cargar: eso es el botón Cargar de la barra (un solo camino para cargar).
+export default function TarjetaCargaDelMes({ cargadas, total, periodo, diasHastaVencimiento }) {
 
   const mes = nombreDelPeriodo(periodo).split(' ')[0] // "octubre"
   const faltan = total - cargadas
-
-  // Lleva directo a la próxima célula para cargar (la misma búsqueda que el botón Cargar de la barra).
-  async function seguirCargando() {
-    setBuscando(true)
-    setError(null)
-    try {
-      const celulaId = await buscarProximaCelula(lugarId, obtenerCelulasDeLugar)
-      if (celulaId != null) {
-        navigate(`/cargar/${celulaId}`)
-        return
-      }
-      setError({ message: 'No encontramos células para cargar. Probá de nuevo en un rato.' })
-    } catch (e) {
-      setError(e)
-    }
-    setBuscando(false)
-  }
 
   // Tarjeta en verde bosque con el número grande en la tipografía de títulos,
   // para que sea lo primero que se ve.
@@ -105,24 +79,11 @@ export default function TarjetaCargaDelMes({ lugarId, cargadas, total, periodo, 
         claseRiel="bg-bosque-hover"
       />
 
-      {error ? (
-        <MensajeError mensaje={error.message} onReintentar={seguirCargando} />
-      ) : (
-        <Boton
-          variante="secundario"
-          className="border-0!"
-          cargando={buscando}
-          textoCargando="Buscando…"
-          onClick={seguirCargando}
-        >
-          {/* "Seguir" solo tiene sentido si ya cargó alguna este mes. */}
-          {cargadas === 0 ? 'Empezar a cargar' : 'Seguir cargando'}
-        </Boton>
-      )}
       </div>
     </div>
   )
 }
+
 
 // DotPattern (Magic UI): puntitos blancos muy tenues, que se desvanecen hacia la izquierda
 // para que el texto quede sobre fondo liso. Es solo textura: no se mueve ni dice nada.

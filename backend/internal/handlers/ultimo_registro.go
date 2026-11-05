@@ -143,10 +143,30 @@ func buscarRegistro(ctx context.Context, pool *pgxpool.Pool, consulta string, ce
 	return &reg, nil
 }
 
+// periodoPedido devuelve el mes que pide la pantalla de carga con ?periodo=2026-09.
+// Sin el parámetro es el mes actual (la carga mensual de siempre). Con un mes anterior se abre
+// ese registro para editarlo desde la ficha: si se puede guardar o no lo decide PUT /api/registros
+// (solo el admin edita meses anteriores). Un mes futuro o un texto con otro formato es un error.
+// time.ParseInLocation lee "2026-09" como el día 1 de ese mes, en la misma zona que el mes actual.
+func periodoPedido(texto string, actual time.Time) (time.Time, error) {
+	if texto == "" {
+		return actual, nil
+	}
+	periodo, err := time.ParseInLocation("2006-01", texto, actual.Location())
+	if err != nil {
+		return time.Time{}, err
+	}
+	if periodo.After(actual) {
+		return time.Time{}, errors.New("el mes pedido es futuro")
+	}
+	return periodo, nil
+}
+
 // ---------- PARTE C: el handler ----------
 
 // UltimoRegistro atiende GET /api/celulas/{id}/ultimo-registro (T14): la célula, el registro del
 // período en curso (para editarlo) y el último registro anterior (para precargar la carga mensual).
+// Con ?periodo=2026-09 devuelve el registro de ese mes y el anterior a ese (editar desde la ficha).
 // Va envuelta en RequiereSesion: cualquier rol con sesión puede verlo.
 func UltimoRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -193,9 +213,16 @@ func UltimoRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 		// 2. El período en curso, en hora de Córdoba.
 		periodo := estados.PeriodoActual(time.Now())
 		respuesta.PeriodoActual = periodo.Format("2006-01")
-		periodoTexto := periodo.Format("2006-01-02") // así lo recibe el SQL ($2::date)
 
-		// 3. El registro de este mes y el último de un mes anterior.
+		// 3. El mes que se abre: el actual o el que vino en ?periodo= (siempre de antes).
+		pedido, err := periodoPedido(r.URL.Query().Get("periodo"), periodo)
+		if err != nil {
+			respuestas.Error(w, http.StatusBadRequest, "El mes pedido no es válido")
+			return
+		}
+		periodoTexto := pedido.Format("2006-01-02") // así lo recibe el SQL ($2::date)
+
+		// 4. El registro de ese mes y el último de un mes anterior a ese.
 		respuesta.Actual, err = buscarRegistro(ctx, pool, consultaRegistroActual, id, periodoTexto)
 		if err != nil {
 			log.Printf("ultimo-registro: no se pudo leer el registro actual de la célula %d: %v", id, err)
@@ -209,7 +236,7 @@ func UltimoRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		// 4. El catálogo de formas de vida (nombre e ícono), en orden de 1 a 4.
+		// 5. El catálogo de formas de vida (nombre e ícono), en orden de 1 a 4.
 		filas, err := pool.Query(ctx, `SELECT id, nombre, icono FROM formas_de_vida ORDER BY id`)
 		if err != nil {
 			log.Printf("ultimo-registro: no se pudieron leer las formas de vida: %v", err)

@@ -1,7 +1,8 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { mesCorto } from '../Ficha/formato.js'
 
-const estiloEjes = { fontSize: 12, fill: 'var(--color-texto-3)' }
+// 14 px: el mínimo de texto de la app (body-sm), porque la usa gente mayor.
+const estiloEjes = { fontSize: 14, fill: 'var(--color-texto-3)' }
 const estiloTooltip = { borderRadius: 12, border: '1px solid var(--color-borde)', boxShadow: 'var(--shadow-nivel-2)', fontSize: 14 }
 
 // RES-05: tasa de supervivencia de cada mes. Es una sola serie, así que va en color bosque
@@ -15,7 +16,7 @@ export default function GraficoSupervivencia({ evolucion }) {
         <LineChart data={datos} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
           <CartesianGrid vertical={false} stroke="var(--color-borde)" />
           <XAxis dataKey="mes" tick={estiloEjes} tickLine={false} axisLine={false} />
-          <YAxis tick={estiloEjes} tickLine={false} axisLine={false} domain={[0, 100]} unit=" %" />
+          <YAxis tick={estiloEjes} tickLine={false} axisLine={false} domain={[0, 100]} unit=" %" width={64} />
           <Tooltip
             formatter={(valor) => [`${valor.toLocaleString('es-AR')} %`, 'Supervivencia']}
             contentStyle={estiloTooltip}

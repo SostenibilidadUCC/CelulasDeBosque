@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 // Grilla del plano de una isleta (T12). Recibe todo por props para que la puedan reutilizar
 // Nueva célula (T17) y Lugares e isletas (T20).
@@ -19,7 +19,8 @@ import { useRef } from 'react'
 const estilosCelda = {
   'al-dia': 'bg-bosque-hover text-white',
   'fuera-de-termino': 'bg-bosque-hover text-white ring-2 ring-inset ring-pendiente-borde',
-  pendiente: 'bg-pendiente-celda text-pendiente-texto',
+  // Ámbar claro, el mismo del chip Pendiente: se distingue sin llamar tanto la atención.
+  pendiente: 'border border-pendiente-borde bg-pendiente text-pendiente-texto',
   'sin-registro': 'border border-gris-borde bg-gris-suave text-texto-2',
   baja: 'border border-gris-borde bg-gris-suave text-texto-3 line-through',
 }
@@ -53,6 +54,7 @@ export default function Plano({
   // Zoom con dos dedos: al apoyar dos dedos se guarda la distancia entre ellos y el tamaño de la celda;
   // al moverlos, el tamaño cambia en la misma proporción que la distancia.
   const pellizco = useRef(null)
+  const [fotoFallo, setFotoFallo] = useState(false)
   const distancia = (toques) => Math.hypot(toques[0].clientX - toques[1].clientX, toques[0].clientY - toques[1].clientY)
 
   function alEmpezarToque(e) {
@@ -70,6 +72,10 @@ export default function Plano({
   // Para encontrar rápido qué célula hay en cada posición: "fila-columna" → célula.
   const porPosicion = new Map(celulas.map((c) => [`${c.fila}-${c.columna}`, c]))
   const hayEstados = celulas.some((c) => c.estado && c.estado !== 'baja')
+  // La leyenda solo explica lo que se ve en este plano: los estados que tiene alguna célula
+  // y "Sin célula" si quedan celdas libres.
+  const estadosEnElPlano = leyenda.filter((e) => celulas.some((c) => c.estado === e))
+  const hayLibres = filas * columnas > celulas.length
 
   const celdas = []
   for (let fila = 1; fila <= filas; fila++) {
@@ -117,16 +123,18 @@ export default function Plano({
     <div className="flex flex-col gap-3">
       {mostrarLeyenda && hayEstados && (
         <ul className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Referencias del plano">
-          {leyenda.map((e) => (
+          {estadosEnElPlano.map((e) => (
             <li key={e} className="flex items-center gap-2 text-body-sm text-texto-2">
               <span aria-hidden="true" className={`size-4 rounded ${estilosCelda[e]}`} />
               {textosEstado[e]}
             </li>
           ))}
-          <li className="flex items-center gap-2 text-body-sm text-texto-2">
-            <span aria-hidden="true" className="size-4 rounded bg-borde/60" />
-            Sin célula
-          </li>
+          {hayLibres && (
+            <li className="flex items-center gap-2 text-body-sm text-texto-2">
+              <span aria-hidden="true" className="size-4 rounded bg-borde/60" />
+              Sin célula
+            </li>
+          )}
         </ul>
       )}
 
@@ -144,8 +152,15 @@ export default function Plano({
         }}
       >
         <div className="relative w-max">
-          {imagenUrl && (
-            <img src={imagenUrl} alt="Foto aérea de la isleta" className="absolute inset-0 size-full rounded-xl object-cover" />
+          {/* Si la foto no carga, se oculta: si no, el navegador muestra su texto alternativo
+              y el ícono de imagen rota detrás de las celdas. */}
+          {imagenUrl && !fotoFallo && (
+            <img
+              src={imagenUrl}
+              alt="Foto aérea de la isleta"
+              onError={() => setFotoFallo(true)}
+              className="absolute inset-0 size-full rounded-xl object-cover"
+            />
           )}
           {/* El tamaño de la grilla depende de cada isleta: por eso va en style (es un valor calculado). */}
           <div

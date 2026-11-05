@@ -1,77 +1,36 @@
-import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router'
+import Acordeon from '../../components/Acordeon.jsx'
 import Boton from '../../components/Boton.jsx'
-import Icono from '../../components/Icono.jsx'
-import Tarjeta from '../../components/Tarjeta.jsx'
 import FotoRegistro from './FotoRegistro.jsx'
-import { fechaCorta } from './formato.js'
+import { fechaCorta, periodoLargo } from './formato.js'
 
-// FIC-04 y FIC-05: carrusel de los registros, del más viejo al más nuevo, con foto, fecha,
-// alturas y quién cargó. Al tocar la foto se amplía (onAmpliar). "Editar" solo si puedeEditar.
-export default function LineaDeTiempo({ celulaId, individuos, registros, onAmpliar }) {
+// FIC-04 y FIC-05: lista de los registros, del más nuevo al más viejo. Cada mes se abre al tocarlo
+// y muestra la foto, las observaciones, quién cargó y "Editar" (solo si puedeEditar).
+// Es una lista vertical (Acordeon) y no un carrusel: deslizar de costado no se descubre solo.
+// Las alturas de cada mes no se repiten acá: están en las tarjetas de individuos y en el gráfico.
+export default function LineaDeTiempo({ celulaId, registros }) {
   const navigate = useNavigate()
-  const carrusel = useRef(null)
 
-  // Arranca mostrando el último mes, que es el que más interesa.
-  useEffect(() => {
-    if (carrusel.current) carrusel.current.scrollLeft = carrusel.current.scrollWidth
-  }, [registros])
+  // .toReversed() devuelve una copia dada vuelta, sin cambiar la lista original.
+  const items = registros.toReversed().map((registro) => ({
+    pregunta: `${periodoLargo(registro.periodo)}${registro.esInicial ? ' · Inicial' : ''}`,
+    respuesta: (
+      <div className="flex flex-col gap-3">
+        <FotoRegistro fotoId={registro.fotoId} descripcion={`Foto del ${fechaCorta(registro.fecha)}`} className="max-w-md" />
+        <p className="text-body-md text-texto-2 tabular-nums">Medido el {fechaCorta(registro.fecha)}</p>
+        {registro.observaciones && <p className="text-body-md text-texto">“{registro.observaciones}”</p>}
+        <p className="text-body-sm text-texto-3">
+          Cargó: {registro.cargadoPor}
+          {registro.modificadoPor && ` · Modificó: ${registro.modificadoPor}`}
+        </p>
+        {registro.puedeEditar && (
+          <Boton variante="secundario" onClick={() => navigate(`/cargar/${celulaId}?periodo=${registro.periodo}`)}>
+            Editar registro
+          </Boton>
+        )}
+      </div>
+    ),
+  }))
 
-  return (
-    <div ref={carrusel} className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2">
-      {registros.map((registro) => (
-        <Tarjeta key={registro.id} className="flex w-64 shrink-0 snap-start flex-col gap-3">
-          <button
-            type="button"
-            onClick={() => onAmpliar(registro)}
-            aria-label={`Ver más grande la foto del ${fechaCorta(registro.fecha)}`}
-            className="rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bosque-hover"
-          >
-            <FotoRegistro fotoId={registro.fotoId} descripcion={`Foto del ${fechaCorta(registro.fecha)}`} />
-          </button>
-
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-label-lg font-semibold text-texto tabular-nums">{fechaCorta(registro.fecha)}</p>
-            {registro.esInicial && (
-              <span className="rounded-full bg-tonal px-2 py-0.5 text-label-sm font-semibold text-bosque">Inicial</span>
-            )}
-          </div>
-
-          <ul className="flex flex-col gap-1">
-            {individuos.map((ind) => {
-              const valor = registro.individuos.find((i) => i.formaDeVida === ind.formaDeVida)
-              return (
-                <li key={ind.formaDeVida} className="flex items-center gap-2 text-body-md text-texto-2">
-                  <Icono nombre={ind.icono} tamano="chico" className="text-bosque" />
-                  <span className="flex-1">{ind.nombre}</span>
-                  <span className="tabular-nums">
-                    {valor?.vivo ? `${valor.alturaCm} cm` : valor ? 'Muerto' : 'Sin datos'}
-                  </span>
-                </li>
-              )
-            })}
-          </ul>
-
-          {registro.observaciones && <p className="text-body-sm text-texto-2">“{registro.observaciones}”</p>}
-
-          <p className="text-body-sm text-texto-3">
-            Cargó: {registro.cargadoPor}
-            {registro.modificadoPor && (
-              <>
-                <br />
-                Modificó: {registro.modificadoPor}
-              </>
-            )}
-          </p>
-
-          {registro.puedeEditar && (
-            // La carga en modo edición es el T14 de Cande: ella define cómo lee ?registro=.
-            <Boton variante="secundario" icono="edit" onClick={() => navigate(`/cargar/${celulaId}?registro=${registro.id}`)} className="mt-auto">
-              Editar
-            </Boton>
-          )}
-        </Tarjeta>
-      ))}
-    </div>
-  )
+  return <Acordeon items={items} />
 }

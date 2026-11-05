@@ -74,6 +74,9 @@ export const obtenerCelula = (id) => pedir(`/celulas/${id}`)
 // T14: carga mensual. Devuelve { celula, periodoActual, actual, anterior }:
 // actual es el registro de este mes (o null) y anterior el último de un mes anterior (o null).
 export const obtenerUltimoRegistro = (celulaId) => pedir(`/celulas/${celulaId}/ultimo-registro`)
+// El registro de un mes anterior ("2026-09"), para editarlo desde la ficha. Mismo formato que el de arriba.
+export const obtenerRegistroDelMes = (celulaId, periodo) =>
+  pedir(`/celulas/${celulaId}/ultimo-registro?periodo=${encodeURIComponent(periodo)}`)
 // T14: guardar el registro. datos = { fecha, fotoId, observaciones, individuos } (ver pages/Carga/pedido.js).
 // Las dos responden { id }. Si ya hay registro de ese mes, crearRegistro falla con un ErrorApi 409
 // y el id del existente viene en error.datos?.registroId.
