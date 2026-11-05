@@ -10,6 +10,7 @@ import Modal from '../../components/Modal.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
 import FotoRegistro from './FotoRegistro.jsx'
+import FotosMesAMes from './FotosMesAMes.jsx'
 import GraficoEvolucion from './GraficoEvolucion.jsx'
 import LineaDeTiempo from './LineaDeTiempo.jsx'
 import TarjetaIndividuo from './TarjetaIndividuo.jsx'
@@ -72,24 +73,27 @@ export default function Ficha() {
 
   const celula = carga.datos
   const { registros } = celula
-  const ultimo = registros.at(-1) // el registro más nuevo (vienen del más viejo al más nuevo)
+  // La foto del encabezado: la del registro más nuevo que tenga foto (vienen del más viejo al más nuevo).
+  const ultimoConFoto = registros.findLast((r) => r.fotoId != null)
 
   return (
     <div className="flex flex-col gap-6 py-4">
-      {/* FIC-01: encabezado. Arriba, la foto del último registro (se amplía al tocarla). */}
+      {/* FIC-01: encabezado. Arriba, la última foto (se amplía al tocarla). */}
       <header className="flex flex-col gap-4 rounded-2xl border border-borde bg-superficie p-4 shadow-nivel-1 sm:p-5 md:grid md:grid-cols-2 md:items-center md:gap-6">
-        {ultimo?.fotoId != null && !fotoFallo && (
+        {ultimoConFoto && !fotoFallo && (
           <button
             type="button"
-            onClick={() => setFotoAmpliada(ultimo)}
-            aria-label={`Ver más grande la foto del ${fechaCorta(ultimo.fecha)}`}
+            onClick={() => setFotoAmpliada(ultimoConFoto)}
+            aria-label={`Ver más grande la foto del ${fechaCorta(ultimoConFoto.fecha)}`}
             className="relative block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bosque-hover"
           >
-            <FotoRegistro fotoId={ultimo.fotoId} descripcion={`Foto de la célula ${celula.codigo}, ${fechaCorta(ultimo.fecha)}`}
+            <FotoRegistro
+              fotoId={ultimoConFoto.fotoId}
+              descripcion={`Foto de la célula ${celula.codigo}, ${fechaCorta(ultimoConFoto.fecha)}`}
               onFallo={() => setFotoFallo(true)}
             />
             <span className="absolute bottom-3 left-3 rounded-full bg-superficie/90 px-3 py-1 text-label-sm font-semibold text-texto tabular-nums">
-              {fechaCorta(ultimo.fecha)}
+              {fechaCorta(ultimoConFoto.fecha)}
             </span>
           </button>
         )}
@@ -102,7 +106,7 @@ export default function Ficha() {
             <ChipEstado estado={celula.estado} />
           </div>
           <nav aria-label="Migas de pan" className="text-body-md text-texto-2">
-            {celula.lugar.nombre} ·{" "}
+            {celula.lugar.nombre} ·{' '}
             <Link to={`/isletas/${celula.isleta.id}`} className="text-bosque underline underline-offset-2">
               Isleta {celula.isleta.numero}
             </Link>
@@ -140,6 +144,9 @@ export default function Ficha() {
             <Titulo nivel="md">Registros</Titulo>
             <LineaDeTiempo celulaId={celula.id} registros={registros} />
           </section>
+
+          {/* FIC-07: todas las fotos, mes por mes, para ver el avance. */}
+          <FotosMesAMes registros={registros} codigo={celula.codigo} onAmpliar={setFotoAmpliada} />
         </>
       )}
 

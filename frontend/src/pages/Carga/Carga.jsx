@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import {
   crearRegistro,
   modificarRegistro,
   obtenerCelulasDeLugar,
+  obtenerRegistroDelMes,
   obtenerSiguientePendiente,
   obtenerUltimoRegistro,
 } from '../../api.js'
@@ -30,20 +31,23 @@ import { armarPedido } from './pedido.js'
 import { alturasSinCambio, errorDeFoto, errorDeIndividuoConCampo, esFormularioValido } from './validacion.js'
 
 // Pantalla de carga mensual (T14). Ruta: /cargar/:celulaId.
+// Con ?periodo=2026-09 abre el registro de ese mes para editarlo (el botón "Editar registro" de la ficha).
 // Fecha, foto, los 4 individuos, observaciones y el guardado, todo dentro de FormularioCarga.
 export default function Carga() {
   const { celulaId } = useParams()
+  const [parametros] = useSearchParams()
+  const periodo = parametros.get('periodo') // null: el mes actual
 
   // /cargar sin célula (el botón "Carga mensual" de Inicio lleva acá).
   if (!celulaId) return <SinCelula />
 
-  // key={celulaId}: si se pasa a otra célula, la pantalla arranca de cero (datos y fecha nuevos).
-  return <CargaDeCelula key={celulaId} celulaId={celulaId} />
+  // key: si se pasa a otra célula (o a otro mes), la pantalla arranca de cero (datos y fecha nuevos).
+  return <CargaDeCelula key={`${celulaId}-${periodo}`} celulaId={celulaId} periodo={periodo} />
 }
 
 // Pide los datos de la célula y decide qué mostrar: cargando, error, no existe,
 // sin permiso, dada de baja o el formulario.
-function CargaDeCelula({ celulaId }) {
+function CargaDeCelula({ celulaId, periodo }) {
   const navigate = useNavigate()
 
   const [carga, setCarga] = useState({ cargando: true })
@@ -52,7 +56,8 @@ function CargaDeCelula({ celulaId }) {
   useEffect(() => {
     // "cancelado" evita guardar la respuesta si el usuario ya salió de la pantalla.
     let cancelado = false
-    obtenerUltimoRegistro(celulaId)
+    const pedido = periodo ? obtenerRegistroDelMes(celulaId, periodo) : obtenerUltimoRegistro(celulaId)
+    pedido
       .then((datos) => {
         if (!cancelado) setCarga({ datos })
       })
@@ -62,7 +67,7 @@ function CargaDeCelula({ celulaId }) {
     return () => {
       cancelado = true
     }
-  }, [celulaId, intento])
+  }, [celulaId, periodo, intento])
 
   function reintentar() {
     setCarga({ cargando: true })
@@ -276,6 +281,19 @@ function FormularioCarga({ datos, onRecargar }) {
       setErrorGuardado(mensajeDeGuardado(error, { fechaEsDelMesActual: periodo === periodoActual }))
       enviando.current = false
       setGuardando(false)
+      return
+    }
+
+    // Si se editó un mes anterior (desde la ficha), se vuelve a la ficha: no tiene sentido saltar
+    // a la próxima célula pendiente de este mes.
+    if (editando && actual.periodo !== periodoActual) {
+      enviando.current = false
+      setGuardando(false)
+      toast.success(`Registro de ${mesEnMinuscula(actual.periodo)} guardado`)
+      // Se vuelve atrás (a la ficha de donde vino) para no dejar la ficha dos veces en el historial.
+      // Si la carga se abrió directo desde un enlace, no hay "atrás": se va a la ficha.
+      if (window.history.state?.idx > 0) navigate(-1)
+      else navigate(`/celulas/${celula.id}`, { replace: true })
       return
     }
 

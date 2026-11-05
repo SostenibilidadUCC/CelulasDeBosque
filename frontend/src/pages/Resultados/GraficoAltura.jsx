@@ -2,7 +2,8 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 import PuntoGrafico from '../../components/PuntoGrafico.jsx'
 import { colorDeForma, mesCorto } from '../Ficha/formato.js'
 
-const estiloEjes = { fontSize: 12, fill: 'var(--color-texto-3)' }
+// 14 px: el mínimo de texto de la app (body-sm), porque la usa gente mayor.
+const estiloEjes = { fontSize: 14, fill: 'var(--color-texto-3)' }
 const estiloTooltip = { borderRadius: 12, border: '1px solid var(--color-borde)', boxShadow: 'var(--shadow-nivel-2)', fontSize: 14 }
 
 // RES-04: altura promedio de los individuos vivos por mes, una línea por forma de vida.

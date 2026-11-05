@@ -24,7 +24,7 @@ export default function LineaDeTiempo({ celulaId, registros }) {
           {registro.modificadoPor && ` · Modificó: ${registro.modificadoPor}`}
         </p>
         {registro.puedeEditar && (
-          <Boton variante="secundario" onClick={() => navigate(`/cargar/${celulaId}?registro=${registro.id}`)}>
+          <Boton variante="secundario" onClick={() => navigate(`/cargar/${celulaId}?periodo=${registro.periodo}`)}>
             Editar registro
           </Boton>
         )}
