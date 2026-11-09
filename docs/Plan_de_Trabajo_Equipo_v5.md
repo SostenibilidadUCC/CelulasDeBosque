@@ -3,8 +3,8 @@
 **Plataforma de Seguimiento de Células de Bosque** · UCC Sostenible
 Versión 5 · 9 de noviembre de 2026 · Go + React + PostgreSQL
 
-> La v5 reemplaza a `Plan_de_Trabajo_Equipo_v4.pdf`. Usa los IDs de
-> `Requerimientos_Celulas_de_Bosque_v6.md` y aplica los cambios de `Cambios_Requerimientos_y_Plan.md`.
+> La v5 reemplaza a `Plan_de_Trabajo_Equipo_v4.pdf` (borrado: está en la historia de Git). Usa los IDs de
+> `Requerimientos_Celulas_de_Bosque_v6.md`.
 
 ## Qué cambió respecto del plan v4
 

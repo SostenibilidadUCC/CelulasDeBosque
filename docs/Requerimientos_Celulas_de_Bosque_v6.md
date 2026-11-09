@@ -4,8 +4,8 @@
 Programa UCC Sostenible · Universidad Católica de Córdoba
 Versión 6 · noviembre de 2026
 
-> La v6 reemplaza a `Requerimientos_Celulas_de_Bosque_v5.pdf`. Aplica los cambios de
-> `Cambios_Requerimientos_y_Plan.md` y el rediseño de noviembre de 2026: menos información, sin botones
+> La v6 reemplaza a `Requerimientos_Celulas_de_Bosque_v5.pdf` (borrado: está en la historia de Git). Aplica los
+> cambios decididos en octubre y noviembre de 2026 y el rediseño: menos información, sin botones
 > repetidos y fácil de usar para personas mayores. Lo descartado se borró del documento.
 
 **Cómo leer este documento:** cada requerimiento tiene un ID único que se usa en los tickets. La prioridad es
