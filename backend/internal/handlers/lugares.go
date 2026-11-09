@@ -17,7 +17,7 @@ type isletaDeLugar struct {
 	Nombre *string `json:"nombre"` // puntero: el nombre es opcional y sale null si no tiene
 }
 
-// avanceDelMes es el avance de carga del mes (sección 7 del documento v4):
+// avanceDelMes es el avance de carga del mes (INI-02 de los requerimientos v6):
 // células con registro del período actual sobre células activas.
 type avanceDelMes struct {
 	Cargadas int `json:"cargadas"`

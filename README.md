@@ -67,7 +67,7 @@ docker exec -it celulas-db psql -U celulas -c '\dt'
 
 ### 4. Datos de prueba
 
-Cuando exista `backend/seed/seed.sql` (ticket T06):
+Con las migraciones aplicadas (el seed borra los datos y los vuelve a crear):
 
 ```bash
 docker exec -i celulas-db psql -U celulas < backend/seed/seed.sql
@@ -75,7 +75,7 @@ docker exec -i celulas-db psql -U celulas < backend/seed/seed.sql
 
 ### 5. Backend
 
-Cuando exista `backend/main.go` (ticket T03):
+Con la base prendida y las variables de entorno cargadas:
 
 ```bash
 cd backend && go run .        # queda en http://localhost:8080

@@ -16,7 +16,7 @@
 -- y tienen registros de los 3 meses anteriores; el mes actual está cargado solo en 2 de cada 3
 -- células. Así el plano siempre muestra células "al día" y "pendientes", corras el seed cuando lo corras.
 --
--- Casos especiales para probar estados (sección 5 del documento v4):
+-- Casos especiales para probar estados (sección 5 de los requerimientos v6):
 --   A-2-18, A-2-19 y A-2-20  sin registro inicial
 --   C-1-10                   dada de baja
 --   A-1-7                    registro del mes pasado cargado fuera de término

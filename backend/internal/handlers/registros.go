@@ -405,7 +405,7 @@ func registroExistente(ctx context.Context, pool *pgxpool.Pool, celulaID int64, 
 //
 // Permisos: el admin edita cualquier registro; el cargador solo los de su lugar y solo del mes
 // actual. Que el cargador pueda editar meses anteriores está a confirmar con la clienta
-// (RN-11, pregunta 9 del documento de requerimientos v4).
+// (RN-11, pregunta 9 de los requerimientos v6).
 func EditarRegistro(pool *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

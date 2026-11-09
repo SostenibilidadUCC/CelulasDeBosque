@@ -1,4 +1,4 @@
-// Paquete estados: el estado de cada célula en el mes (sección 5 del documento v4).
+// Paquete estados: el estado de cada célula en el mes (sección 5 de los requerimientos v6).
 //
 // La consulta de estados se escribe UNA sola vez, acá adentro. Los handlers no escriben
 // su propio SQL de estados: llaman a DeCelulas. Así, si cambia una regla (por ejemplo,

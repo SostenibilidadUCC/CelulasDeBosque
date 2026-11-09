@@ -9,8 +9,8 @@ import { useSesion } from '../../sesion/useSesion.js'
 import TarjetaCargaDelMes from './TarjetaCargaDelMes.jsx'
 import TarjetaLugar from './TarjetaLugar.jsx'
 
-// Pantalla de inicio (T11, INI-01 a 04 y 07). INI-05 (últimas células) e INI-06 (mapa)
-// quedan para otro ticket.
+// Pantalla de inicio (T11, INI-01 a 04). INI-06 (mapa) queda para después; INI-05 e INI-07
+// se borraron en la v6.
 // Cada rol ve solo lo que le sirve: el cargador, cuánto le falta cargar en su lugar y el botón
 // para seguir; el admin y el lector, la lista de lugares.
 export default function Inicio() {

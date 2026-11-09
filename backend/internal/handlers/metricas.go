@@ -50,7 +50,7 @@ type mesDeEvolucion struct {
 	AlturaPromedio map[int]float64 `json:"alturaPromedio"` // por forma de vida: {"1": 85.5, "2": 60.1}
 }
 
-// Metricas es lo que devuelve GET /api/metricas. Las fórmulas son las de la sección 7 del v5.
+// Metricas es lo que devuelve GET /api/metricas. Las fórmulas son las de la sección 7 de los requerimientos v6.
 // Los porcentajes y promedios son punteros: si no hay datos para calcularlos, salen null
 // (así el front muestra "sin datos" en vez de un 0 que no es cierto).
 type Metricas struct {

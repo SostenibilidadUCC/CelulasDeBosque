@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { claseOpcion } from './claseOpcion.js'
 import Icono from './Icono.jsx'
 
-// Pregunta de sí o no con la etiqueta a la izquierda: presencia de frutos y nuevas plántulas (CAR-18).
+// Pregunta de sí o no con la etiqueta a la izquierda: presencia de frutos y nuevas plántulas (CAR-06, CAR-19).
 // valor: true (Sí), false (No) o null (sin elegir).
 // Por dentro usa el ToggleGroup de shadcn. Tocar de nuevo la opción elegida no la desmarca.
 export default function BotonesSiNo({ etiqueta, icono, valor, onChange }) {
