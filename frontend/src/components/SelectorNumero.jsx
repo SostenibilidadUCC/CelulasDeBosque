@@ -1,10 +1,10 @@
 import { useId } from 'react'
 import Icono from './Icono.jsx'
 
-// 0 a 100 es la propuesta del documento v4 (pregunta 15, a confirmar con la clienta).
+// Flores de 0 a 100 en números exactos: lo confirmó la clienta el 16/10 (CAR-06).
 const DE_0_A_100 = Array.from({ length: 101 }, (_, i) => i)
 
-// Desplegable nativo: en el celular abre el selector propio del teléfono (CAR-18).
+// Desplegable nativo: en el celular abre el selector propio del teléfono (CAR-06).
 // "opciones" puede ser una lista de números ([0, 1, 2…]) o de objetos ({ valor, texto })
 // por si la clienta pide rangos como "1 a 5". Así no hay que reescribir el componente.
 export default function SelectorNumero({ etiqueta, icono = 'filter_vintage', valor, onChange, opciones = DE_0_A_100, ayuda }) {

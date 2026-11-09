@@ -12,7 +12,7 @@ El objetivo es la **sensibilización ambiental**, no la investigación científi
 - Los resultados se muestran con pocas métricas claras.
 - Nunca se agregan rankings ni comparaciones del tipo "mejor o peor lugar".
 
-Se lanza el día de la plantación (fin de octubre o noviembre de 2026).
+Se lanza el día de la primera plantación: el **miércoles 25 de noviembre de 2026**.
 
 ## Equipo
 
@@ -36,13 +36,13 @@ Somos tres estudiantes con poca experiencia. Cada semana, cada persona hace una 
 ## Documentación
 
 - `docs/Requerimientos_Celulas_de_Bosque_v6.md`: especificación completa (reemplaza a la v5 en PDF). Cada requerimiento tiene un ID (AUT-01, CAR-06, RN-04…). Si un ticket nombra un ID, los criterios de aceptación están ahí.
-- `docs/Plan_de_Trabajo_Equipo_v4.pdf`: tickets (T01 a T27), calendario y lista de endpoints.
+- `docs/Plan_de_Trabajo_Equipo_v5.md`: estado de los tickets (T01 a T29), calendario hasta el lanzamiento y lista de endpoints (reemplaza a la v4 en PDF).
 - `diseno/`: pantallas exportadas de Stitch (`code.html` + `screen.png`) y `DESIGN.md` con colores y tipografía.
 
 ## Stack
 
 - **Backend:** Go 1.25+, `net/http` de la librería estándar (sin framework), `pgx` para PostgreSQL, `goose` para migraciones, `bcrypt` para contraseñas, `excelize` para Excel, `aws-sdk-go-v2` para fotos en Cloudflare R2.
-- **Frontend:** React + Vite en JavaScript, React Router, Tailwind CSS, shadcn/ui (componentes en `src/components/ui`), Magic UI (solo `blur-fade` y `number-ticker`), Recharts, `browser-image-compression`, `qrcode`.
+- **Frontend:** React + Vite en JavaScript, React Router, Tailwind CSS, shadcn/ui (componentes en `src/components/ui`), Magic UI (solo `blur-fade`, `number-ticker`, `dot-pattern`, `shine-border` y `magic-card`, con efectos suaves), Recharts, `browser-image-compression`, `qrcode`.
 - **Base de datos:** PostgreSQL 16 (Docker en desarrollo, Neon en producción).
 - **Deploy:** un solo servicio en Render (plan gratuito), armado con el `Dockerfile` de la raíz. **El servidor Go también entrega el build de React**: cualquier ruta que no empiece con `/api` devuelve `frontend/dist`. En desarrollo, Vite hace proxy de `/api` al servidor Go. No hay CORS.
 
@@ -138,7 +138,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exact
 | **Administrador** | Todo. |
 | **Cargador** | Ver todos los lugares. Crear células y cargar o editar registros **solo en su lugar**. |
 | **Lector** | Ver todo. No carga ni edita nada. |
-| **Público** (sin sesión) | Solo `GET /api/publico/{letra}` de lugares activos. |
+| **Público** (sin sesión) | Ve la presentación (`/`) y las fotos de registros no anulados de lugares activos. La página pública por lugar (`GET /api/publico/{letra}`, T22) está en espera: ver la sección 6 del plan v5. |
 
 - **Los permisos se validan siempre en el backend.** Ocultar un botón en React no alcanza.
 - Usá el middleware `auth.RequiereSesion` y las funciones `auth.EsAdmin(usuario)` y `auth.PuedeEditarLugar(usuario, lugarID)`. No reescribas esa lógica en cada handler.
@@ -214,6 +214,11 @@ Si un cambio depende de alguna de estas, avisá antes de asumir un valor. Los n�
 - Pregunta 9: si el cargador puede editar meses anteriores (por ahora, solo el admin).
 - Pregunta 19: cómo se mide el crecimiento de un individuo repuesto (propuesta: guardar una marca "repuesto" y medir desde la reposición).
 
+Decisiones pendientes del plan (sección 6 de `docs/Plan_de_Trabajo_Equipo_v5.md`):
+
+- D1: si se hace la página pública por lugar y los QR (parece que no va a haber QR).
+- D2: a dónde lleva el botón "Ver cómo crecen" de la presentación (hoy, a `/publico/A`, que no existe).
+
 Ya respondidas:
 
 - La cuarta forma de vida es **Rastrera** y en ella se mide la **altura**. La tercera es **Gramínea** (antes Herbácea).
@@ -222,3 +227,4 @@ Ya respondidas:
 - Las flores se cuentan de 0 a 100, con un desplegable de números exactos.
 - Nuevas plántulas es un campo simple Sí/No y no se carga si el individuo está muerto.
 - Diámetro y polinizadores se descartaron.
+- La primera plantación (y el lanzamiento) es el 25 de noviembre de 2026.

@@ -73,7 +73,8 @@ Estos colores se usan **solo** para distinguir formas de vida (líneas de gráfi
 
 ## Tipografía
 
-- Fuente única: **Inter** (Google Fonts), pesos 400, 500, 600 y 700. Fallback: `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
+- Fuente de texto: **Inter** (Google Fonts), pesos 400, 500, 600 y 700. Fallback: `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`.
+- Fuente de títulos: **Fraunces** (Google Fonts), pesos 600 y 700, con la clase `font-titulo` (ya configurada en `src/index.css` y usada por `Titulo`). Solo para títulos: el resto va en Inter.
 - Números, métricas, alturas y códigos con cifras tabulares (`font-variant-numeric: tabular-nums;`, clase `tabular-nums`) para que se alineen.
 
 | Token | Tamaño / interlineado | Peso | Uso |
@@ -339,7 +340,7 @@ Transiciones de 150–200 ms con `ease-out`, solo en: apertura de paneles y moda
 - Texto menor a 14 px o inputs menores a 16 px.
 - Modo oscuro (por ahora no está en el alcance, aunque Stitch lo configure).
 - Fotos de stock o de ejemplo en producción.
-- Librerías de componentes fuera de shadcn/ui y Magic UI (Material UI, Bootstrap…). De Magic UI, solo efectos suaves (`blur-fade`, `number-ticker`) que respeten "reducir movimiento".
+- Librerías de componentes fuera de shadcn/ui y Magic UI (Material UI, Bootstrap…). De Magic UI, solo `blur-fade`, `number-ticker`, `dot-pattern`, `shine-border` y `magic-card`, con efectos suaves que respeten "reducir movimiento". El `accordion` de shadcn se usa envuelto en `components/Acordeon.jsx`.
 - Estilos en línea (`style={{...}}`) salvo para valores calculados, como la posición de una celda en el plano.
 
 ## Configuración de Tailwind

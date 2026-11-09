@@ -2,8 +2,8 @@
 
 Plataforma del programa **UCC Sostenible** (Universidad Católica de Córdoba) para registrar mes a mes el crecimiento y la supervivencia de las células de bosque, y mostrar los resultados con un QR.
 
-- Requerimientos: `docs/Requerimientos_Celulas_de_Bosque_v4.pdf`
-- Plan de trabajo y tickets: `docs/Plan_de_Trabajo_Equipo_v3.pdf`
+- Requerimientos: `docs/Requerimientos_Celulas_de_Bosque_v6.md`
+- Plan de trabajo y tickets: `docs/Plan_de_Trabajo_Equipo_v5.md`
 - Reglas para trabajar en el repo: `CLAUDE.md`
 
 ## Requisitos
@@ -67,7 +67,7 @@ docker exec -it celulas-db psql -U celulas -c '\dt'
 
 ### 4. Datos de prueba
 
-Cuando exista `backend/seed/seed.sql` (ticket T06):
+Con las migraciones aplicadas (el seed borra los datos y los vuelve a crear):
 
 ```bash
 docker exec -i celulas-db psql -U celulas < backend/seed/seed.sql
@@ -75,7 +75,7 @@ docker exec -i celulas-db psql -U celulas < backend/seed/seed.sql
 
 ### 5. Backend
 
-Cuando exista `backend/main.go` (ticket T03):
+Con la base prendida y las variables de entorno cargadas:
 
 ```bash
 cd backend && go run .        # queda en http://localhost:8080

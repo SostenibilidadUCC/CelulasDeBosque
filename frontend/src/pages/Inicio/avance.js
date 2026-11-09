@@ -1,4 +1,4 @@
-// Cuentas del avance de carga del mes (sección 7 del documento v4).
+// Cuentas del avance de carga del mes (INI-02 de los requerimientos v6).
 
 // Porcentaje entero de cargadas sobre total. Con total 0 (lugar sin células) da 0, no NaN.
 export function porcentaje(cargadas, total) {

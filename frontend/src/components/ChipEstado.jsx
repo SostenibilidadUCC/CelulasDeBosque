@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import Icono from './Icono.jsx'
 
-// Estados de la célula en el mes (sección 5 del documento v4) y de los individuos (Vivo/Muerto).
+// Estados de la célula en el mes (sección 5 de los requerimientos v6) y de los individuos (Vivo/Muerto).
 // Colores e íconos de frontend/CLAUDE.md. Los nombres de los estados de la célula tienen que
 // coincidir con los que devuelva EstadoCelula (Cande, T11). Por dentro usa el Badge de shadcn.
 const estados = {

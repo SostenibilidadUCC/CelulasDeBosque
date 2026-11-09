@@ -26,7 +26,7 @@ func observacionesLimpias(obs *string) *string {
 	return &limpio
 }
 
-// validarRegistro revisa un pedido completo (CAR-04, CAR-06, CAR-18, RN-06 a RN-08).
+// validarRegistro revisa un pedido completo (CAR-04, CAR-06, CAR-09, RN-06 a RN-08).
 // No toca la base: recibe lo que necesita (hoy, la fecha de plantación y los rangos del catálogo),
 // así se puede probar con tests simples.
 // Devuelve la fecha ya convertida, y un mensaje de error en español ("" si todo está bien).
