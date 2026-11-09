@@ -25,7 +25,7 @@ export function mesCorto(periodo) {
 export const colorDeForma = {
   1: 'var(--color-arbol)',
   2: 'var(--color-arbusto)',
-  3: 'var(--color-herbacea)',
+  3: 'var(--color-graminea)',
   4: 'var(--color-rastrera)',
 }
 const formatoMesLargo = new Intl.DateTimeFormat('es-AR', { month: 'long' })

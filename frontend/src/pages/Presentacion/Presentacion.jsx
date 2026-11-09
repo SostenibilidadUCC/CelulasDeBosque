@@ -14,7 +14,7 @@ import { useSesion } from '../../sesion/useSesion.js'
 const formasDeVida = [
   { nombre: 'Árbol', icono: 'park', color: 'bg-arbol' },
   { nombre: 'Arbusto', icono: 'nature', color: 'bg-arbusto' },
-  { nombre: 'Gramínea', icono: 'local_florist', color: 'bg-herbacea' }, // token "herbacea" hasta T28
+  { nombre: 'Gramínea', icono: 'local_florist', color: 'bg-graminea' },
   { nombre: 'Rastrera', icono: 'grass', color: 'bg-rastrera' },
 ]
 
