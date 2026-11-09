@@ -3,6 +3,9 @@
 Registro de los cambios decididos después de escribir los PDF. Cuando se haga una versión nueva de los
 documentos, hay que pasar estos cambios y marcarlos como aplicados.
 
+> **Aplicado (9/11/2026):** estos cambios ya están en `Requerimientos_Celulas_de_Bosque_v6.md` y en
+> `Plan_de_Trabajo_Equipo_v5.md`. Este archivo queda como historia de las decisiones.
+
 Estados: **Decidido** (ya acordado, falta aplicarlo), **Hecho** (ya está en el código), **Pendiente** (falta decidir).
 
 ---

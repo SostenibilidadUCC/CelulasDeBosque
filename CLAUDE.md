@@ -36,7 +36,7 @@ Somos tres estudiantes con poca experiencia. Cada semana, cada persona hace una 
 ## Documentación
 
 - `docs/Requerimientos_Celulas_de_Bosque_v6.md`: especificación completa (reemplaza a la v5 en PDF). Cada requerimiento tiene un ID (AUT-01, CAR-06, RN-04…). Si un ticket nombra un ID, los criterios de aceptación están ahí.
-- `docs/Plan_de_Trabajo_Equipo_v4.pdf`: tickets (T01 a T27), calendario y lista de endpoints.
+- `docs/Plan_de_Trabajo_Equipo_v5.md`: estado de los tickets (T01 a T29), calendario hasta el lanzamiento y lista de endpoints (reemplaza a la v4 en PDF).
 - `diseno/`: pantallas exportadas de Stitch (`code.html` + `screen.png`) y `DESIGN.md` con colores y tipografía.
 
 ## Stack

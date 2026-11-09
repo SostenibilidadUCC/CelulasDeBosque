@@ -592,8 +592,7 @@ altura, flores, frutos y plántulas quedan vacías (RN-08).
 
 ### Restricciones
 
-- El lanzamiento coincide con la primera plantación, a mediados de noviembre de 2026 (el día exacto está
-  *(a confirmar)*).
+- El lanzamiento coincide con la primera plantación, el 25 de noviembre de 2026.
 - El equipo es de estudiantes que terminan de cursar la primera semana de noviembre, por lo que la
   plataforma tiene que quedar documentada y con un responsable definido.
 - El presupuesto de infraestructura es mínimo y a definir con UCC.
@@ -639,7 +638,6 @@ algunos.
 | 19 | Para un individuo repuesto, ¿cómo se calcula el crecimiento? El crecimiento promedio compara la altura del último registro con la del registro inicial; con una reposición compararía la planta vieja con la nueva. *(propuesta)*: guardar una marca "repuesto" en el registro y medir el crecimiento desde la reposición. | Sección 7, RN-09 |
 | 20 | ¿Cuál es el contacto del voluntariado y de UCC Sostenible para la página pública? | PUB-06, PRI-06 |
 | 21 | ¿Quiere un informe (por ejemplo en PDF) con el historial de cambios? | Sección 8.14 |
-| 22 | ¿Qué día exacto es la primera plantación? | Secciones 12 y 14 |
 
 ### Debe averiguar el equipo
 
@@ -658,6 +656,6 @@ registro por célula por período (RN-04), la primera carga mensual es la del pe
 |---|---|
 | Versión de prueba para validar con la clienta | *(a confirmar)* |
 | Prueba en campo con un cargador real | *(a confirmar)*, antes de la plantación |
-| Lanzamiento: primera plantación y registros iniciales | Mediados de noviembre de 2026 (día *(a confirmar)*, pregunta 22) |
+| Lanzamiento: primera plantación y registros iniciales | 25 de noviembre de 2026 |
 | Primera carga mensual (período 2026-12) | Diciembre de 2026 |
 | Traspaso a UCC Sostenible | *(a confirmar)* |

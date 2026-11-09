@@ -2,8 +2,8 @@
 
 Plataforma del programa **UCC Sostenible** (Universidad Católica de Córdoba) para registrar mes a mes el crecimiento y la supervivencia de las células de bosque, y mostrar los resultados con un QR.
 
-- Requerimientos: `docs/Requerimientos_Celulas_de_Bosque_v4.pdf`
-- Plan de trabajo y tickets: `docs/Plan_de_Trabajo_Equipo_v3.pdf`
+- Requerimientos: `docs/Requerimientos_Celulas_de_Bosque_v6.md`
+- Plan de trabajo y tickets: `docs/Plan_de_Trabajo_Equipo_v5.md`
 - Reglas para trabajar en el repo: `CLAUDE.md`
 
 ## Requisitos
