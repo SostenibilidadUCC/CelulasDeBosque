@@ -32,7 +32,7 @@ type isletaDeFicha struct {
 // individuoDeFicha es una de las 4 plantas de la célula (RN-01).
 type individuoDeFicha struct {
 	ID          int64  `json:"id"`
-	FormaDeVida int    `json:"formaDeVida"` // 1 Árbol, 2 Arbusto, 3 Herbácea, 4 Rastrera
+	FormaDeVida int    `json:"formaDeVida"` // 1 Árbol, 2 Arbusto, 3 Gramínea, 4 Rastrera
 	Nombre      string `json:"nombre"`
 	Icono       string `json:"icono"`
 }

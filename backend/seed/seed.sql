@@ -125,7 +125,7 @@ SELECT c.id,
        fotos_celulas.ids[1 + (c.id + r.k) % 10],
        CASE
            WHEN r.k = 1 AND c.numero % 11 = 0 THEN 'Rebrote en la base del arbusto'
-           WHEN r.k = 2 AND c.numero % 13 = 0 THEN 'Se vieron abejas en la herbácea'
+           WHEN r.k = 2 AND c.numero % 13 = 0 THEN 'Se vieron abejas en la gramínea'
        END,
        (l.letra = 'A' AND i.numero = 1 AND c.numero = 7 AND r.k = 1),
        u.id,

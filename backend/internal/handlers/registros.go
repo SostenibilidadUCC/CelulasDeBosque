@@ -27,7 +27,7 @@ const mensajeErrorRegistro = "No se pudo guardar el registro. Probá de nuevo en
 // pedidoIndividuo es uno de los 4 individuos del pedido.
 // Los campos son punteros para distinguir "no vino" (nil) de "vino con 0 o false".
 type pedidoIndividuo struct {
-	FormaDeVida     int16 `json:"formaDeVida"` // 1 Árbol, 2 Arbusto, 3 Herbácea, 4 Rastrera
+	FormaDeVida     int16 `json:"formaDeVida"` // 1 Árbol, 2 Arbusto, 3 Gramínea, 4 Rastrera
 	Vivo            *bool `json:"vivo"`
 	AlturaCm        *int  `json:"alturaCm"`
 	Flores          *int  `json:"flores"`
