@@ -96,7 +96,7 @@ Usá siempre estas palabras, en el código y en la interfaz:
 
 - **Código de célula:** `Lugar-Isleta-Número`, por ejemplo `A-1-45`. **Código de individuo:** `A-1-45-1`. Los códigos **no se guardan**: se calculan desde la jerarquía.
 - En pantalla se muestra el nombre de la forma de vida ("Árbol"), nunca el dígito.
-- **No uses** "árbol", "ejemplar" o "especie" para referirte a una célula, ni "lote", "parcela" o "cuadrante" para una isleta. Tampoco "herbácea": la forma de vida 3 es **Gramínea**. "Herbácea" todavía aparece en el código (migración `00001_tablas.sql`, `registros_validacion.go`, `ficha.go`, `index.css`, `formato.js` y `seed.sql`); el renombre es el ticket **T28**: no la cambies en otros tickets.
+- **No uses** "árbol", "ejemplar" o "especie" para referirte a una célula, ni "lote", "parcela" o "cuadrante" para una isleta. La forma de vida 3 se llama siempre **Gramínea**, también en el código, los tokens de color y el seed (RNF-USA-06).
 - No hay carteles, estacas ni NFC: la célula se encuentra por el plano y el código.
 
 ## Reglas de negocio
@@ -221,7 +221,7 @@ Decisiones pendientes del plan (sección 6 de `docs/Plan_de_Trabajo_Equipo_v5.md
 
 Ya respondidas:
 
-- La cuarta forma de vida es **Rastrera** y en ella se mide la **altura**. La tercera es **Gramínea** (antes Herbácea).
+- La cuarta forma de vida es **Rastrera** y en ella se mide la **altura**. La tercera es **Gramínea**.
 - Un individuo muerto que se repone se habilita como vivo con "Cargar uno nuevo (reposición)" y sigue siendo el mismo individuo en la base (ver RN-09).
 - La altura es un desplegable de 1 a 999 que arranca en la altura del mes anterior.
 - Las flores se cuentan de 0 a 100, con un desplegable de números exactos.

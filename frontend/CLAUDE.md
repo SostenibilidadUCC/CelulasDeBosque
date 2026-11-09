@@ -308,7 +308,7 @@ Número grande (`headline-xl` en computadora, `headline-lg` en celular, tabular,
 
 - Español rioplatense con **voseo**: "Cargá", "Elegí", "Tocá", "Revisá". Nunca "Carga", "Elige", "Toca".
 - Frases cortas y concretas. Una idea por oración.
-- Vocabulario del dominio (ver `CLAUDE.md` de la raíz): célula, isleta, lugar, individuo, forma de vida, registro. Nunca "ejemplar", "especie", "lote", "parcela", "cuadrante" ni "herbácea" (la forma de vida 3 es **Gramínea**). "Herbácea" todavía aparece en el código (migración `00001_tablas.sql`, `registros_validacion.go`, `ficha.go`, `index.css`, `formato.js` y `seed.sql`); el renombre es el ticket **T28**: no la cambies en otros tickets.
+- Vocabulario del dominio (ver `CLAUDE.md` de la raíz): célula, isleta, lugar, individuo, forma de vida, registro. Nunca "ejemplar", "especie", "lote", "parcela", "cuadrante". La forma de vida 3 se llama siempre **Gramínea** (RNF-USA-06).
 - Botones con verbo + objeto: "Guardar registro", "Dar de alta célula", "Descargar Excel".
 - Errores: qué pasó + qué hacer. "No se pudo subir la foto. Revisá la conexión y tocá Reintentar." Nunca "Error 500" ni mensajes técnicos.
 - Tono alentador sin exagerar: "¡Registro guardado!" está bien; "¡Increíble, sos un héroe del bosque!" no.
@@ -389,7 +389,7 @@ Para Tailwind v4, en `src/index.css`. Si el proyecto usa Tailwind v3, los mismos
   /* Formas de vida */
   --color-arbol: #1b4332;
   --color-arbusto: #52b788;
-  --color-herbacea: #c08552; /* Gramínea (pasa a --color-graminea en T28, junto con el código) */
+  --color-graminea: #c08552;
   --color-rastrera: #7c6fb0;
 
   /* Tipografía */
