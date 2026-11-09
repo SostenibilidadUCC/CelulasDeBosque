@@ -9,7 +9,7 @@ import (
 
 // nombresFormaDeVida son los nombres de la tabla formas_de_vida (catálogo fijo de 4 filas).
 // Se usan solo para armar mensajes de error que entienda la persona.
-var nombresFormaDeVida = map[int16]string{1: "Árbol", 2: "Arbusto", 3: "Herbácea", 4: "Rastrera"}
+var nombresFormaDeVida = map[int16]string{1: "Árbol", 2: "Arbusto", 3: "Gramínea", 4: "Rastrera"}
 
 // maxObservaciones es el largo máximo de las observaciones (igual al CHECK de la tabla registros).
 const maxObservaciones = 500
