@@ -311,7 +311,32 @@ Guion corto y recorrido para presentar la app el día de la plantación. El QR i
 
 Todo lo que necesita quien siga: cuentas de Render, Neon, Cloudflare R2 y GitHub (las contraseñas se entregan
 en persona), costos, cómo publicar, cómo agregar un lugar o una variable y cómo restaurar un backup.
-**Está listo cuando:** UCC Sostenible recibió el documento y tiene acceso a todas las cuentas.
+
+**Copias de seguridad (sale de T29).** Las copias corren solas, pero nada de lo que depende de planes gratuitos
+tiene garantía de seguir igual por años. Hay que explicárselo a la clienta y dejar a alguien a cargo:
+
+- [ ] Nombrar en el documento a una persona de UCC Sostenible responsable de las copias, con nombre y apellido.
+- [ ] Tareas de esa persona: **una vez por mes**, revisar en la pestaña Actions del repo que las dos copias estén
+      en verde; **una vez por año**, restaurar una copia en Docker siguiendo el README, para comprobar que sirve.
+- [ ] Los mails de error de GitHub le llegan a la última persona que modificó el workflow: al traspasar, hacer
+      que le lleguen a la responsable.
+- [ ] Explicar qué puede dejar de andar con los años:
+  - **Espacio de R2:** el plan gratuito tiene 10 GB, y la copia de fotos duplica lo que ocupan las fotos. Según
+    cuántas células haya, en unos años puede hacer falta cargar una tarjeta en la cuenta de Cloudflare de la UCC
+    (pasarse cuesta centavos por mes).
+  - **Claves:** si cambia la contraseña de Neon o vence la clave de R2, las copias fallan hasta que se actualice
+    el secret en GitHub (Settings → Secrets and variables → Actions). La clave de R2 se crea sin vencimiento.
+  - **Planes gratuitos:** GitHub, Neon y Cloudflare pueden cambiar sus límites (Neon ya bajó su historial
+    gratuito a 6 horas).
+- [ ] **Repo privado:** en un repo público, GitHub apaga las tareas programadas después de 60 días sin cambios;
+      en uno privado, no. Pasarlo a privado no cuesta nada (las copias usan unos 40 a 80 de los 2.000 minutos
+      gratis por mes), pero antes la dueña de la organización tiene que instalar la app de Render en
+      SostenibilidadUCC y reconectar el servicio, porque hoy Render baja el código como repo público. Los
+      secrets van en el repo, no en la organización: en el plan gratuito, los de la organización no llegan a
+      los repos privados.
+
+**Está listo cuando:** UCC Sostenible recibió el documento, tiene acceso a todas las cuentas y hay una persona
+responsable de revisar las copias.
 **Requerimientos:** RNF-MAN-03, 04.
 
 ### T24 · Correcciones — Todas · Semanas 7 y 8
