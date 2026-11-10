@@ -74,6 +74,15 @@ func main() {
 	mux.HandleFunc("PUT /api/usuarios/{id}", a.RequiereSesion(handlers.EditarUsuario(pool)))
 	mux.HandleFunc("POST /api/usuarios/{id}/contrasena-nueva", a.RequiereSesion(handlers.GenerarContrasenaNueva(pool)))
 
+	// T20: lugares e isletas. Solo el admin (cada handler lo valida).
+	mux.HandleFunc("GET /api/admin/lugares", a.RequiereSesion(handlers.ListarLugaresAdmin(pool)))
+	mux.HandleFunc("POST /api/admin/lugares", a.RequiereSesion(handlers.CrearLugar(pool)))
+	mux.HandleFunc("PUT /api/admin/lugares/{id}", a.RequiereSesion(handlers.EditarLugar(pool)))
+	mux.HandleFunc("POST /api/admin/isletas", a.RequiereSesion(handlers.CrearIsleta(pool)))
+	mux.HandleFunc("PUT /api/admin/isletas/{id}", a.RequiereSesion(handlers.EditarIsleta(pool)))
+	mux.HandleFunc("POST /api/admin/isletas/{id}/plano", a.RequiereSesion(handlers.GuardarPlano(pool)))
+	mux.HandleFunc("POST /api/admin/isletas/{id}/celulas-lote", a.RequiereSesion(handlers.CrearCelulasEnLote(pool)))
+
 	// Cualquier /api/... que no coincida con otra ruta es un 404 en JSON.
 	// El orden de registro no importa: el mux siempre elige la ruta más específica.
 	mux.HandleFunc("/api/", apiNoExiste)
