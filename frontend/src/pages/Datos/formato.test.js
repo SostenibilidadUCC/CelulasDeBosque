@@ -1,10 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { fechaTabla, numero, siNo, SIN_DATO } from './formato.js'
-
-test('fechaTabla: día/mes/año', () => {
-  assert.equal(fechaTabla('2026-11-18'), '18/11/2026')
-})
+import { numero, siNo, SIN_DATO } from './formato.js'
 
 test('siNo: sí, no y sin dato', () => {
   assert.equal(siNo(true), 'Sí')

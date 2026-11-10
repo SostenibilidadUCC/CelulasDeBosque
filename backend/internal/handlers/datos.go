@@ -23,6 +23,10 @@ import (
 // filasPorPagina es el tamaño de cada página de la tabla (TAB-01).
 const filasPorPagina = 50
 
+// maximoPaginas es la página más alta que se acepta en ?pagina= (500.000 filas: mucho más de lo
+// que va a tener la base). Más arriba se responde 400 en lugar de un error de la base.
+const maximoPaginas = 10000
+
 // filaDatos es una fila de la tabla: un individuo en un registro. Los punteros salen null
 // cuando no hay dato (por ejemplo, la altura de un individuo muerto, RN-08).
 type filaDatos struct {
@@ -41,7 +45,7 @@ type filaDatos struct {
 	AlturaCm        *float64 `json:"alturaCm"`
 	Flores          *int     `json:"flores"`
 	Frutos          *bool    `json:"frutos"`
-	Plantulas       *bool    `json:"plantulas"`
+	PlantulasNuevas *bool    `json:"plantulasNuevas"` // igual que en registros.go (CLAUDE.md, Variables por individuo)
 	CoberturaPct    *float64 `json:"coberturaPct"` // vacía hasta que se responda la pregunta 8 (RN-19)
 	Observaciones   *string  `json:"observaciones"`
 	CargadoPor      string   `json:"cargadoPor"` // "M. Pérez"
@@ -69,8 +73,10 @@ type codigoBuscado struct {
 // la tabla tiene todos los lugares, así que se acepta cualquier parte del código, de izquierda
 // a derecha: "45" (la célula 45 de cualquier lugar), "A", "A-1", "A-1-45" o "A-1-45-1" (un individuo).
 // Devuelve ok = false si el texto no se entiende: en ese caso la tabla sale vacía.
+// Los guiones del final se ignoran: mientras alguien escribe "A-1-" (y frena un segundo, que es
+// cuando el buscador busca), se entiende como "A-1" en lugar de vaciar la tabla.
 func interpretarCodigo(q string) (b codigoBuscado, ok bool) {
-	q = strings.TrimSpace(q)
+	q = strings.TrimRight(strings.TrimSpace(q), "- ")
 	if q == "" {
 		return b, true
 	}
@@ -211,7 +217,7 @@ func buscarDatos(ctx context.Context, pool *pgxpool.Pool, f FiltrosMetricas, b c
 		var letra string
 		err := fila.Scan(&d.CelulaID, &letra, &d.Lugar, &d.Isleta, &d.Celula, &d.FormaDeVida, &d.NombreForma,
 			&d.Periodo, &d.FechaMedicion, &d.EsInicial, &d.FueraDeTermino,
-			&d.Vivo, &d.AlturaCm, &d.Flores, &d.Frutos, &d.Plantulas,
+			&d.Vivo, &d.AlturaCm, &d.Flores, &d.Frutos, &d.PlantulasNuevas,
 			&d.CoberturaPct, &d.Observaciones, &d.CargadoPor, &total)
 		d.CodigoIndividuo = fmt.Sprintf("%s-%d-%d-%d", letra, d.Isleta, d.Celula, d.FormaDeVida)
 		d.CargadoPor = abreviarNombre(d.CargadoPor)
@@ -249,8 +255,9 @@ func Datos(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 		pagina := 1
 		if texto := r.URL.Query().Get("pagina"); texto != "" {
+			// Con un número gigante, (pagina - 1) × 50 se pasa del máximo de un entero y la base da error.
 			n, esNumero := numeroPositivo(texto)
-			if !esNumero {
+			if !esNumero || n > maximoPaginas {
 				respuestas.Error(w, http.StatusBadRequest, "La página no es válida")
 				return
 			}
@@ -263,27 +270,39 @@ func Datos(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		respuesta := respuestaDatos{Filas: []filaDatos{}, Pagina: pagina, PorPagina: filasPorPagina}
-		formas, err := pool.Query(r.Context(), `SELECT id, nombre, icono FROM formas_de_vida ORDER BY id`)
-		if err != nil {
+		var err error
+		if respuesta.FormasDeVida, err = leerFormasDeVida(r.Context(), pool); err != nil {
 			errorInterno("no se pudieron leer las formas de vida", err)
 			return
 		}
-		respuesta.FormasDeVida, err = pgx.CollectRows(formas, func(fila pgx.CollectableRow) (formaDeVidaDeMetricas, error) {
-			var f formaDeVidaDeMetricas
-			err := fila.Scan(&f.FormaDeVida, &f.Nombre, &f.Icono)
-			return f, err
-		})
-		if err != nil {
-			errorInterno("no se pudieron leer las formas de vida", err)
+		if !codigoOk { // si el buscador no se entendió, la tabla va vacía
+			respuestas.JSON(w, respuesta)
 			return
 		}
 
-		if codigoOk { // si el buscador no se entendió, la tabla va vacía
-			limite := filasPorPagina
-			respuesta.Filas, respuesta.Total, err = buscarDatos(r.Context(), pool, filtros, b, orden, &limite, (pagina-1)*filasPorPagina)
-			if err != nil {
-				errorInterno("no se pudieron leer", err)
+		// leerPagina pide una página. El total viene en cada fila (count(*) OVER ()).
+		leerPagina := func(n, limite int) ([]filaDatos, int, error) {
+			return buscarDatos(r.Context(), pool, filtros, b, orden, &limite, (n-1)*filasPorPagina)
+		}
+		respuesta.Filas, respuesta.Total, err = leerPagina(pagina, filasPorPagina)
+		if err != nil {
+			errorInterno("no se pudieron leer", err)
+			return
+		}
+		// Si la página quedó vacía pero no es la primera (por ejemplo, se anularon registros mientras
+		// alguien miraba la última), no se sabe el total: se cuenta con una fila de la primera página
+		// y se responde la última página que existe, así la tabla no aparece vacía sin forma de volver.
+		if len(respuesta.Filas) == 0 && pagina > 1 {
+			if _, respuesta.Total, err = leerPagina(1, 1); err != nil {
+				errorInterno("no se pudo contar", err)
 				return
+			}
+			if respuesta.Total > 0 {
+				respuesta.Pagina = (respuesta.Total-1)/filasPorPagina + 1
+				if respuesta.Filas, respuesta.Total, err = leerPagina(respuesta.Pagina, filasPorPagina); err != nil {
+					errorInterno("no se pudieron leer", err)
+					return
+				}
 			}
 		}
 		respuestas.JSON(w, respuesta)
@@ -332,7 +351,7 @@ func filaExcel(d filaDatos) []any {
 	return []any{
 		d.CodigoIndividuo, d.Lugar, d.Isleta, d.Celula, d.NombreForma, d.Periodo, fecha,
 		siNo(&inicial), siNo(&fueraDeTermino), estado,
-		valorDe(d.AlturaCm), valorDe(d.Flores), siNo(d.Frutos), siNo(d.Plantulas),
+		valorDe(d.AlturaCm), valorDe(d.Flores), siNo(d.Frutos), siNo(d.PlantulasNuevas),
 		valorDe(d.CoberturaPct), valorDe(d.Observaciones), d.CargadoPor,
 	}
 }

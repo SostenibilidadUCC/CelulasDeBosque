@@ -29,6 +29,9 @@ func TestInterpretarCodigo(t *testing.T) {
 		{"A-1", true, "A", 1, 0, 0},
 		{" a-1-45 ", true, "A", 1, 45, 0},
 		{"A-1-45-1", true, "A", 1, 45, 1},
+		// Mientras se escribe: el guion del final no vacía la tabla.
+		{"A-1-", true, "A", 1, 0, 0},
+		{"a-", true, "A", 0, 0, 0},
 		{"A-1-45-5", false, "", 0, 0, 0},   // forma de vida 5 no existe
 		{"A-1-45-1-2", false, "", 0, 0, 0}, // demasiadas partes
 		{"AB-1", false, "", 0, 0, 0},
@@ -194,9 +197,21 @@ func TestDatosConBase(t *testing.T) {
 		}
 	})
 
-	t.Run("orden inválido", func(t *testing.T) {
-		if w := pedir(Datos(pool), "/api/datos?orden=foto"); w.Code != http.StatusBadRequest {
-			t.Errorf("código %d, se esperaba 400", w.Code)
+	t.Run("orden o página inválidos", func(t *testing.T) {
+		for _, url := range []string{"/api/datos?orden=foto", "/api/datos?pagina=99999999999999999"} {
+			if w := pedir(Datos(pool), url); w.Code != http.StatusBadRequest {
+				t.Errorf("%s: código %d, se esperaba 400", url, w.Code)
+			}
+		}
+	})
+
+	t.Run("página pasada del final", func(t *testing.T) {
+		// Se pide una página que no existe: tiene que volver la última, con el total y sus filas.
+		var r respuestaDatos
+		_ = json.Unmarshal(pedir(Datos(pool), "/api/datos"+base+"&pagina=500").Body.Bytes(), &r)
+		ultima := (esperado-1)/filasPorPagina + 1
+		if r.Total != esperado || r.Pagina != ultima || len(r.Filas) == 0 {
+			t.Errorf("total %d, página %d, %d filas; se esperaba total %d en la página %d", r.Total, r.Pagina, len(r.Filas), esperado, ultima)
 		}
 	})
 

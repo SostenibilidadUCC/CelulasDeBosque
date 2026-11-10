@@ -119,7 +119,12 @@ export default function Datos() {
           />
           <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-[1fr_auto]">
             <Buscador inicial={filtros.q} onBuscar={buscar} etiqueta="Buscar por código" placeholder="A-1-45 o A-1-45-1" />
-            <BotonExcel pedido={armarPedido(filtros, periodoActual)} hayFilas={(d?.total ?? 0) > 0} />
+            {/* Mientras llegan los datos de un filtro nuevo, no se puede descargar: el Excel saldría
+                de un filtro que todavía no se ve en la tabla. */}
+            <BotonExcel
+              pedido={armarPedido(filtros, periodoActual)}
+              habilitado={!datos.cargando && (d?.total ?? 0) > 0}
+            />
           </div>
         </div>
       )}
@@ -145,7 +150,7 @@ export default function Datos() {
 }
 
 // TAB-05: descarga el Excel con lo filtrado (todas las páginas). Es la acción principal de la pantalla.
-function BotonExcel({ pedido, hayFilas }) {
+function BotonExcel({ pedido, habilitado }) {
   const [descargando, setDescargando] = useState(false)
   const [error, setError] = useState(null)
 
@@ -171,7 +176,7 @@ function BotonExcel({ pedido, hayFilas }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <Boton icono="download" cargando={descargando} textoCargando="Armando el Excel…" disabled={!hayFilas} onClick={descargar} className="md:w-auto">
+      <Boton icono="download" cargando={descargando} textoCargando="Armando el Excel…" disabled={!habilitado} onClick={descargar} className="md:w-auto">
         Descargar Excel
       </Boton>
       {error && (

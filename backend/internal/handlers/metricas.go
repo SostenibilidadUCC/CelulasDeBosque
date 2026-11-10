@@ -328,16 +328,22 @@ func CalcularMetricas(ctx context.Context, pool *pgxpool.Pool, f FiltrosMetricas
 	}
 
 	// 5. El catálogo de formas de vida, en orden de 1 a 4.
-	filas, err = pool.Query(ctx, `SELECT id, nombre, icono FROM formas_de_vida ORDER BY id`)
+	m.FormasDeVida, err = leerFormasDeVida(ctx, pool)
+	return m, err
+}
+
+// leerFormasDeVida devuelve el catálogo de formas de vida, de 1 a 4, para los filtros y las leyendas.
+// La usan Resultados y la Tabla de datos (T21).
+func leerFormasDeVida(ctx context.Context, pool *pgxpool.Pool) ([]formaDeVidaDeMetricas, error) {
+	filas, err := pool.Query(ctx, `SELECT id, nombre, icono FROM formas_de_vida ORDER BY id`)
 	if err != nil {
-		return m, err
+		return nil, err
 	}
-	m.FormasDeVida, err = pgx.CollectRows(filas, func(f pgx.CollectableRow) (formaDeVidaDeMetricas, error) {
+	return pgx.CollectRows(filas, func(f pgx.CollectableRow) (formaDeVidaDeMetricas, error) {
 		var forma formaDeVidaDeMetricas
 		err := f.Scan(&forma.FormaDeVida, &forma.Nombre, &forma.Icono)
 		return forma, err
 	})
-	return m, err
 }
 
 // ---------- PARTE E: el handler ----------

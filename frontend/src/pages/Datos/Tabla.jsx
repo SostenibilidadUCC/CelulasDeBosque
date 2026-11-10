@@ -1,8 +1,10 @@
 import { Link } from 'react-router'
+import { cn } from '@/lib/utils'
 import ChipEstado from '../../components/ChipEstado.jsx'
 import Icono from '../../components/Icono.jsx'
 import { periodoLargo } from '../Ficha/formato.js'
-import { fechaTabla, numero, siNo, SIN_DATO } from './formato.js'
+import { fechaEnTexto } from '../Carga/fechas.js'
+import { numero, siNo, SIN_DATO } from './formato.js'
 
 // Columnas de la tabla (TAB-01), en el orden de la sección 11.1 de la v6. El código va aparte
 // porque es la columna fija. orden es la clave que entiende el backend (?orden=); sin orden,
@@ -11,7 +13,7 @@ const columnas = [
   { titulo: 'Lugar', orden: 'lugar', celda: (f) => f.lugar },
   { titulo: 'Forma de vida', orden: 'forma', celda: (f) => f.nombreForma },
   { titulo: 'Período', orden: 'periodo', celda: (f) => periodoLargo(f.periodo) },
-  { titulo: 'Fecha de medición', orden: 'fecha', celda: (f) => fechaTabla(f.fechaMedicion) },
+  { titulo: 'Fecha de medición', orden: 'fecha', celda: (f) => fechaEnTexto(f.fechaMedicion) },
   { titulo: 'Inicial', celda: (f) => siNo(f.esInicial) },
   { titulo: 'Fuera de término', celda: (f) => siNo(f.fueraDeTermino) },
   {
@@ -22,7 +24,7 @@ const columnas = [
   { titulo: 'Altura (cm)', orden: 'altura', derecha: true, celda: (f) => numero(f.alturaCm) },
   { titulo: 'Flores', orden: 'flores', derecha: true, celda: (f) => numero(f.flores) },
   { titulo: 'Frutos', orden: 'frutos', celda: (f) => siNo(f.frutos) },
-  { titulo: 'Plántulas nuevas', orden: 'plantulas', celda: (f) => siNo(f.plantulas) },
+  { titulo: 'Plántulas nuevas', orden: 'plantulas', celda: (f) => siNo(f.plantulasNuevas) },
   // Cobertura: vacía hasta que se responda la pregunta 8 de la v6 (RN-19).
   { titulo: 'Cobertura (%)', derecha: true, celda: (f) => numero(f.coberturaPct) },
   { titulo: 'Observaciones', ancha: true, celda: (f) => f.observaciones || SIN_DATO },
@@ -57,13 +59,17 @@ export default function Tabla({ filas, orden, dir, onOrdenar }) {
         <tbody>
           {filas.map((f) => (
             <tr key={`${f.codigoIndividuo}-${f.periodo}`} className="group">
-              <th scope="row" className={`${claseCelda} sticky left-0 z-10 border-r bg-superficie text-left group-hover:bg-tonal`}>
-                {/* Lleva a la ficha de la célula, donde están las fotos y los gráficos. */}
+              {/* py-0: el enlace ya mide 48 px de alto; con más relleno, cada fila quedaría muy alta. */}
+              <th scope="row" className={cn(claseCelda, 'sticky left-0 z-10 border-r bg-superficie py-0 text-left group-hover:bg-tonal')}>
+                {/* Lleva a la ficha de la célula, donde están las fotos y los gráficos. El enlace ocupa
+                    48 px de alto (zona táctil mínima) y adentro va la pastilla del código, de su tamaño de siempre. */}
                 <Link
                   to={`/celulas/${f.celulaId}`}
-                  className="inline-flex min-h-10 items-center rounded-full bg-tonal px-2.5 text-code-tag font-semibold tracking-[0.06em] whitespace-nowrap text-bosque underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-bosque-hover"
+                  className="group/codigo flex min-h-12 items-center rounded-xl focus-visible:outline-2 focus-visible:outline-bosque-hover"
                 >
-                  {f.codigoIndividuo}
+                  <span className="rounded-full bg-tonal px-2.5 py-0.5 text-code-tag font-semibold tracking-[0.06em] whitespace-nowrap text-bosque underline-offset-4 group-hover/codigo:underline">
+                    {f.codigoIndividuo}
+                  </span>
                 </Link>
               </th>
               {columnas.map((c) => (
@@ -99,12 +105,13 @@ function Encabezado({ titulo, clave, orden, dir, onOrdenar, derecha = false, cla
       </th>
     )
   }
+  // py-0: el botón ya mide 48 px de alto (zona táctil mínima).
   return (
-    <th scope="col" className={clases} aria-sort={activa ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}>
+    <th scope="col" className={cn(clases, 'py-0')} aria-sort={activa ? (dir === 'desc' ? 'descending' : 'ascending') : 'none'}>
       <button
         type="button"
         onClick={() => onOrdenar(clave)}
-        className={`inline-flex min-h-10 items-center gap-1 rounded-md focus-visible:outline-2 focus-visible:outline-bosque-hover ${
+        className={`inline-flex min-h-12 items-center gap-1 rounded-md focus-visible:outline-2 focus-visible:outline-bosque-hover ${
           activa ? 'text-bosque' : ''
         }`}
       >
