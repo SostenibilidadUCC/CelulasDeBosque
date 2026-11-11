@@ -13,6 +13,7 @@ import Resultados from './pages/Resultados/Resultados.jsx'
 import Datos from './pages/Datos/Datos.jsx'
 import Usuarios from './pages/Usuarios/Usuarios.jsx'
 import Lugares from './pages/Lugares/Lugares.jsx'
+import IsletaAdmin from './pages/Lugares/IsletaAdmin.jsx'
 import Mas from './pages/Mas/Mas.jsx'
 import PedirAcceso from './pages/PedirAcceso/PedirAcceso.jsx'
 import Prueba from './pages/Prueba/Prueba.jsx'
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="datos" element={<Datos />} />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="lugares" element={<Lugares />} />
+          <Route path="lugares/isletas/:id" element={<IsletaAdmin />} />
           <Route path="mas" element={<Mas />} />
           <Route path="prueba" element={<Prueba />} />
           <Route path="*" element={<NoEncontrada />} />
