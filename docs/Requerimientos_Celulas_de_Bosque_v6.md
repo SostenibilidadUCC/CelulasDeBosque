@@ -505,8 +505,8 @@ Dónde se consulta este historial está *(a confirmar)*. Podría ir en un inform
 | RNF-SEG-03 | Seguridad | Las contraseñas se guardan con hash; nunca en texto plano ni en logs. | A |
 | RNF-SEG-04 | Seguridad | Las fotos se sirven solo por `GET /api/fotos/{id}`, que verifica permisos; nunca se expone la dirección directa de R2. Sin sesión solo se ven las fotos de lugares activos (RN-15). | A |
 | RNF-SEG-05 | Seguridad | Las claves y credenciales del proyecto no se suben al repositorio. | A |
-| RNF-DIS-01 | Disponibilidad | Backups automáticos de la base de datos al menos diarios, con retención de 30 días. Qué ofrece Neon en el plan gratuito está *(a confirmar)*. | A |
-| RNF-DIS-02 | Disponibilidad | Backup de las fotos al menos semanal. Cómo hacerlo con R2 está *(a confirmar)*. | A |
+| RNF-DIS-01 | Disponibilidad | Backups automáticos de la base de datos al menos diarios, con retención de 30 días. Neon gratis guarda solo 6 horas de historial, así que hay una copia diaria propia (GitHub Action) guardada en R2 (ver la sección 13 y el README). | A |
+| RNF-DIS-02 | Disponibilidad | Backup de las fotos al menos semanal. Una GitHub Action copia cada semana las fotos nuevas a otro bucket de R2, sin borrar nunca nada (ver el README). | A |
 | RNF-DIS-03 | Disponibilidad | Se prueba restaurar un backup antes del lanzamiento. | A |
 | RNF-COM-01 | Compatibilidad | Funciona en Chrome para Android y Safari para iOS de los últimos 3 años, y en Chrome, Firefox y Edge de escritorio. | A |
 | RNF-COM-02 | Compatibilidad | Se puede instalar en la pantalla de inicio del celular (aplicación web instalable). | B |
@@ -643,8 +643,8 @@ algunos.
 
 | Pendiente | Afecta |
 |---|---|
-| Qué copias de seguridad ofrece Neon en el plan gratuito. | RNF-DIS-01 |
-| Cómo hacer la copia semanal de las fotos de R2. | RNF-DIS-02 |
+| ~~Qué copias de seguridad ofrece Neon en el plan gratuito.~~ **Respondido (T29):** solo 6 horas de historial para volver a un momento anterior (máximo del plan gratuito, con tope de 1 GB). No alcanza para los 30 días: se hace una copia diaria con `pg_dump` desde una GitHub Action, guardada en el bucket de R2 `celulas-bosque-backups`, que borra las de más de 30 días. | RNF-DIS-01 |
+| ~~Cómo hacer la copia semanal de las fotos de R2.~~ **Respondido (T29):** una GitHub Action copia cada domingo las fotos nuevas al bucket `celulas-bosque-backups` (carpeta `fotos/`), sin borrar nunca nada. Queda en la misma cuenta de Cloudflare: si se pierde la cuenta, se pierde también la copia. | RNF-DIS-02 |
 
 ## 14. Plazos e hitos
 
