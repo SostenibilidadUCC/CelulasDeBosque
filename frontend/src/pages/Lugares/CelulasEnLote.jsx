@@ -58,7 +58,7 @@ export default function CelulasEnLote({ isleta, onGuardado }) {
           <CampoTexto etiqueta="Hasta el número" value={datos.hasta} onChange={cambiar('hasta', soloDigitos)} inputMode="numeric" maxLength={4} required className="tabular-nums" />
         </div>
         <div className="sm:max-w-xs">
-          <CampoTexto etiqueta="Fecha de plantación" type="date" value={datos.fecha} onChange={cambiar('fecha')} required />
+          <CampoTexto etiqueta="Fecha de plantación" type="date" value={datos.fecha} max={hoyEnCordoba()} onChange={cambiar('fecha')} required />
         </div>
         <Boton type="submit" variante="secundario" icono="visibility" cargando={estado === 'calculando'} textoCargando="Calculando…" disabled={Boolean(estado)} className="sm:w-auto sm:self-start">
           Ver dónde van

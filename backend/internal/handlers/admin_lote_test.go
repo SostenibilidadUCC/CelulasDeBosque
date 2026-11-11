@@ -52,7 +52,7 @@ func TestAdminCelulasLote(t *testing.T) {
 	isleta := e.crearIsletaPrueba(t, idZ, 1, 3, 3) // grilla de 3 × 3 = 9 celdas
 	e.crearCelulaPrueba(t, isleta, 2, 1, 2)        // la célula 2 ya ocupa la fila 1, columna 2
 	ruta := fmt.Sprintf("/api/admin/isletas/%d/celulas-lote", isleta)
-	lote := map[string]any{"desde": 3, "hasta": 6, "fechaPlantacion": "2026-11-25"}
+	lote := map[string]any{"desde": 3, "hasta": 6, "fechaPlantacion": "2026-11-02"}
 
 	// Se ubican de izquierda a derecha y de arriba abajo, salteando la celda ocupada.
 	esperadas := []struct {
@@ -113,7 +113,7 @@ func TestAdminCelulasLote(t *testing.T) {
 		}
 		for _, esperada := range esperadas {
 			c := celulas[esperada.numero]
-			if c.fila != esperada.fila || c.columna != esperada.columna || c.fecha != "2026-11-25" || !c.creadaPorAdmin {
+			if c.fila != esperada.fila || c.columna != esperada.columna || c.fecha != "2026-11-02" || !c.creadaPorAdmin {
 				t.Errorf("célula %d guardada como %+v", esperada.numero, c)
 			}
 			if fmt.Sprint(c.formas) != "[1 2 3 4]" {
@@ -123,7 +123,7 @@ func TestAdminCelulasLote(t *testing.T) {
 	})
 
 	t.Run("números ya usados en la isleta dan 409 y no se crea ninguna", func(t *testing.T) {
-		codigo, datos := pedir(e.mux, e.admin, "POST", ruta, map[string]any{"desde": 6, "hasta": 8, "fechaPlantacion": "2026-11-25"})
+		codigo, datos := pedir(e.mux, e.admin, "POST", ruta, map[string]any{"desde": 6, "hasta": 8, "fechaPlantacion": "2026-11-02"})
 		if codigo != http.StatusConflict || datos["error"] != "Ya existen en esta isleta las células 6" {
 			t.Errorf("código = %d, cuerpo = %v; se esperaba 409 con los números repetidos", codigo, datos)
 		}
@@ -133,7 +133,7 @@ func TestAdminCelulasLote(t *testing.T) {
 	})
 
 	t.Run("si no hay celdas libres suficientes da 400 y no se crea ninguna", func(t *testing.T) {
-		codigo, datos := pedir(e.mux, e.admin, "POST", ruta, map[string]any{"desde": 10, "hasta": 15, "fechaPlantacion": "2026-11-25"})
+		codigo, datos := pedir(e.mux, e.admin, "POST", ruta, map[string]any{"desde": 10, "hasta": 15, "fechaPlantacion": "2026-11-02"})
 		if codigo != http.StatusBadRequest || datos["error"] != "No entran: son 6 células y quedan 4 celdas libres en el plano" {
 			t.Errorf("código = %d, cuerpo = %v; se esperaba 400 por falta de lugar", codigo, datos)
 		}
@@ -144,10 +144,11 @@ func TestAdminCelulasLote(t *testing.T) {
 
 	t.Run("datos inválidos dan 400 y una isleta que no existe da 404", func(t *testing.T) {
 		casos := map[string]map[string]any{
-			"hasta menor que desde": {"desde": 9, "hasta": 8, "fechaPlantacion": "2026-11-25"},
-			"desde 0":               {"desde": 0, "hasta": 2, "fechaPlantacion": "2026-11-25"},
-			"más de 900 células":    {"desde": 1, "hasta": 901, "fechaPlantacion": "2026-11-25"},
+			"hasta menor que desde": {"desde": 9, "hasta": 8, "fechaPlantacion": "2026-11-02"},
+			"desde 0":               {"desde": 0, "hasta": 2, "fechaPlantacion": "2026-11-02"},
+			"más de 900 células":    {"desde": 1, "hasta": 901, "fechaPlantacion": "2026-11-02"},
 			"fecha inválida":        {"desde": 10, "hasta": 11, "fechaPlantacion": "25/11/2026"},
+			"fecha futura":          {"desde": 10, "hasta": 11, "fechaPlantacion": "2999-01-01"},
 			"sin fecha":             {"desde": 10, "hasta": 11},
 		}
 		for nombre, cuerpo := range casos {

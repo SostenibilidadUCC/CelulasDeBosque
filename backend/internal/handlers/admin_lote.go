@@ -81,6 +81,21 @@ func listarNumeros(numeros []int) string {
 	return strings.Join(partes, ", ")
 }
 
+// validarFechaPlantacion lee la fecha del lote ("2026-11-25") y revisa que no sea futura (ALT-04).
+// Con RN-06, una célula plantada en el futuro no podría tener registro inicial, porque la fecha de
+// medición no puede ser anterior a la plantación ni futura. "Hoy" es en hora de Córdoba.
+// Devuelve el mensaje para el usuario si algo está mal.
+func validarFechaPlantacion(texto string, ahora time.Time) (time.Time, string) {
+	fecha, err := time.Parse("2006-01-02", texto)
+	if err != nil {
+		return time.Time{}, "Elegí la fecha de plantación"
+	}
+	if fecha.After(hoyEnCordoba(ahora)) {
+		return time.Time{}, "La fecha de plantación no puede ser futura"
+	}
+	return fecha, ""
+}
+
 // CrearCelulasEnLote atiende POST /api/admin/isletas/{id}/celulas-lote (LUG-07).
 // Con ?vistaPrevia=true solo calcula dónde iría cada célula y no guarda nada (200); sin eso,
 // las crea con sus 4 individuos, todas o ninguna (201). En los dos casos responde
@@ -114,9 +129,9 @@ func CrearCelulasEnLote(pool *pgxpool.Pool) http.HandlerFunc {
 			respuestas.Error(w, http.StatusBadRequest, fmt.Sprintf("Se pueden crear hasta %d células de una vez", maximoCelulasLote))
 			return
 		}
-		fecha, err := time.Parse("2006-01-02", pedido.FechaPlantacion)
-		if err != nil {
-			respuestas.Error(w, http.StatusBadRequest, "Elegí la fecha de plantación")
+		fecha, mensaje := validarFechaPlantacion(pedido.FechaPlantacion, time.Now())
+		if mensaje != "" {
+			respuestas.Error(w, http.StatusBadRequest, mensaje)
 			return
 		}
 
