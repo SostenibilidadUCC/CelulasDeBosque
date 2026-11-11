@@ -24,11 +24,9 @@ function iniciales(nombre = '') {
     .join('')
 }
 
-// Pantallas para los tres roles (la v6 da la tabla de datos a admin, cargador y lector).
-const seccionesTodos = [{ a: '/datos', texto: 'Tabla de datos' }]
-
 // Pantallas solo para el admin. El Código QR (T22) se suma acá cuando exista.
 const seccionesAdmin = [
+  { a: '/datos', texto: 'Tabla de datos' },
   { a: '/usuarios', texto: 'Usuarios' },
   { a: '/lugares', texto: 'Lugares e isletas' },
 ]
@@ -74,41 +72,34 @@ export default function Mas() {
         </div>
       </Tarjeta>
 
-      {/* En celular no hay menú lateral: este es el único lugar donde están estas pantallas. */}
-      <ListaDeSecciones titulo="Datos" secciones={seccionesTodos} />
-
-      {/* Ocultarlas es solo experiencia de uso: el backend valida que sea admin. */}
-      {usuario.rol === 'admin' && <ListaDeSecciones titulo="Administración" secciones={seccionesAdmin} />}
+      {/* Las pantallas del admin. En celular no hay menú lateral: este es el único lugar donde están.
+          Ocultarlas es solo experiencia de uso: el backend valida que sea admin. */}
+      {usuario.rol === 'admin' && (
+        <section className="flex flex-col gap-2">
+          <Titulo nivel="sm" como="h2">
+            Administración
+          </Titulo>
+          <nav aria-label="Administración">
+            <ul className="divide-y divide-borde overflow-hidden rounded-2xl border border-borde bg-superficie shadow-nivel-1">
+              {seccionesAdmin.map((seccion) => (
+                <li key={seccion.a}>
+                  <Link
+                    to={seccion.a}
+                    className="flex min-h-14 items-center justify-between gap-3 px-4 text-label-lg font-medium text-texto hover:bg-tonal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-bosque-hover"
+                  >
+                    {seccion.texto}
+                    <Icono nombre="chevron_right" className="text-texto-3" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </section>
+      )}
 
       <Boton variante="secundario" cargando={saliendo} textoCargando="Cerrando sesión…" onClick={salir}>
         Cerrar sesión
       </Boton>
     </div>
-  )
-}
-
-// Una lista de enlaces a otras pantallas, con su título.
-function ListaDeSecciones({ titulo, secciones }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <Titulo nivel="sm" como="h2">
-        {titulo}
-      </Titulo>
-      <nav aria-label={titulo}>
-        <ul className="divide-y divide-borde overflow-hidden rounded-2xl border border-borde bg-superficie shadow-nivel-1">
-          {secciones.map((seccion) => (
-            <li key={seccion.a}>
-              <Link
-                to={seccion.a}
-                className="flex min-h-14 items-center justify-between gap-3 px-4 text-label-lg font-medium text-texto hover:bg-tonal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-bosque-hover"
-              >
-                {seccion.texto}
-                <Icono nombre="chevron_right" className="text-texto-3" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    </section>
   )
 }
