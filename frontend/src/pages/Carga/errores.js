@@ -3,12 +3,21 @@
 // En ningún caso se borra lo cargado: el formulario queda igual para corregir o reintentar.
 
 const SIN_CONEXION = 'No hay conexión. Lo que cargaste sigue acá: probá de nuevo.'
+const SESION_VENCIDA_CON_BORRADOR =
+  'Tu sesión venció. Lo que cargaste quedó guardado en este celular: ingresá de nuevo y tocá «Retomar lo que cargaste».'
+const SESION_VENCIDA_SIN_BORRADOR = 'Tu sesión venció. Ingresá de nuevo y volvé a guardar los cambios.'
 const GENERICO = 'No se pudo guardar el registro. Probá de nuevo en unos minutos.'
 
 // - fechaEsDelMesActual: si la fecha elegida es del mes en curso. Solo en ese caso, ante un 409,
 //   se ofrece "Ver lo guardado": la pantalla solo sabe abrir el registro del mes en curso.
-export function mensajeDeGuardado(error, { fechaEsDelMesActual }) {
+// - conBorrador: si lo cargado se guarda como borrador en el celular (T17). Cambia el texto del 401.
+export function mensajeDeGuardado(error, { fechaEsDelMesActual, conBorrador = false }) {
   switch (error?.estado) {
+    case 401: // la sesión venció: la app pasa al login
+      return {
+        texto: conBorrador ? SESION_VENCIDA_CON_BORRADOR : SESION_VENCIDA_SIN_BORRADOR,
+        verRegistroDelMes: false,
+      }
     case 409: // RN-04: ya hay un registro de ese mes (el backend manda además error.datos.registroId)
       return { texto: 'Esta célula ya tiene un registro de ese mes.', verRegistroDelMes: fechaEsDelMesActual }
     case 403:
