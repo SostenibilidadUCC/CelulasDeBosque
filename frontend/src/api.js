@@ -176,3 +176,8 @@ export const guardarPlano = (isletaId, datos) => pedir(`/admin/isletas/${isletaI
 // datos = { desde, hasta, fechaPlantacion }. Con vistaPrevia no guarda nada. Responde { celulas: [{ numero, fila, columna, codigo }] }.
 export const crearCelulasEnLote = (isletaId, datos, vistaPrevia = false) =>
   pedir(`/admin/isletas/${isletaId}/celulas-lote${vistaPrevia ? '?vistaPrevia=true' : ''}`, { method: 'POST', cuerpo: datos })
+
+// T17: nueva célula. datos = { isletaId, numero, fila, columna, fechaPlantacion } (la fecha es opcional:
+// sin ella, hoy). Responde 201 con { id, codigo, isletaId, numero, fila, columna, fechaPlantacion }.
+// 409 si el número o la celda ya están ocupados (el mensaje del servidor dice cuál).
+export const crearCelula = (datos) => pedir('/celulas', { method: 'POST', cuerpo: datos })
