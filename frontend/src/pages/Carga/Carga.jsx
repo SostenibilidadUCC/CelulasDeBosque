@@ -20,6 +20,8 @@ import MensajeError from '../../components/MensajeError.jsx'
 import Modal from '../../components/Modal.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
+import { useSesion } from '../../sesion/useSesion.js'
+import AvisoBorrador from './AvisoBorrador.jsx'
 import BloqueIndividuo from './BloqueIndividuo.jsx'
 import CampoObservaciones from './CampoObservaciones.jsx'
 import ConfirmacionGuardado from './ConfirmacionGuardado.jsx'
@@ -29,6 +31,7 @@ import { fechaEnTexto, hoyEnCordoba, mesEnMinuscula, periodoDeFecha, rangoDeFech
 import { alturaAnterior, estabaMuerto, individuoMuerto, individuoNuevo, individuosIniciales } from './individuos.js'
 import { armarPedido } from './pedido.js'
 import { alturasSinCambio, errorDeFoto, errorDeIndividuoConCampo, esFormularioValido } from './validacion.js'
+import { useBorrador } from './useBorrador.js'
 
 // Pantalla de carga mensual (T14). Ruta: /cargar/:celulaId.
 // Con ?periodo=2026-09 abre el registro de ese mes para editarlo (el botón "Editar registro" de la ficha).
@@ -146,29 +149,41 @@ function CargaDeCelula({ celulaId, periodo }) {
   }
 
   // onRecargar vuelve a pedir los datos: el formulario se desmonta y se arma de nuevo con lo guardado.
-  return <FormularioCarga datos={carga.datos} onRecargar={reintentar} />
+  // periodoPedido: el mes de la URL (?periodo=), o null si es el mes en curso. Lo usa el borrador.
+  return <FormularioCarga datos={carga.datos} periodoPedido={periodo} onRecargar={reintentar} />
 }
 
 // El formulario de carga. Se monta recién cuando llegaron los datos, así el estado inicial
 // (la fecha) puede salir de la respuesta sin un useEffect.
 // Acá vive todo el estado del registro: fecha, foto, individuos, observaciones y el guardado.
-function FormularioCarga({ datos, onRecargar }) {
+function FormularioCarga({ datos, periodoPedido, onRecargar }) {
   const { celula, formasDeVida, periodoActual, actual, anterior } = datos
 
   // "hoy" se calcula una sola vez al abrir la pantalla.
   const [hoy] = useState(hoyEnCordoba)
-  // Si ya hay registro de este mes, se edita: la fecha arranca en la guardada. Si no, en hoy.
-  const [fecha, setFecha] = useState(actual?.fecha ?? hoy)
-  const [verCampoFecha, setVerCampoFecha] = useState(false)
-  // Los 4 individuos, en el orden de formasDeVida. Ver individuosIniciales para la precarga (RN-09).
+  // T17: lo precargado al abrir, en un solo objeto. Arranca así el formulario y el borrador lo usa
+  // para saber si la persona cambió algo (si no cambió nada, no se guarda borrador).
+  // - Fecha: editando, la guardada; si no, hoy.
+  // - Individuos: ver individuosIniciales para la precarga (RN-09).
+  // - Observaciones (CAR-13): editando, las guardadas; nuevo, vacías (no se copian las del mes anterior).
+  // - Foto (RN-07): editando, la guardada; nuevo, null (nunca la del mes anterior).
   // Con una función, useState la corre solo la primera vez (no en cada render).
-  const [individuos, setIndividuos] = useState(() => individuosIniciales(datos))
-  // CAR-13: un solo texto del registro. Editando, el guardado; nuevo, vacío (no se copia el del mes anterior).
-  const [observaciones, setObservaciones] = useState(actual?.observaciones ?? '')
+  const [iniciales] = useState(() => ({
+    fecha: actual?.fecha ?? hoy,
+    individuos: individuosIniciales(datos),
+    observaciones: actual?.observaciones ?? '',
+    fotoId: actual?.fotoId ?? null,
+  }))
+  const [fecha, setFecha] = useState(iniciales.fecha)
+  const [verCampoFecha, setVerCampoFecha] = useState(false)
+  // Los 4 individuos, en el orden de formasDeVida.
+  const [individuos, setIndividuos] = useState(iniciales.individuos)
+  // CAR-13: un solo texto del registro.
+  const [observaciones, setObservaciones] = useState(iniciales.observaciones)
   // La confirmación abierta: { tipo: 'muerto' | 'reposicion', formaDeVida }, o null si no hay ninguna.
   const [confirmacion, setConfirmacion] = useState(null)
-  // RN-07: el id de la foto de este mes. Editando, la guardada; nuevo, null (nunca la del mes anterior).
-  const [fotoId, setFotoId] = useState(actual?.fotoId ?? null)
+  // RN-07: el id de la foto de este mes.
+  const [fotoId, setFotoId] = useState(iniciales.fotoId)
   // Mientras Foto comprime o sube, fotoId es null: con esto no se muestra "Falta la foto" en ese
   // momento y no se deja guardar hasta que termine (Foto lo avisa con onOcupada).
   const [fotoOcupada, setFotoOcupada] = useState(false)
@@ -248,6 +263,36 @@ function FormularioCarga({ datos, onRecargar }) {
   const editando = actual != null
   const formularioValido = esFormularioValido({ errorFecha, fotoId, individuos, observaciones })
 
+  // ---------- Borrador en el celular (T17, CAR-16) ----------
+  // El id del usuario se toma al abrir: si la sesión vence, "usuario" pasa a null, pero el borrador
+  // tiene que quedar con la clave de quien lo cargó, para ofrecérselo cuando vuelva a ingresar.
+  const { usuario } = useSesion()
+  const [usuarioId] = useState(() => usuario?.id ?? null)
+  // Solo para un registro nuevo del mes en curso. Editando (CAR-14) o en un mes anterior abierto desde
+  // la ficha, no se ofrece ni se guarda borrador.
+  const usaBorrador = !editando && usuarioId != null && (periodoPedido == null || periodoPedido === periodoActual)
+  const borrador = useBorrador({
+    activo: usaBorrador,
+    usuarioId,
+    celulaId: celula.id,
+    periodo: periodoActual,
+    datos: { fecha, individuos, observaciones, fotoId },
+    iniciales,
+  })
+
+  // "Retomar lo que cargaste": se pasa lo guardado al formulario. Si tenía foto (ya subida al
+  // servidor), Foto la muestra con GET /api/fotos/{id} y Guardar la manda como la foto del registro,
+  // igual que si se hubiera subido recién.
+  function retomarBorrador() {
+    const delCelular = borrador.retomar()
+    if (!delCelular) return
+    setFecha(delCelular.fecha)
+    setVerCampoFecha(delCelular.fecha !== hoy) // si no es hoy, que se vea la fecha elegida
+    setIndividuos(delCelular.individuos)
+    setObservaciones(delCelular.observaciones)
+    setFotoId(delCelular.fotoId)
+  }
+
   // Al tocar Guardar: valida y, si las alturas quedaron igual que el mes anterior, pide confirmarlo (CAR-08).
   function intentarGuardar() {
     if (enviando.current) return // ya hay un guardado en curso
@@ -276,9 +321,17 @@ function FormularioCarga({ datos, onRecargar }) {
     try {
       if (editando) await modificarRegistro(actual.id, pedido)
       else await crearRegistro(celula.id, pedido)
+      borrador.terminar() // ya está en el servidor: el borrador no hace falta más
     } catch (error) {
-      // TODO T17: un 401 (sesión vencida) manda al login y lo cargado se pierde: falta el borrador.
-      setErrorGuardado(mensajeDeGuardado(error, { fechaEsDelMesActual: periodo === periodoActual }))
+      const mensaje = mensajeDeGuardado(error, { fechaEsDelMesActual: periodo === periodoActual, conBorrador: usaBorrador })
+      // 401: la sesión venció. pedir() avisa y la app pasa al login enseguida, así que esta pantalla
+      // se cierra. Antes se guarda el borrador en el acto (sin esperar), y el aviso va como toast,
+      // que sigue visible en el login. Al volver a ingresar se vuelve a esta célula y se ofrece retomarlo.
+      if (error?.estado === 401) {
+        borrador.guardarYa()
+        toast.error(mensaje.texto, { duration: 10000 })
+      }
+      setErrorGuardado(mensaje)
       enviando.current = false
       setGuardando(false)
       return
@@ -326,6 +379,16 @@ function FormularioCarga({ datos, onRecargar }) {
           onBuscarSiguiente={() => buscarSiguienteCelula(celula)}
           onEditarDeNuevo={onRecargar}
         />
+      </Pagina>
+    )
+  }
+
+  // Hay un borrador de esta célula: antes de mostrar el formulario se pregunta qué hacer con él.
+  if (borrador.borradorPendiente) {
+    return (
+      <Pagina>
+        <EncabezadoCarga celula={celula} periodo={periodoActual} editando={false} />
+        <AvisoBorrador onRetomar={retomarBorrador} onEmpezarDeNuevo={borrador.empezarDeNuevo} />
       </Pagina>
     )
   }
@@ -424,7 +487,14 @@ function FormularioCarga({ datos, onRecargar }) {
             {errorGuardado.texto}
           </p>
           {errorGuardado.verRegistroDelMes && (
-            <Boton variante="secundario" icono="history" onClick={onRecargar}>
+            <Boton
+              variante="secundario"
+              icono="history"
+              onClick={() => {
+                borrador.terminar() // el botón dice que se descarta lo cargado: también el borrador
+                onRecargar()
+              }}
+            >
               Ver lo guardado (se descarta lo que cargaste ahora)
             </Boton>
           )}

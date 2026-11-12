@@ -72,6 +72,39 @@ export default function Mas() {
         </div>
       </Tarjeta>
 
+      {/* T17 (ALT-01): Nueva célula, para el admin y el cargador. Se usa una sola vez por célula, el día
+          de la plantación: por eso está acá y no en la barra. Va en su propio bloque, separado de
+          Administración. Ocultarlo al lector es solo experiencia de uso: el backend valida el permiso. */}
+      {(usuario.rol === 'admin' || usuario.rol === 'cargador') && (
+        <section className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
+            <Titulo nivel="sm" como="h2">
+              Plantación
+            </Titulo>
+            <p id="ayuda-plantacion" className="text-body-sm text-texto-2">
+              Dá de alta cada célula el día que la plantás.
+            </p>
+          </div>
+          <nav aria-label="Plantación">
+            <ul className="overflow-hidden rounded-2xl border border-borde bg-superficie shadow-nivel-1">
+              <li>
+                <Link
+                  to="/celulas/nueva"
+                  aria-describedby="ayuda-plantacion"
+                  className="flex min-h-14 items-center justify-between gap-3 px-4 text-label-lg font-medium text-texto hover:bg-tonal focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-bosque-hover"
+                >
+                  <span className="flex items-center gap-3">
+                    <Icono nombre="add" className="text-bosque" />
+                    Nueva célula
+                  </span>
+                  <Icono nombre="chevron_right" className="text-texto-3" />
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </section>
+      )}
+
       {/* Las pantallas del admin. En celular no hay menú lateral: este es el único lugar donde están.
           Ocultarlas es solo experiencia de uso: el backend valida que sea admin. */}
       {usuario.rol === 'admin' && (
