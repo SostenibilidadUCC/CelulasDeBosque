@@ -176,3 +176,37 @@ export const guardarPlano = (isletaId, datos) => pedir(`/admin/isletas/${isletaI
 // datos = { desde, hasta, fechaPlantacion }. Con vistaPrevia no guarda nada. Responde { celulas: [{ numero, fila, columna, codigo }] }.
 export const crearCelulasEnLote = (isletaId, datos, vistaPrevia = false) =>
   pedir(`/admin/isletas/${isletaId}/celulas-lote${vistaPrevia ? '?vistaPrevia=true' : ''}`, { method: 'POST', cuerpo: datos })
+
+// T21: tabla de datos. filtros: { lugar, isleta, desde, hasta, forma, q, orden, dir, pagina }. Los vacíos no se mandan.
+// Responde { filas, total, pagina, porPagina, formasDeVida }: 50 filas por página, una por individuo y registro.
+export const obtenerDatos = (filtros = {}) => {
+  const parametros = new URLSearchParams()
+  for (const [nombre, valor] of Object.entries(filtros)) {
+    if (valor) parametros.set(nombre, valor)
+  }
+  const texto = parametros.toString()
+  return pedir(`/datos${texto ? `?${texto}` : ''}`)
+}
+// T21: el Excel de lo filtrado (los mismos filtros, sin pagina). Responde { archivo, nombre }: archivo es un Blob
+// y nombre sale del backend ("celulas_A_2026-08_2026-11.xlsx"). Usa fetch y no pedir() porque la respuesta
+// es un archivo, no JSON; los errores sí llegan en JSON y se tratan igual que en pedir().
+export async function descargarExcel(filtros = {}) {
+  const parametros = new URLSearchParams()
+  for (const [nombre, valor] of Object.entries(filtros)) {
+    if (valor) parametros.set(nombre, valor)
+  }
+  let respuesta
+  try {
+    respuesta = await fetch(`/api/datos/excel?${parametros}`, { credentials: 'include' })
+  } catch {
+    throw new ErrorApi('No hay conexión. Revisá tu señal y probá de nuevo.', 0)
+  }
+  if (!respuesta.ok) {
+    const datos = await respuesta.json().catch(() => null)
+    if (respuesta.status === 401) window.dispatchEvent(new Event(EVENTO_SESION_VENCIDA))
+    throw new ErrorApi(datos?.error ?? 'No se pudo descargar el Excel. Probá de nuevo.', respuesta.status, datos)
+  }
+  // El nombre viene en el encabezado: attachment; filename="celulas_A_2026-08_2026-11.xlsx".
+  const nombre = respuesta.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ?? 'celulas.xlsx'
+  return { archivo: await respuesta.blob(), nombre }
+}
