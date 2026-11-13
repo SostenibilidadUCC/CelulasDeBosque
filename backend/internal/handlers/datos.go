@@ -17,8 +17,9 @@ import (
 
 // Tabla de datos y Excel (T21, TAB-01, 03 a 05). Una fila por individuo y registro, con los datos
 // crudos de cada medición. Los filtros son los de Resultados (leerFiltros de metricas.go) más el
-// buscador por código, y entran los mismos registros que en Resultados: sin anulados (RN-12),
-// sin células dadas de baja y sin lugares deshabilitados.
+// buscador por código. No entran los registros anulados (RN-12) ni los de lugares deshabilitados.
+// A diferencia de Resultados, las células dadas de baja SÍ entran, con lo medido hasta la fecha de baja:
+// RN-14 dice que su historial sigue visible, y la tabla son los datos crudos, no una métrica.
 
 // filasPorPagina es el tamaño de cada página de la tabla (TAB-01).
 const filasPorPagina = 50
@@ -176,7 +177,8 @@ const consultaDatos = `
 		JOIN variables v ON v.id = md.variable_id
 		WHERE md.registro_id = r.id AND md.individuo_id = ind.id
 	) m
-	WHERE NOT r.anulado AND c.estado = 'activa' AND l.activo
+	WHERE NOT r.anulado AND l.activo
+	  AND (c.estado = 'activa' OR r.fecha_medicion <= c.fecha_baja) -- RN-14: el historial de una dada de baja se ve
 	  AND ($1::bigint IS NULL OR l.id = $1)
 	  AND ($2::bigint IS NULL OR i.id = $2)
 	  AND ($3::date IS NULL OR r.periodo >= $3)

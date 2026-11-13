@@ -142,11 +142,13 @@ func TestDatosConBase(t *testing.T) {
 		WHERE l.letra = 'C' AND i.numero = 1`).Scan(&lugarC, &isletaC1); err != nil {
 		t.Fatalf("no se encontró la isleta C-1 (¿corriste el seed?): %v", err)
 	}
-	// Lo esperado se cuenta directo en la base: un Árbol por cada registro no anulado de las células activas.
+	// Lo esperado se cuenta directo en la base: un Árbol por cada registro no anulado, de las células
+	// activas y de las dadas de baja hasta su fecha de baja (RN-14).
 	var esperado int
 	if err := pool.QueryRow(ctx, `
 		SELECT count(*) FROM registros r JOIN celulas c ON c.id = r.celula_id
-		WHERE c.isleta_id = $1 AND c.estado = 'activa' AND NOT r.anulado`, isletaC1).Scan(&esperado); err != nil {
+		WHERE c.isleta_id = $1 AND NOT r.anulado
+		  AND (c.estado = 'activa' OR r.fecha_medicion <= c.fecha_baja)`, isletaC1).Scan(&esperado); err != nil {
 		t.Fatalf("no se pudieron contar los registros: %v", err)
 	}
 
@@ -194,6 +196,45 @@ func TestDatosConBase(t *testing.T) {
 			if f.CodigoIndividuo != "C-1-8-1" {
 				t.Errorf("el buscador trajo %s", f.CodigoIndividuo)
 			}
+		}
+	})
+
+	// RN-14: C-1-10 se dio de baja el 20/10/2026 y tiene 3 registros anteriores (agosto, septiembre y
+	// octubre). Su historial tiene que seguir en la tabla, y nada medido después de la baja.
+	t.Run("célula dada de baja con su historial", func(t *testing.T) {
+		var fechaBaja time.Time
+		var registrosAntes int
+		if err := pool.QueryRow(ctx, `
+			SELECT c.fecha_baja, count(r.id) FILTER (WHERE NOT r.anulado AND r.fecha_medicion <= c.fecha_baja)
+			FROM celulas c LEFT JOIN registros r ON r.celula_id = c.id
+			WHERE c.isleta_id = $1 AND c.numero = 10 AND c.estado = 'baja'
+			GROUP BY c.id`, isletaC1).Scan(&fechaBaja, &registrosAntes); err != nil {
+			t.Fatalf("no se encontró C-1-10 dada de baja (¿corriste el seed?): %v", err)
+		}
+		if registrosAntes == 0 {
+			t.Fatal("C-1-10 no tiene registros anteriores a la baja: el caso no se puede probar")
+		}
+
+		var r respuestaDatos
+		_ = json.Unmarshal(pedir(Datos(pool), "/api/datos"+base+"&q=C-1-10").Body.Bytes(), &r)
+		if r.Total != registrosAntes {
+			t.Errorf("C-1-10 tiene %d filas, se esperaban %d (sus registros hasta la baja)", r.Total, registrosAntes)
+		}
+		for _, f := range r.Filas {
+			if f.FechaMedicion > fechaBaja.Format("2006-01-02") {
+				t.Errorf("apareció un registro del %s, posterior a la baja (%s)", f.FechaMedicion, fechaBaja.Format("2006-01-02"))
+			}
+		}
+
+		// Y también en el Excel.
+		libro, err := excelize.OpenReader(pedir(DatosExcel(pool), "/api/datos/excel"+base+"&q=C-1-10").Body)
+		if err != nil {
+			t.Fatalf("el Excel no se puede abrir: %v", err)
+		}
+		defer libro.Close()
+		filas, _ := libro.GetRows("Datos")
+		if len(filas) != registrosAntes+1 {
+			t.Errorf("el Excel de C-1-10 tiene %d filas, se esperaban %d (más los títulos)", len(filas), registrosAntes+1)
 		}
 	})
 
