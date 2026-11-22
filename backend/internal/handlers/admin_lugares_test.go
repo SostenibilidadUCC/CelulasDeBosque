@@ -63,7 +63,6 @@ func nuevoEntornoAdmin(t *testing.T) *entornoAdmin {
 	mux.HandleFunc("PUT /api/admin/lugares/{id}", a.RequiereSesion(EditarLugar(pool)))
 	mux.HandleFunc("POST /api/admin/isletas", a.RequiereSesion(CrearIsleta(pool)))
 	mux.HandleFunc("PUT /api/admin/isletas/{id}", a.RequiereSesion(EditarIsleta(pool)))
-	mux.HandleFunc("POST /api/admin/isletas/{id}/plano", a.RequiereSesion(GuardarPlano(pool)))
 	mux.HandleFunc("POST /api/admin/isletas/{id}/celulas-lote", a.RequiereSesion(CrearCelulasEnLote(pool)))
 
 	e := &entornoAdmin{pool: pool, mux: mux}

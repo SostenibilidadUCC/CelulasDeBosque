@@ -138,7 +138,6 @@ export default function FormularioCelula({ isletaId, onTocar }) {
           tamanoCelda={TAMANO_CELDA}
           resaltadaId={ID_PROVISORIA}
           onSeleccionarLibre={elegirCelda}
-          imagenUrl={isleta.planoFotoId ? `/api/fotos/${isleta.planoFotoId}` : undefined}
         />
         {eleccion && !celdaOcupada && (
           <p className="text-body-md text-texto-2 tabular-nums">

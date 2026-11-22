@@ -7,11 +7,10 @@ import MensajeError from '../../components/MensajeError.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import { useSesion } from '../../sesion/useSesion.js'
 import CelulasEnLote from './CelulasEnLote.jsx'
-import EditorPlano from './EditorPlano.jsx'
 import { SinPermiso } from './Lugares.jsx'
 
-// Pantalla de administración de una isleta (T20): el plano (LUG-05, LUG-06) y la creación de
-// células en lote (LUG-07), en dos pestañas para que haya un solo botón principal a la vista.
+// Pantalla de administración de una isleta (T20): la creación de células en lote (LUG-07).
+// La grilla del plano se elige al crear o editar la isleta (FormularioIsleta), sin foto de fondo.
 // Ruta: /lugares/isletas/:id. Los datos salen de GET /api/isletas/{id}, el mismo que usa el Plano.
 export default function IsletaAdmin() {
   const { usuario } = useSesion()
@@ -29,16 +28,10 @@ export default function IsletaAdmin() {
   )
 }
 
-const pestanas = [
-  { id: 'plano', texto: 'Plano', icono: 'flight' },
-  { id: 'lote', texto: 'Crear células', icono: 'add' },
-]
-
 function ContenidoIsleta() {
   const { id } = useParams()
   const [carga, setCarga] = useState({ cargando: true })
   const [intento, setIntento] = useState(0)
-  const [pestana, setPestana] = useState('plano')
   const [aviso, setAviso] = useState(null)
 
   useEffect(() => {
@@ -63,8 +56,8 @@ function ContenidoIsleta() {
   }, [aviso])
 
   const recargar = () => setIntento((n) => n + 1)
-  // Después de guardar, se avisa acá (el editor arranca de cero) y se vuelve a pedir la isleta
-  // (sin "cargando") para ver el plano y las células nuevas.
+  // Después de guardar, se avisa acá (el formulario arranca de cero) y se vuelve a pedir la isleta
+  // (sin "cargando") para ver el plano con las células nuevas.
   function alGuardar(texto) {
     setAviso(texto)
     recargar()
@@ -103,34 +96,8 @@ function ContenidoIsleta() {
         </p>
       )}
 
-      <div role="tablist" aria-label="Qué querés hacer" className="flex gap-2 border-b border-borde">
-        {pestanas.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            role="tab"
-            id={`pestana-${p.id}`}
-            aria-selected={pestana === p.id}
-            aria-controls={`panel-${p.id}`}
-            onClick={() => setPestana(p.id)}
-            className={`-mb-px flex min-h-12 items-center gap-2 border-b-[3px] px-3 text-label-md font-medium focus-visible:outline-2 focus-visible:outline-bosque-hover ${
-              pestana === p.id ? 'border-bosque text-bosque' : 'border-transparent text-texto-2 hover:text-bosque'
-            }`}
-          >
-            <Icono nombre={p.icono} tamano="chico" />
-            {p.texto}
-          </button>
-        ))}
-      </div>
-
-      <div role="tabpanel" id={`panel-${pestana}`} aria-labelledby={`pestana-${pestana}`}>
-        {/* key: al recargar la isleta, el editor arranca de cero con los datos nuevos. */}
-        {pestana === 'plano' ? (
-          <EditorPlano key={`plano-${intento}`} isleta={isleta} onGuardado={alGuardar} />
-        ) : (
-          <CelulasEnLote key={`lote-${intento}`} isleta={isleta} onGuardado={alGuardar} />
-        )}
-      </div>
+      {/* key: al recargar la isleta, el formulario arranca de cero con los datos nuevos. */}
+      <CelulasEnLote key={`lote-${intento}`} isleta={isleta} onGuardado={alGuardar} />
     </>
   )
 }

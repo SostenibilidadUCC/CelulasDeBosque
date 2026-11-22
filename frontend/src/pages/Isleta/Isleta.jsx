@@ -30,8 +30,9 @@ function fechaCorta(texto) {
   return `${dia} ${nombreMes} ${anio}`
 }
 
-// Pantalla del plano de una isleta (T12, ISL-01 a 06). Es la que usa el cargador en el campo
-// para encontrar la célula sin carteles.
+// Pantalla del plano de una isleta (T12, ISL-01 a 05). Es la que usa el cargador en el campo
+// para encontrar la célula sin carteles. Toda isleta tiene su grilla desde que se crea, así que
+// ya no hay vista en lista para "isleta sin plano" (ISL-06).
 export default function Isleta() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -58,7 +59,7 @@ export default function Isleta() {
     }
   }, [id, intento])
 
-  // ISL-05: la célula buscada se centra en pantalla, tanto en el plano como en la lista.
+  // ISL-05: la célula buscada se centra en pantalla.
   useEffect(() => {
     if (resaltadaId == null) return
     document
@@ -98,7 +99,6 @@ export default function Isleta() {
   }
 
   const isleta = carga.datos
-  const tienePlano = isleta.planoFotoId != null // ISL-06: sin plano, se ven en lista
 
   // El estado del mes solo le sirve a quien carga en este lugar (admin o su cargador; el backend
   // lo calcula en puedeEditar con auth.PuedeEditarLugar). Al resto se le muestran las células
@@ -182,50 +182,17 @@ export default function Isleta() {
             )}
           </div>
 
-          {tienePlano ? (
-            <Plano
-              filas={isleta.filas}
-              columnas={isleta.columnas}
-              celulas={celulas}
-              tamanoCelda={tamano}
-              tamanoMinimo={TAMANO_MINIMO}
-              tamanoMaximo={TAMANO_MAXIMO}
-              onCambiarTamano={setTamano} // ISL-01: zoom con dos dedos
-              resaltadaId={resaltadaId}
-              onSeleccionar={setSeleccionada}
-              imagenUrl={`/api/fotos/${isleta.planoFotoId}`}
-            />
-          ) : (
-            <>
-              <p className="flex items-center gap-2 rounded-xl bg-tonal p-3 text-body-md text-bosque">
-                <Icono nombre="info" tamano="chico" />
-                Esta isleta todavía no tiene plano. Mientras tanto, las células se ven en lista.
-              </p>
-              <ul className="flex flex-col gap-2">
-                {celulas.map((c) => (
-                  <li key={c.id}>
-                    <button
-                      type="button"
-                      data-celula={c.id}
-                      onClick={() => setSeleccionada(c)}
-                      className={`flex min-h-14 w-full items-center gap-3 rounded-2xl border bg-superficie px-4 py-3 text-left shadow-nivel-1 focus-visible:outline-2 focus-visible:outline-bosque-hover ${
-                        c.id === resaltadaId ? 'border-bosque-hover ring-[3px] ring-hoja/25' : 'border-borde'
-                      }`}
-                    >
-                      <span className="flex flex-1 flex-col items-start gap-1">
-                        <CodigoCelula codigo={c.codigo} />
-                        <span className="text-body-sm text-texto-3">
-                          {c.ultimoRegistro ? `Último registro: ${fechaCorta(c.ultimoRegistro.fecha)}` : 'Sin registros'}
-                        </span>
-                      </span>
-                      {c.estado && <ChipEstado estado={c.estado} />}
-                      <Icono nombre="chevron_right" className="text-texto-3" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+          <Plano
+            filas={isleta.filas}
+            columnas={isleta.columnas}
+            celulas={celulas}
+            tamanoCelda={tamano}
+            tamanoMinimo={TAMANO_MINIMO}
+            tamanoMaximo={TAMANO_MAXIMO}
+            onCambiarTamano={setTamano} // ISL-01: zoom con dos dedos
+            resaltadaId={resaltadaId}
+            onSeleccionar={setSeleccionada}
+          />
         </>
       )}
 

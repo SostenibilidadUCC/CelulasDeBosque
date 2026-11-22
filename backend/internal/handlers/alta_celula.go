@@ -130,8 +130,7 @@ func AltaCelula(pool *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		// La celda tiene que estar dentro de la grilla del plano. No se pide la foto del plano:
-		// una isleta sin foto puede recibir células, igual que en el lote.
+		// La celda tiene que estar dentro de la grilla del plano.
 		if pedido.Fila < 1 || pedido.Fila > filas {
 			respuestas.Error(w, http.StatusBadRequest, fmt.Sprintf("La fila tiene que ser de 1 a %d", filas))
 			return

@@ -12,8 +12,8 @@ import FormularioLugar from './FormularioLugar.jsx'
 import TarjetaLugar from './TarjetaLugar.jsx'
 
 // Pantalla Lugares e isletas (T20, LUG-01 a 04). Solo para administradores.
-// Lista todos los lugares, también los deshabilitados, con sus isletas. El plano y la creación
-// de células en lote de cada isleta están en otra pantalla (IsletaAdmin).
+// Lista todos los lugares, también los deshabilitados, con sus isletas. La grilla del plano se
+// elige al crear o editar la isleta; la creación de células en lote está en otra pantalla (IsletaAdmin).
 export default function Lugares() {
   const { usuario } = useSesion()
 

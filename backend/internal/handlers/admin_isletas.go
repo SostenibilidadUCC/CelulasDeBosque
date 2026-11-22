@@ -17,8 +17,9 @@ import (
 )
 
 // Administración de isletas (T20, LUG-04). Solo el administrador.
-// Las filas y columnas se eligen al crear la isleta; después se cambian junto con el plano
-// (POST /api/admin/isletas/{id}/plano), que revisa que las células sigan entrando en la grilla.
+// El plano de la isleta es solo su grilla de filas y columnas (sin foto de fondo): se define al
+// crear la isleta y se cambia al editarla, siempre que las células sigan entrando en la grilla.
+// La columna plano_foto_id de la base quedó sin usar (puede ser NULL).
 
 // Límites de la grilla del plano (LUG-05) y del número de isleta.
 const (
@@ -30,11 +31,11 @@ const (
 func leerIsletaAdmin(ctx context.Context, pool *pgxpool.Pool, id int64) (isletaAdmin, error) {
 	var i isletaAdmin
 	err := pool.QueryRow(ctx, `
-		SELECT i.id, i.numero, i.nombre, i.filas, i.columnas, i.plano_foto_id,
+		SELECT i.id, i.numero, i.nombre, i.filas, i.columnas,
 		       (SELECT count(*) FROM celulas c WHERE c.isleta_id = i.id),
 		       EXISTS (SELECT 1 FROM registros r JOIN celulas c ON c.id = r.celula_id WHERE c.isleta_id = i.id)
 		FROM isletas i WHERE i.id = $1`, id).
-		Scan(&i.ID, &i.Numero, &i.Nombre, &i.Filas, &i.Columnas, &i.PlanoFotoID, &i.CantidadCelulas, &i.TieneRegistros)
+		Scan(&i.ID, &i.Numero, &i.Nombre, &i.Filas, &i.Columnas, &i.CantidadCelulas, &i.TieneRegistros)
 	return i, err
 }
 
@@ -138,12 +139,15 @@ func CrearIsleta(pool *pgxpool.Pool) http.HandlerFunc {
 
 // pedidoEditarIsleta es el cuerpo de PUT /api/admin/isletas/{id}.
 type pedidoEditarIsleta struct {
-	Numero int     `json:"numero"`
-	Nombre *string `json:"nombre"` // opcional
+	Numero   int     `json:"numero"`
+	Nombre   *string `json:"nombre"` // opcional
+	Filas    int     `json:"filas"`
+	Columnas int     `json:"columnas"`
 }
 
-// EditarIsleta atiende PUT /api/admin/isletas/{id}: cambia el número y el nombre.
-// El número no cambia si la isleta ya tiene registros (RN-03). Va envuelta en RequiereSesion.
+// EditarIsleta atiende PUT /api/admin/isletas/{id}: cambia el número, el nombre y la grilla del plano.
+// El número no cambia si la isleta ya tiene registros (RN-03). Las células no se mueven: si alguna
+// quedaría fuera de la nueva grilla, no se guarda (LUG-06). Va envuelta en RequiereSesion.
 func EditarIsleta(pool *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !auth.EsAdmin(auth.UsuarioActual(r)) {
@@ -162,7 +166,11 @@ func EditarIsleta(pool *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 		pedido.Nombre = textoOpcional(pedido.Nombre)
-		if mensaje := validarNumeroYNombre(pedido.Numero, pedido.Nombre); mensaje != "" {
+		mensaje := validarNumeroYNombre(pedido.Numero, pedido.Nombre)
+		if mensaje == "" {
+			mensaje = validarGrilla(pedido.Filas, pedido.Columnas)
+		}
+		if mensaje != "" {
 			respuestas.Error(w, http.StatusBadRequest, mensaje)
 			return
 		}
@@ -173,6 +181,8 @@ func EditarIsleta(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		// Igual que en EditarLugar: se lee y se actualiza en una transacción, con la fila bloqueada.
+		// FOR UPDATE también frena la creación de células en lote (bloquea la misma fila), así la
+		// revisión de la grilla de abajo sigue valiendo al guardar.
 		tx, err := pool.Begin(r.Context())
 		if err != nil {
 			errorInterno("no se pudo empezar la transacción", err)
@@ -201,9 +211,26 @@ func EditarIsleta(pool *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		_, err = tx.Exec(r.Context(),
-			`UPDATE isletas SET numero = $1, nombre = $2, modificado_en = now() WHERE id = $3`,
-			pedido.Numero, pedido.Nombre, id)
+		// La fila y la columna más altas que ya usan las células (también las dadas de baja,
+		// que siguen ocupando su celda). Sin células, las dos dan 0 y cualquier grilla sirve.
+		var filaMaxima, columnaMaxima int
+		err = tx.QueryRow(r.Context(),
+			`SELECT COALESCE(max(fila), 0), COALESCE(max(columna), 0) FROM celulas WHERE isleta_id = $1`, id).
+			Scan(&filaMaxima, &columnaMaxima)
+		if err != nil {
+			errorInterno("no se pudieron leer las posiciones", err)
+			return
+		}
+		if filaMaxima > pedido.Filas || columnaMaxima > pedido.Columnas {
+			respuestas.Error(w, http.StatusBadRequest,
+				fmt.Sprintf("La grilla es chica: hay células hasta la fila %d y la columna %d", filaMaxima, columnaMaxima))
+			return
+		}
+
+		_, err = tx.Exec(r.Context(), `
+			UPDATE isletas SET numero = $1, nombre = $2, filas = $3, columnas = $4, modificado_en = now()
+			WHERE id = $5`,
+			pedido.Numero, pedido.Nombre, pedido.Filas, pedido.Columnas, id)
 		if violaUnica(err, "isletas_lugar_id_numero_key") {
 			respuestas.Error(w, http.StatusConflict, mensajeIsletaRepetida(pedido.Numero))
 			return

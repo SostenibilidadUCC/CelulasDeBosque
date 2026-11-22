@@ -54,7 +54,6 @@ type respuestaIsleta struct {
 	Lugar       lugarDeIsleta `json:"lugar"`
 	Filas       int           `json:"filas"`
 	Columnas    int           `json:"columnas"`
-	PlanoFotoID *int64        `json:"planoFotoId"` // null si todavía no se subió el plano (ISL-06)
 	PuedeEditar bool          `json:"puedeEditar"` // si el usuario puede cargar registros en este lugar
 	Celulas     []celdaCelula `json:"celulas"`
 }
@@ -77,12 +76,12 @@ func Isleta(pool *pgxpool.Pool) http.HandlerFunc {
 		// 1. La isleta y su lugar. Un lugar deshabilitado no se muestra (LUG-03).
 		var isleta respuestaIsleta
 		err = pool.QueryRow(r.Context(), `
-			SELECT i.id, i.numero, i.nombre, i.filas, i.columnas, i.plano_foto_id,
+			SELECT i.id, i.numero, i.nombre, i.filas, i.columnas,
 			       l.id, l.letra, l.nombre
 			FROM isletas i
 			JOIN lugares l ON l.id = i.lugar_id
 			WHERE i.id = $1 AND l.activo`, id).
-			Scan(&isleta.ID, &isleta.Numero, &isleta.Nombre, &isleta.Filas, &isleta.Columnas, &isleta.PlanoFotoID,
+			Scan(&isleta.ID, &isleta.Numero, &isleta.Nombre, &isleta.Filas, &isleta.Columnas,
 				&isleta.Lugar.ID, &isleta.Lugar.Letra, &isleta.Lugar.Nombre)
 		if errors.Is(err, pgx.ErrNoRows) {
 			respuestas.Error(w, http.StatusNotFound, "No existe esa isleta")

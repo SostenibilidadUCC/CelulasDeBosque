@@ -22,9 +22,9 @@ const formasDeVida = [
 // El código A‑1‑45 usa guiones que no se cortan (U+2011), para que no quede "A-" en una línea.
 const pasos = [
   {
-    icono: 'flight',
+    icono: 'grid_view',
     titulo: 'Ubicamos cada célula',
-    texto: 'Cada célula tiene un código, como A‑1‑45, y su lugar marcado en el plano de la isleta, hecho con una foto de dron.',
+    texto: 'Cada célula tiene un código, como A‑1‑45, y su lugar marcado en el plano de la isleta.',
   },
   {
     icono: 'photo_camera',
