@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router'
 import Icono from './Icono.jsx'
+import Logo from './Logo.jsx'
 
 // Pantallas de la barra de abajo: ya se llega con un toque, no necesitan "Volver".
 const PANTALLAS_PRINCIPALES = ['/inicio', '/celulas', '/resultados', '/mas']
@@ -46,9 +47,7 @@ export default function BarraSuperior() {
             muestraVolver ? 'ml-auto' : ''
           }`}
         >
-          <span className="flex size-9 items-center justify-center rounded-full bg-bosque text-white">
-            <Icono nombre="park" tamano="chico" relleno />
-          </span>
+          <Logo className="size-9" />
           {/* Con "Volver" a la izquierda, en celular queda solo el ícono para que entre todo. */}
           <span className={`flex-col leading-tight ${muestraVolver ? 'hidden sm:flex' : 'flex'}`}>
             <span className="font-titulo text-headline-sm font-semibold text-bosque">Células de Bosque</span>

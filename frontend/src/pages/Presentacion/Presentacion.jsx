@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 import Acordeon from '../../components/Acordeon.jsx'
 import Boton from '../../components/Boton.jsx'
 import Icono from '../../components/Icono.jsx'
+import Logo from '../../components/Logo.jsx'
 import { BlurFade } from '../../components/ui/blur-fade.jsx'
 import { useSesion } from '../../sesion/useSesion.js'
 
@@ -273,9 +274,7 @@ function BarraPresentacion({ usuario, onIngresar }) {
   return (
     <div className="mx-auto flex w-full max-w-[1120px] items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-10">
       <span className="flex items-center gap-2">
-        <span className="flex size-10 items-center justify-center rounded-full bg-superficie text-bosque">
-          <Icono nombre="park" relleno />
-        </span>
+        <Logo className="rounded-[22%] ring-2 ring-white/80" />
         <span className="flex flex-col leading-tight">
           <span className="font-titulo text-headline-sm font-semibold">Células de Bosque</span>
           <span className="text-body-sm text-white/80">UCC Sostenible</span>

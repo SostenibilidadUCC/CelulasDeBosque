@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 import Boton from '../../components/Boton.jsx'
-import Icono from '../../components/Icono.jsx'
+import Logo from '../../components/Logo.jsx'
 import { useSesion } from '../../sesion/useSesion.js'
 import Resultados from '../Resultados/Resultados.jsx'
 
@@ -21,9 +21,7 @@ export default function ResultadosPublico() {
             onClick={() => navigate('/')}
             className="flex min-h-12 items-center gap-2 rounded-xl text-bosque focus-visible:outline-2 focus-visible:outline-bosque-hover"
           >
-            <span className="flex size-10 items-center justify-center rounded-full bg-tonal">
-              <Icono nombre="park" relleno />
-            </span>
+            <Logo />
             <span className="flex flex-col items-start leading-tight">
               <span className="font-titulo text-headline-sm font-semibold">Células de Bosque</span>
               <span className="text-body-sm text-texto-2">UCC Sostenible</span>

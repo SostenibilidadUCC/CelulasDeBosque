@@ -4,6 +4,7 @@ import { iniciarSesion } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import CampoTexto from '../../components/CampoTexto.jsx'
 import Icono from '../../components/Icono.jsx'
+import Logo from '../../components/Logo.jsx'
 import Tarjeta from '../../components/Tarjeta.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import { useSesion } from '../../sesion/useSesion.js'
@@ -43,9 +44,7 @@ export default function Login() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-6 px-4 py-10">
       <header className="flex flex-col items-center gap-4 text-center">
-        <span className="flex size-16 items-center justify-center rounded-full bg-bosque text-white shadow-nivel-2">
-          <Icono nombre="park" tamano="grande" relleno />
-        </span>
+        <Logo className="size-16 shadow-nivel-2 rounded-[22%]" />
         <div className="flex flex-col gap-2">
           <Titulo nivel="lg">Células de Bosque</Titulo>
           <p className="text-body-lg text-texto-2">
