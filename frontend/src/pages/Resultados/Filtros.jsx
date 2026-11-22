@@ -1,4 +1,3 @@
-import Icono from '../../components/Icono.jsx'
 import Selector from '../Celulas/Selector.jsx'
 import { opcionesPeriodo } from './periodos.js'
 
@@ -19,8 +18,8 @@ export default function Filtros({ filtros, lugares, formasDeVida, onCambiar }) {
     ...(lugarElegido?.isletas ?? []).map((i) => ({ valor: String(i.id), texto: `Isleta ${i.numero}` })),
   ]
   const opcionesForma = [
-    { valor: '', texto: 'Todas', icono: null },
-    ...formasDeVida.map((f) => ({ valor: String(f.formaDeVida), texto: f.nombre, icono: f.icono })),
+    { valor: '', texto: 'Todas' },
+    ...formasDeVida.map((f) => ({ valor: String(f.formaDeVida), texto: f.nombre })),
   ]
 
   return (
@@ -45,11 +44,10 @@ export default function Filtros({ filtros, lugares, formasDeVida, onCambiar }) {
               type="button"
               aria-pressed={elegida}
               onClick={() => onCambiar({ forma: opcion.valor })}
-              className={`flex min-h-10 items-center gap-1 rounded-full px-3 text-label-md transition duration-150 ease-out focus-visible:outline-2 focus-visible:outline-bosque-hover ${
+              className={`flex min-h-10 items-center rounded-full px-3 text-label-md transition duration-150 ease-out focus-visible:outline-2 focus-visible:outline-bosque-hover ${
                 elegida ? 'bg-superficie font-semibold text-bosque shadow-nivel-1' : 'text-texto-2'
               }`}
             >
-              {opcion.icono && <Icono nombre={opcion.icono} tamano="chico" />}
               {opcion.texto}
             </button>
           )

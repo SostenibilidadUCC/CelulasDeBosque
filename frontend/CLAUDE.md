@@ -69,7 +69,7 @@ Usá **solo** estos tokens. Nunca escribas un hexadecimal suelto en un component
 | Gramínea | `#c08552` | `local_florist` |
 | Rastrera | `#7c6fb0` | `grass` |
 
-Estos colores se usan **solo** para distinguir formas de vida (líneas de gráficos, puntos de leyenda, íconos).
+Estos colores se usan **solo** para distinguir formas de vida (líneas de gráficos y puntos de leyenda). Los íconos de las formas de vida se siguen usando en la Presentación y en el panel de la célula de la pantalla Isleta; en Resultados, la Carga y la Ficha se muestra solo el nombre.
 
 ## Tipografía
 
@@ -218,7 +218,7 @@ Igual que `BotonesVivoMuerto` pero más compacto: dos botones lado a lado de 48 
 
 Tarjeta, una por forma de vida y siempre en el orden Árbol, Arbusto, Gramínea, Rastrera:
 
-1. Arriba: ícono y nombre de la forma de vida.
+1. Arriba: nombre de la forma de vida, sin ícono.
 2. `BotonesVivoMuerto`.
 3. Altura con `SelectorNumero` (arranca en la altura del mes anterior).
 4. Cantidad de flores con `SelectorNumero` (arranca en 0).
@@ -230,7 +230,7 @@ No hay diámetro ni polinizadores (descartados).
 
 ### Control segmentado de formas de vida (filtros)
 
-Barra `rounded-full` con fondo `segmento` y 4 px de relleno interior. Opción elegida: fondo blanco, sombra nivel 1, texto `bosque` en 600 e ícono. Opciones no elegidas: transparentes, texto `texto-2`. Incluye la opción "Todas".
+Barra `rounded-full` con fondo `segmento` y 4 px de relleno interior. Opción elegida: fondo blanco (`superficie`), sombra nivel 1 y texto `bosque` en 600, sin ícono: solo el nombre. Opciones no elegidas: transparentes, texto `texto-2`. Incluye la opción "Todas".
 
 ### `Foto`
 
