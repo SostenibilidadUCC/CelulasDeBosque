@@ -35,3 +35,16 @@ test('otro error (500): el mensaje del ErrorApi, nunca vacío', () => {
   assert.equal(mensajeDeGuardado(error(500, null, 'Error del servidor'), { fechaEsDelMesActual: true }).texto, 'Error del servidor')
   assert.ok(mensajeDeGuardado(error(500, null, ''), { fechaEsDelMesActual: true }).texto.length > 0)
 })
+
+test('401 con borrador: avisa que la sesión venció y que lo cargado quedó en el celular', () => {
+  const resultado = mensajeDeGuardado(error(401), { fechaEsDelMesActual: true, conBorrador: true })
+  assert.match(resultado.texto, /Tu sesión venció/)
+  assert.match(resultado.texto, /Retomar lo que cargaste/)
+  assert.equal(resultado.verRegistroDelMes, false)
+})
+
+test('401 sin borrador (editando): avisa que hay que volver a guardar', () => {
+  const resultado = mensajeDeGuardado(error(401), { fechaEsDelMesActual: true })
+  assert.match(resultado.texto, /Tu sesión venció/)
+  assert.doesNotMatch(resultado.texto, /Retomar/)
+})

@@ -177,6 +177,11 @@ export const guardarPlano = (isletaId, datos) => pedir(`/admin/isletas/${isletaI
 export const crearCelulasEnLote = (isletaId, datos, vistaPrevia = false) =>
   pedir(`/admin/isletas/${isletaId}/celulas-lote${vistaPrevia ? '?vistaPrevia=true' : ''}`, { method: 'POST', cuerpo: datos })
 
+// T17: nueva célula. datos = { isletaId, numero, fila, columna, fechaPlantacion } (la fecha es opcional:
+// sin ella, hoy). Responde 201 con { id, codigo, isletaId, numero, fila, columna, fechaPlantacion }.
+// 409 si el número o la celda ya están ocupados (el mensaje del servidor dice cuál).
+export const crearCelula = (datos) => pedir('/celulas', { method: 'POST', cuerpo: datos })
+
 // T21: tabla de datos. filtros: { lugar, isleta, desde, hasta, forma, q, orden, dir, pagina }. Los vacíos no se mandan.
 // Responde { filas, total, pagina, porPagina, formasDeVida }: 50 filas por página, una por individuo y registro.
 export const obtenerDatos = (filtros = {}) => {

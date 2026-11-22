@@ -6,7 +6,6 @@ import PanelElegirCelula from './PanelElegirCelula.jsx'
 // Encabezado de la carga con la célula actual. Al tocarlo se abre el panel "Elegí la célula"
 // (el mismo del botón Cargar de la barra) para saltar a otra célula del lugar.
 // - celula: { id, codigo, lugarId, lugar, isletaId, isleta } de ultimo-registro.
-// TODO T17: al cambiar de célula se pierde lo que ya se cargó (falta el borrador en el celular).
 export default function ElegirCelula({ celula }) {
   const [abierto, setAbierto] = useState(false)
 
