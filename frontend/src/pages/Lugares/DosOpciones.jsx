@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { cn } from '@/lib/utils'
 import { claseOpcion } from '../../components/claseOpcion.js'
 import Icono from '../../components/Icono.jsx'
 
@@ -21,9 +22,14 @@ export default function DosOpciones({ etiqueta, opciones, valor, onCambiar }) {
               role="radio"
               aria-checked={elegida}
               onClick={() => onCambiar(opcion.valor)}
-              className={`${claseOpcion} flex items-center justify-center gap-2 ${
-                elegida ? 'border-bosque bg-bosque text-white hover:bg-bosque-hover hover:text-white' : ''
-              }`}
+              // cn (y no un template string) porque claseOpcion ya trae bg-superficie, border-niebla
+              // y text-texto: si se suman bg-bosque y text-white sin sacar las otras, Tailwind no
+              // usa "la última", y la opción elegida quedaba con texto blanco sobre fondo blanco.
+              className={cn(
+                claseOpcion,
+                'flex items-center justify-center gap-2',
+                elegida && 'border-bosque bg-bosque text-white hover:bg-bosque-hover hover:text-white',
+              )}
             >
               {opcion.icono && <Icono nombre={opcion.icono} tamano="chico" />}
               {opcion.texto}
