@@ -22,17 +22,17 @@ import (
 
 const (
 	// maxBytesFoto es lo máximo que se acepta por pedido. El front ya achica la foto
-	// (lado mayor 1600 px), así que una foto real pesa menos de 1 MB.
+	// (lado mayor 1280 px), así que una foto real pesa menos de 1 MB.
 	maxBytesFoto = 10 << 20 // 10 MB
 
 	// maxPixelesFoto evita las "bombas de descompresión": un archivo chiquito que al abrirlo
-	// ocupa gigas de memoria. El front ya manda fotos de 1600 px de lado mayor (unos 2 millones
+	// ocupa gigas de memoria. El front ya manda fotos de 1280 px de lado mayor (unos 1,2 millones
 	// de píxeles), así que 16 millones sobra. Al abrirla, una foto ocupa unos 4 bytes por píxel:
 	// 16 millones son unos 64 MB, contra unos 200 MB con el límite anterior de 50 millones.
 	maxPixelesFoto = 16_000_000
 
 	// calidadJPEG es la calidad al volver a guardar la foto (de 1 a 100).
-	calidadJPEG = 85
+	calidadJPEG = 80
 
 	mensajeErrorFoto = "No se pudo procesar la foto. Probá de nuevo en unos minutos."
 )

@@ -364,7 +364,7 @@ Roles: Administrador (cualquier lugar), Cargador (su lugar).
 | CAR-02 | Encabezado. | Muestra código, lugar, isleta, período y botón "Cambiar" célula. | A |
 | CAR-03 | Fecha y período. | Fecha de hoy por defecto, editable. El período se deduce de la fecha (RN-04, RN-06). | A |
 | CAR-04 | Foto. | Botones "Abrir cámara" y "Elegir de galería". Muestra al lado la foto del mes anterior como referencia de encuadre. Es obligatoria (RN-07). | A |
-| CAR-05 | Compresión y subida. | La foto se reduce en el celular (lado mayor 1600 px, hasta 300 KB) y se sube con barra de progreso y botón para reintentar si falla. | A |
+| CAR-05 | Compresión y subida. | La foto se reduce en el celular (lado mayor 1280 px, hasta 500 KB) y se sube con barra de progreso y botón para reintentar si falla. | A |
 | CAR-06 | Bloques de individuos. | 4 bloques fijos, uno por forma de vida (Árbol, Arbusto, Gramínea, Rastrera), cada uno con Vivo/Muerto, altura en un desplegable de centímetros, cantidad de flores en un desplegable de números, y presencia de frutos y nuevas plántulas con Sí/No. | A |
 | CAR-07 | Valor de referencia. | Debajo de la altura se muestra solo la del mes anterior ("En septiembre: 173 cm"), sin la diferencia. | A |
 | CAR-08 | Altura precargada. | El desplegable de altura arranca posicionado en el valor del mes anterior. Si al guardar alguna altura quedó igual, pide confirmar "La altura quedó igual que el mes anterior, ¿es correcto?". | A |

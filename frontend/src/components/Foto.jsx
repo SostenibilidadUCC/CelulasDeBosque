@@ -5,11 +5,15 @@ import Boton from './Boton.jsx'
 import Icono from './Icono.jsx'
 import PanelInferior from './PanelInferior.jsx'
 
-// Opciones de compresión (CAR-05): lado mayor 1600 px y hasta 300 KB, siempre en JPEG.
+// Opciones de compresión (CAR-05): lado mayor 1280 px, calidad 0,8 y hasta 500 KB, siempre en JPEG.
+// Es un punto medio entre nitidez y espacio en R2 (plan gratis de 10 GB, con el backup duplicando las fotos).
+// El tope de 500 KB es solo de seguridad: con 1280 px y calidad 0,8 casi nunca se alcanza, así que la
+// librería no achica la foto varias veces (eso pasaba con el tope viejo de 300 KB y la pixelaba).
 // useWebWorker hace el trabajo en segundo plano para que la pantalla no se congele.
 const opcionesCompresion = {
-  maxWidthOrHeight: 1600,
-  maxSizeMB: 0.3,
+  maxWidthOrHeight: 1280,
+  maxSizeMB: 0.5,
+  initialQuality: 0.8,
   fileType: 'image/jpeg',
   useWebWorker: true,
 }
@@ -142,20 +146,20 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId, onOcupada }) {
               alt="Foto del mes anterior"
               loading="lazy"
               onError={() => setAnteriorFallida(fotoAnteriorId)}
-              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover"
+              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-contain object-center"
             />
             <figcaption className="text-body-sm text-texto-2">Mes anterior</figcaption>
           </figure>
         )}
         <figure className="flex flex-col gap-1">
           {vistaPrevia ? (
-            <img src={vistaPrevia} alt="Foto de este mes" className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover" />
+            <img src={vistaPrevia} alt="Foto de este mes" className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-contain object-center" />
           ) : fotoGuardada ? (
             <img
               src={`/api/fotos/${fotoGuardada}`}
               alt="Foto de este mes"
               onError={() => setActualFallida(fotoGuardada)}
-              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover"
+              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-contain object-center"
             />
           ) : (
             // Sin foto: el recuadro mismo es el botón.
