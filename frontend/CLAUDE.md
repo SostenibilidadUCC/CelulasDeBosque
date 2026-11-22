@@ -69,7 +69,7 @@ Usá **solo** estos tokens. Nunca escribas un hexadecimal suelto en un component
 | Gramínea | `#c08552` | `local_florist` |
 | Rastrera | `#7c6fb0` | `grass` |
 
-Estos colores se usan **solo** para distinguir formas de vida (líneas de gráficos, puntos de leyenda, íconos).
+Estos colores se usan **solo** para distinguir formas de vida (líneas de gráficos y puntos de leyenda). Los íconos de las formas de vida se siguen usando en la Presentación y en el panel de la célula de la pantalla Isleta; en Resultados, la Carga y la Ficha se muestra solo el nombre.
 
 ## Tipografía
 
@@ -230,7 +230,7 @@ No hay diámetro ni polinizadores (descartados).
 
 ### Control segmentado de formas de vida (filtros)
 
-Barra `rounded-full` con fondo `segmento` y 4 px de relleno interior. Opción elegida: fondo blanco, sombra nivel 1, texto `bosque` en 600 e ícono. Opciones no elegidas: transparentes, texto `texto-2`. Incluye la opción "Todas".
+Barra `rounded-full` con fondo `segmento` y 4 px de relleno interior. Opción elegida: fondo blanco (`superficie`), sombra nivel 1 y texto `bosque` en 600, sin ícono: solo el nombre. Opciones no elegidas: transparentes, texto `texto-2`. Incluye la opción "Todas".
 
 ### `Foto`
 
