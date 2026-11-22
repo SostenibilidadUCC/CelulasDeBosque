@@ -44,6 +44,12 @@ func main() {
 	// T18: resultados y métricas
 	mux.HandleFunc("GET /api/metricas", a.RequiereSesion(handlers.ObtenerMetricas(pool)))
 
+	// T22: Resultados públicos (D1 y D2). Los mismos handlers que las rutas de arriba, pero SIN
+	// RequiereSesion: los ve cualquiera desde el botón "Ver cómo crecen" de la presentación.
+	// Devuelven solo números agregados y lugares activos: nunca nombres ni emails de usuarios.
+	mux.HandleFunc("GET /api/publico/lugares", handlers.Lugares(pool))
+	mux.HandleFunc("GET /api/publico/metricas", handlers.ObtenerMetricas(pool))
+
 	// T21: tabla de datos y Excel. Las ven todos los roles con sesión.
 	mux.HandleFunc("GET /api/datos", a.RequiereSesion(handlers.Datos(pool)))
 	mux.HandleFunc("GET /api/datos/excel", a.RequiereSesion(handlers.DatosExcel(pool)))

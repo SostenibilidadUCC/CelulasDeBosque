@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icono from '../../components/Icono.jsx'
-import { obtenerLugares, obtenerMetricas } from '../../api.js'
+import { obtenerLugares, obtenerLugaresPublicos, obtenerMetricas, obtenerMetricasPublicas } from '../../api.js'
 import Cargando from '../../components/Cargando.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
 import Tarjeta from '../../components/Tarjeta.jsx'
@@ -22,7 +22,11 @@ const GRAFICOS = [
 const SIN_DATOS_GRAFICO = 'Todavía no hay registros suficientes para este gráfico'
 
 // Pantalla Resultados (T18, RES-01 a 05 y 07): pocas métricas claras sobre el impacto.
-export default function Resultados() {
+// Con publico (T22), pide los datos a las rutas sin sesión: la usa la página pública /como-crecen.
+export default function Resultados({ publico = false }) {
+  // Con o sin sesión se piden los mismos datos; solo cambia la ruta del backend.
+  const cargarLugares = publico ? obtenerLugaresPublicos : obtenerLugares
+  const cargarMetricas = publico ? obtenerMetricasPublicas : obtenerMetricas
   // Los filtros van como texto, igual que en los <select>: '' quiere decir "todos".
   const [filtros, setFiltros] = useState({ lugar: '', isleta: '', periodo: 'todo', forma: '' })
   const [lugares, setLugares] = useState({ cargando: true })
@@ -33,7 +37,7 @@ export default function Resultados() {
   // 1. Los lugares (con sus isletas) para los filtros. De acá sale también el período actual.
   useEffect(() => {
     let cancelado = false
-    obtenerLugares()
+    cargarLugares()
       .then((datos) => {
         if (!cancelado) setLugares({ datos })
       })
@@ -43,7 +47,7 @@ export default function Resultados() {
     return () => {
       cancelado = true
     }
-  }, [intento])
+  }, [intento, cargarLugares])
 
   // 2. Las métricas, cada vez que cambia un filtro. "cancelado" evita que una respuesta vieja
   // (de un filtro anterior que tardó más) pise a la nueva.
@@ -52,7 +56,7 @@ export default function Resultados() {
     if (!periodoActual) return
     let cancelado = false
     const { desde, hasta } = rangoDelPeriodo(filtros.periodo, periodoActual)
-    obtenerMetricas({ lugar: filtros.lugar, isleta: filtros.isleta, forma: filtros.forma, desde, hasta })
+    cargarMetricas({ lugar: filtros.lugar, isleta: filtros.isleta, forma: filtros.forma, desde, hasta })
       .then((datos) => {
         if (!cancelado) setMetricas({ datos })
       })
@@ -62,7 +66,7 @@ export default function Resultados() {
     return () => {
       cancelado = true
     }
-  }, [filtros, periodoActual, intento])
+  }, [filtros, periodoActual, intento, cargarMetricas])
 
   // Al cambiar un filtro se muestran los datos anteriores más claros hasta que llegan los nuevos.
   // Si cambia el lugar, la isleta vuelve a "todas" (la anterior era de otro lugar).

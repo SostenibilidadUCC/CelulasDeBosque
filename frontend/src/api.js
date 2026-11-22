@@ -160,6 +160,18 @@ export const obtenerMetricas = (filtros = {}) => {
   return pedir(`/metricas${texto ? `?${texto}` : ''}`)
 }
 
+// T22: los mismos datos de Resultados, pero sin sesión, para la página pública (/como-crecen).
+// Responden igual que obtenerLugares y obtenerMetricas.
+export const obtenerLugaresPublicos = () => pedir('/publico/lugares')
+export const obtenerMetricasPublicas = (filtros = {}) => {
+  const parametros = new URLSearchParams()
+  for (const [nombre, valor] of Object.entries(filtros)) {
+    if (valor) parametros.set(nombre, valor)
+  }
+  const texto = parametros.toString()
+  return pedir(`/publico/metricas${texto ? `?${texto}` : ''}`)
+}
+
 // T20: lugares e isletas (solo admin). Los lugares vienen todos, también los deshabilitados,
 // con sus isletas: { lugares: [{ id, letra, nombre, tipo, localidad, activo, tieneRegistros, siguienteIsleta, isletas }] }.
 export const listarLugaresAdmin = () => pedir('/admin/lugares')
