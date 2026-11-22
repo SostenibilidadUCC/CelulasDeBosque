@@ -142,20 +142,20 @@ export default function Foto({ fotoId, onCambio, fotoAnteriorId, onOcupada }) {
               alt="Foto del mes anterior"
               loading="lazy"
               onError={() => setAnteriorFallida(fotoAnteriorId)}
-              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover"
+              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-contain object-center"
             />
             <figcaption className="text-body-sm text-texto-2">Mes anterior</figcaption>
           </figure>
         )}
         <figure className="flex flex-col gap-1">
           {vistaPrevia ? (
-            <img src={vistaPrevia} alt="Foto de este mes" className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover" />
+            <img src={vistaPrevia} alt="Foto de este mes" className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-contain object-center" />
           ) : fotoGuardada ? (
             <img
               src={`/api/fotos/${fotoGuardada}`}
               alt="Foto de este mes"
               onError={() => setActualFallida(fotoGuardada)}
-              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover"
+              className="aspect-[4/3] w-full rounded-xl bg-gris-suave object-contain object-center"
             />
           ) : (
             // Sin foto: el recuadro mismo es el botón.

@@ -18,7 +18,7 @@ export default function FotoRegistro({ fotoId, descripcion, className = '', onFa
         setFallo(true)
         onFallo?.()
       }}
-      className={`aspect-[4/3] w-full rounded-xl bg-gris-suave object-cover ${className}`}
+      className={`aspect-[4/3] w-full rounded-xl bg-gris-suave object-contain object-center ${className}`}
     />
   )
 }
