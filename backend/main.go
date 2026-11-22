@@ -44,6 +44,10 @@ func main() {
 	// T18: resultados y métricas
 	mux.HandleFunc("GET /api/metricas", a.RequiereSesion(handlers.ObtenerMetricas(pool)))
 
+	// T21: tabla de datos y Excel. Las ven todos los roles con sesión.
+	mux.HandleFunc("GET /api/datos", a.RequiereSesion(handlers.Datos(pool)))
+	mux.HandleFunc("GET /api/datos/excel", a.RequiereSesion(handlers.DatosExcel(pool)))
+
 	// T13: fotos. Si faltan las variables de R2 el servidor arranca igual,
 	// pero las rutas de fotos responden 500 hasta que se configuren.
 	var fotos almacen.Almacen // nil = sin configurar
