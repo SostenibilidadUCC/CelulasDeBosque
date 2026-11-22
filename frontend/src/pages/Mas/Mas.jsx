@@ -5,6 +5,7 @@ import Boton from '../../components/Boton.jsx'
 import Icono from '../../components/Icono.jsx'
 import Tarjeta from '../../components/Tarjeta.jsx'
 import Titulo from '../../components/Titulo.jsx'
+import { puedeCrearCelulas } from '../../sesion/permisos.js'
 import { useSesion } from '../../sesion/useSesion.js'
 
 // El backend manda el rol como "admin", "cargador" o "lector"; en pantalla nunca se muestra así.
@@ -75,7 +76,7 @@ export default function Mas() {
       {/* T17 (ALT-01): Nueva célula, para el admin y el cargador. Se usa una sola vez por célula, el día
           de la plantación: por eso está acá y no en la barra. Va en su propio bloque, separado de
           Administración. Ocultarlo al lector es solo experiencia de uso: el backend valida el permiso. */}
-      {(usuario.rol === 'admin' || usuario.rol === 'cargador') && (
+      {puedeCrearCelulas(usuario) && (
         <section className="flex flex-col gap-2">
           <div className="flex flex-col gap-1">
             <Titulo nivel="sm" como="h2">

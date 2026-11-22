@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { obtenerCelulasDeLugar, obtenerLugares } from '../../api.js'
 import Boton from '../../components/Boton.jsx'
 import Cargando from '../../components/Cargando.jsx'
 import MensajeError from '../../components/MensajeError.jsx'
 import Titulo from '../../components/Titulo.jsx'
 import Vacio from '../../components/Vacio.jsx'
+import { puedeCrearCelulas } from '../../sesion/permisos.js'
 import { useSesion } from '../../sesion/useSesion.js'
 import Filtros from './Filtros.jsx'
 import TarjetaCelula from './TarjetaCelula.jsx'
@@ -153,11 +154,24 @@ export default function Celulas() {
   )
 }
 
-// Marco común de la pantalla: título y separación.
+// Marco común de la pantalla: título, botón "Nueva célula" y separación.
+// Está en el marco para que el botón se vea en todos los estados (cargando, error, vacío y con lista).
 function Pagina({ children }) {
+  const { usuario } = useSesion()
+  const navigate = useNavigate()
+
   return (
     <div className="flex flex-col gap-4 py-4">
-      <Titulo>Células</Titulo>
+      <div className="flex items-center justify-between gap-3">
+        <Titulo>Células</Titulo>
+        {/* ALT-01: el mismo chequeo y la misma ruta que el botón de Cuenta. El backend valida el permiso.
+            w-auto porque Boton ocupa todo el ancho por defecto; shrink-0 para que no se aplaste. */}
+        {puedeCrearCelulas(usuario) && (
+          <Boton icono="add" className="w-auto shrink-0" onClick={() => navigate('/celulas/nueva')}>
+            Nueva célula
+          </Boton>
+        )}
+      </div>
       {children}
     </div>
   )
