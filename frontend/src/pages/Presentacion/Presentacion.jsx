@@ -7,7 +7,7 @@ import { useSesion } from '../../sesion/useSesion.js'
 
 // Página de presentación (ruta "/"): lo primero que ve cualquier persona, con o sin sesión.
 // Explica qué es una célula de bosque y cómo se sigue su crecimiento, y lleva a los resultados
-// públicos del Campus UCC o al login. Los textos salen de https://ucc.edu.ar/celulas-de-bosques,
+// públicos (/publico, sin sesión) o al login. Los textos salen de https://ucc.edu.ar/celulas-de-bosques,
 // adaptados al vocabulario de la app (Gramínea y Rastrera, sin siglas).
 // Las fotos son de la galería de esa página, optimizadas en public/presentacion.
 
@@ -82,7 +82,7 @@ const preguntas = [
 export default function Presentacion() {
   const navigate = useNavigate()
   const { usuario } = useSesion()
-  const verResultados = () => navigate('/publico/A')
+  const verResultados = () => navigate('/publico')
 
   return (
     <div className="min-h-svh bg-fondo">

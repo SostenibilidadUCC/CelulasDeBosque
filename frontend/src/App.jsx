@@ -19,6 +19,7 @@ import PedirAcceso from './pages/PedirAcceso/PedirAcceso.jsx'
 import Prueba from './pages/Prueba/Prueba.jsx'
 import NoEncontrada from './pages/NoEncontrada/NoEncontrada.jsx'
 import Presentacion from './pages/Presentacion/Presentacion.jsx'
+import ResultadosPublico from './pages/ResultadosPublico/ResultadosPublico.jsx'
 
 // Archivo compartido: solo se AGREGAN rutas, nunca se borran las de otra persona.
 export default function App() {
@@ -29,6 +30,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/publico/:letra" element={<Publico />} />
         <Route path="/" element={<Presentacion />} />
+        {/* T22: Resultados sin sesión, adonde lleva "Ver cómo crecen" de la presentación. */}
+        <Route path="/publico" element={<ResultadosPublico />} />
         <Route path="/pedir-acceso" element={<PedirAcceso />} />
 
         {/* Pantallas internas, con barra de navegación */}

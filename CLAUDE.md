@@ -138,7 +138,7 @@ Las cuatro formas de vida (Árbol, Arbusto, Gramínea, Rastrera) registran exact
 | **Administrador** | Todo. |
 | **Cargador** | Ver todos los lugares. Crear células y cargar o editar registros **solo en su lugar**. |
 | **Lector** | Ver todo. No carga ni edita nada. |
-| **Público** (sin sesión) | Ve la presentación (`/`) y las fotos de registros no anulados de lugares activos. La página pública por lugar (`GET /api/publico/{letra}`, T22) está en espera: ver la sección 6 del plan v5. |
+| **Público** (sin sesión) | Ve la presentación (`/`), Resultados en `/publico` (`GET /api/publico/lugares` y `GET /api/publico/metricas`, T22) y las fotos de registros no anulados de lugares activos. La página pública por lugar (`GET /api/publico/{letra}`, T22) está en espera: ver la sección 6 del plan v5. |
 
 - **Los permisos se validan siempre en el backend.** Ocultar un botón en React no alcanza.
 - Usá el middleware `auth.RequiereSesion` y las funciones `auth.EsAdmin(usuario)` y `auth.PuedeEditarLugar(usuario, lugarID)`. No reescribas esa lógica en cada handler.
@@ -217,7 +217,7 @@ Si un cambio depende de alguna de estas, avisá antes de asumir un valor. Los n�
 Decisiones pendientes del plan (sección 6 de `docs/Plan_de_Trabajo_Equipo_v5.md`):
 
 - D1: si se hace la página pública por lugar y los QR (parece que no va a haber QR).
-- D2: a dónde lleva el botón "Ver cómo crecen" de la presentación (hoy, a `/publico/A`, que no existe).
+- D2: a dónde lleva el botón "Ver cómo crecen" de la presentación. El equipo decidió el 22/11/2026 que lleve a `/publico` (Resultados sin sesión); falta confirmarlo con la clienta.
 
 Ya respondidas:
 
