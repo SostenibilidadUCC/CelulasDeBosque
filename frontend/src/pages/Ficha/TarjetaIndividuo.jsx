@@ -1,5 +1,4 @@
 import ChipEstado from '../../components/ChipEstado.jsx'
-import Icono from '../../components/Icono.jsx'
 import Tarjeta from '../../components/Tarjeta.jsx'
 
 // FIC-02: altura actual y crecimiento desde el registro inicial de un individuo.
@@ -18,10 +17,7 @@ export default function TarjetaIndividuo({ individuo, registros }) {
 
   return (
     <Tarjeta className={`flex flex-col gap-2 ${muerto ? 'bg-gris-suave' : ''}`}>
-      <div className="flex items-center gap-2">
-        <Icono nombre={individuo.icono} className={muerto ? 'text-texto-3' : 'text-bosque'} />
-        <h3 className="text-label-lg font-semibold text-texto">{individuo.nombre}</h3>
-      </div>
+      <h3 className="text-label-lg font-semibold text-texto">{individuo.nombre}</h3>
       {muerto ? (
         <div>
           <ChipEstado estado="muerto" />

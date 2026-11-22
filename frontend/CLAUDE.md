@@ -218,7 +218,7 @@ Igual que `BotonesVivoMuerto` pero más compacto: dos botones lado a lado de 48 
 
 Tarjeta, una por forma de vida y siempre en el orden Árbol, Arbusto, Gramínea, Rastrera:
 
-1. Arriba: ícono y nombre de la forma de vida.
+1. Arriba: nombre de la forma de vida, sin ícono.
 2. `BotonesVivoMuerto`.
 3. Altura con `SelectorNumero` (arranca en la altura del mes anterior).
 4. Cantidad de flores con `SelectorNumero` (arranca en 0).

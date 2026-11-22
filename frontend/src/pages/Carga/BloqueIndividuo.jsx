@@ -43,8 +43,7 @@ export default function BloqueIndividuo({
     return (
       <section className="flex flex-col gap-3 rounded-2xl border border-gris-borde bg-gris-suave p-4">
         <div className="flex items-center justify-between gap-2">
-          <Titulo nivel="sm" como="h3" className="flex items-center gap-2 text-texto-2!">
-            <Icono nombre={forma.icono} className="text-texto-3" />
+          <Titulo nivel="sm" como="h3" className="text-texto-2!">
             {forma.nombre}
           </Titulo>
           <ChipEstado estado="muerto" />
@@ -81,8 +80,7 @@ export default function BloqueIndividuo({
     >
       {/* Vivo / Muerto va chico, a la derecha del nombre: lo importante son los datos de abajo. */}
       <div className="flex items-center justify-between gap-2">
-        <Titulo nivel="sm" como="h3" className="flex min-w-0 items-center gap-2">
-          <Icono nombre={forma.icono} className="text-bosque-hover" />
+        <Titulo nivel="sm" como="h3" className="min-w-0">
           {forma.nombre}
         </Titulo>
         <BotonesVivoMuerto vivo={individuo.vivo} onChange={cambiarVivo} />
