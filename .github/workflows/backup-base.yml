@@ -1,0 +1,71 @@
+# T29 (RNF-DIS-01): copia diaria de la base de Neon, guardada en el bucket de backups de R2.
+#
+# Neon gratis guarda solo 6 horas de historial y los requerimientos piden 30 días: por eso esta copia.
+# Corre en GitHub y no en Render porque Render apaga el servidor cuando nadie lo usa.
+# Las copias de más de 30 días las borra sola una regla del bucket (prefijo base/), configurada en Cloudflare.
+#
+# El repo es público: los logs los puede ver cualquiera. Por eso las claves van como secrets
+# (GitHub las tapa en los logs) y la copia se sube directo a R2, nunca como archivo de la Action.
+#
+# Secrets que usa (Settings → Secrets and variables → Actions):
+#   NEON_DATABASE_URL     conexión directa de Neon (sin pooling), la misma que usa Render
+#   R2_ACCOUNT_ID         id de la cuenta de Cloudflare
+#   R2_ACCESS_KEY_ID      clave de R2 con permiso de lectura y escritura en el bucket de backups
+#   R2_SECRET_ACCESS_KEY
+#   R2_BUCKET_BACKUPS     nombre del bucket de backups: celulas-bosque-backups
+#
+# Para correrla a mano: pestaña Actions → "Backup de la base" → Run workflow.
+name: Backup de la base
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # todos los días a las 6:00 UTC (3:00 en Córdoba). GitHub puede demorarla un rato.
+  workflow_dispatch: # botón para correrla a mano
+
+# Si una copia todavía está corriendo, la siguiente espera en lugar de pisarla.
+concurrency: backup-base
+
+jobs:
+  copia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto # R2 no usa regiones, pero la herramienta de AWS pide una
+      # R2 no acepta algunas verificaciones que la herramienta de AWS agrega por defecto: se piden solo si hacen falta.
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      BUCKET: ${{ secrets.R2_BUCKET_BACKUPS }}
+    steps:
+      - name: Averiguar la versión de PostgreSQL de Neon
+        # pg_dump tiene que ser de la misma versión que la base (o más nueva). Se usa la misma,
+        # así la copia se puede restaurar con un PostgreSQL de esa versión.
+        run: |
+          MAYOR=$(docker run --rm postgres:17-alpine psql "$DATABASE_URL" -tAc "SHOW server_version_num" | cut -c1-2)
+          echo "Neon usa PostgreSQL $MAYOR"
+          echo "MAYOR=$MAYOR" >> "$GITHUB_ENV"
+
+      - name: Copiar la base
+        # --format=custom: un solo archivo comprimido, que se restaura con pg_restore.
+        # --no-owner y --no-privileges: la copia no depende de los usuarios de Neon, así se puede
+        # restaurar en cualquier base (por ejemplo, en Docker para probar).
+        run: |
+          ARCHIVO="celulas-$(date -u +%Y-%m-%d)-pg$MAYOR.dump"
+          docker run --rm -v "$PWD:/copia" "postgres:$MAYOR-alpine" \
+            pg_dump --format=custom --no-owner --no-privileges --file="/copia/$ARCHIVO" "$DATABASE_URL"
+          echo "ARCHIVO=$ARCHIVO" >> "$GITHUB_ENV"
+          ls -lh "$ARCHIVO"
+
+      - name: Revisar que la copia tenga los datos
+        # pg_restore --list muestra qué hay adentro sin restaurar nada. Si falta la tabla de registros,
+        # algo salió mal y la Action termina con error (y GitHub manda un mail).
+        run: |
+          docker run --rm -v "$PWD:/copia" "postgres:$MAYOR-alpine" pg_restore --list "/copia/$ARCHIVO" > contenido.txt
+          grep -q "TABLE DATA public registros" contenido.txt
+          echo "Tablas con datos: $(grep -c 'TABLE DATA' contenido.txt)"
+
+      - name: Subir la copia a R2
+        run: aws s3 cp "$ARCHIVO" "s3://$BUCKET/base/$ARCHIVO" --endpoint-url "$R2_ENDPOINT" --no-progress

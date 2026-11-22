@@ -1,0 +1,41 @@
+# T29 (RNF-DIS-02): copia semanal de las fotos, del bucket de fotos al bucket de backups de R2.
+#
+# Copia solo lo nuevo (aws s3 sync compara qué falta) y NUNCA borra nada de la copia: si alguien
+# borra fotos del bucket principal, siguen estando acá. La copia queda en la carpeta fotos/ del bucket
+# de backups, que no tiene la regla de 30 días (esa es solo para base/).
+#
+# Secrets que usa (los mismos que la copia de la base, más el bucket de fotos):
+#   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY  (la clave necesita leer el bucket de fotos
+#                                                           y escribir en el de backups)
+#   R2_BUCKET_FOTOS       nombre del bucket de fotos: celulas-bosque-fotos
+#   R2_BUCKET_BACKUPS     nombre del bucket de backups: celulas-bosque-backups
+#
+# Para correrla a mano: pestaña Actions → "Backup de las fotos" → Run workflow.
+name: Backup de las fotos
+
+on:
+  schedule:
+    - cron: '0 7 * * 0' # los domingos a las 7:00 UTC (4:00 en Córdoba), una hora después de la de la base
+  workflow_dispatch:
+
+concurrency: backup-fotos
+
+jobs:
+  copia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      R2_ENDPOINT: https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
+      FOTOS: ${{ secrets.R2_BUCKET_FOTOS }}
+      BACKUPS: ${{ secrets.R2_BUCKET_BACKUPS }}
+    steps:
+      - name: Copiar las fotos nuevas
+        # --only-show-errors: no lista cada foto en el log (el log es público).
+        run: |
+          aws s3 sync "s3://$FOTOS" "s3://$BACKUPS/fotos" --endpoint-url "$R2_ENDPOINT" --only-show-errors
+          echo "Fotos en la copia: $(aws s3 ls "s3://$BACKUPS/fotos/" --recursive --endpoint-url "$R2_ENDPOINT" | wc -l)"
