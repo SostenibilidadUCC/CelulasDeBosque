@@ -160,7 +160,7 @@ export const obtenerMetricas = (filtros = {}) => {
   return pedir(`/metricas${texto ? `?${texto}` : ''}`)
 }
 
-// T22: los mismos datos de Resultados, pero sin sesión, para la página pública (/publico).
+// T22: los mismos datos de Resultados, pero sin sesión, para la página pública (/como-crecen).
 // Responden igual que obtenerLugares y obtenerMetricas.
 export const obtenerLugaresPublicos = () => pedir('/publico/lugares')
 export const obtenerMetricasPublicas = (filtros = {}) => {

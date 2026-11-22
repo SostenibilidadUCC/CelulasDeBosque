@@ -22,7 +22,7 @@ const GRAFICOS = [
 const SIN_DATOS_GRAFICO = 'Todavía no hay registros suficientes para este gráfico'
 
 // Pantalla Resultados (T18, RES-01 a 05 y 07): pocas métricas claras sobre el impacto.
-// Con publico (T22), pide los datos a las rutas sin sesión: la usa la página pública /publico.
+// Con publico (T22), pide los datos a las rutas sin sesión: la usa la página pública /como-crecen.
 export default function Resultados({ publico = false }) {
   // Con o sin sesión se piden los mismos datos; solo cambia la ruta del backend.
   const cargarLugares = publico ? obtenerLugaresPublicos : obtenerLugares

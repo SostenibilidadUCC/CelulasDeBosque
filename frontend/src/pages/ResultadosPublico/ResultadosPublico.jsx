@@ -4,7 +4,7 @@ import Icono from '../../components/Icono.jsx'
 import { useSesion } from '../../sesion/useSesion.js'
 import Resultados from '../Resultados/Resultados.jsx'
 
-// Resultados públicos (ruta /publico, T22): la misma pantalla de Resultados, sin sesión y sin la
+// Resultados públicos (ruta /como-crecen, T22): la misma pantalla de Resultados, sin sesión y sin la
 // barra de navegación de la app. Es adonde lleva "Ver cómo crecen" de la presentación (D1 y D2).
 // Arriba, como pide el DESIGN.md para la página pública, solo el logo y un botón discreto "Ingresar".
 export default function ResultadosPublico() {

@@ -31,7 +31,7 @@ export default function App() {
         <Route path="/publico/:letra" element={<Publico />} />
         <Route path="/" element={<Presentacion />} />
         {/* T22: Resultados sin sesión, adonde lleva "Ver cómo crecen" de la presentación. */}
-        <Route path="/publico" element={<ResultadosPublico />} />
+        <Route path="/como-crecen" element={<ResultadosPublico />} />
         <Route path="/pedir-acceso" element={<PedirAcceso />} />
 
         {/* Pantallas internas, con barra de navegación */}

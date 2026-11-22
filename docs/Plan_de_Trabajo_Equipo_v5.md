@@ -159,8 +159,8 @@ usándolo.
 | `POST /api/celulas/{id}/registros` | Guarda el registro del mes. 409 con `registroId` si ya hay uno. | Admin; cargador en su lugar | T13 | Hecho |
 | `PUT /api/registros/{id}` | Modifica un registro (RN-11). | Admin; cargador en su lugar | T13 | Hecho |
 | `GET /api/metricas` | Métricas y datos de gráficos, con filtros. | Con sesión | T18 | Hecho |
-| `GET /api/publico/lugares` | Igual que `GET /api/lugares`, para los filtros de `/publico`. | Cualquiera, sin sesión | T22 | Hecho |
-| `GET /api/publico/metricas` | Igual que `GET /api/metricas`, para `/publico`. | Cualquiera, sin sesión | T22 | Hecho |
+| `GET /api/publico/lugares` | Igual que `GET /api/lugares`, para los filtros de `/como-crecen`. | Cualquiera, sin sesión | T22 | Hecho |
+| `GET /api/publico/metricas` | Igual que `GET /api/metricas`, para `/como-crecen`. | Cualquiera, sin sesión | T22 | Hecho |
 | `POST /api/solicitar-acceso` | Pide acceso: la cuenta queda pendiente. | Cualquiera | T16 | Hecho |
 | `GET /api/usuarios` | Lista de usuarios. | Admin | T16 | Hecho |
 | `PUT /api/usuarios/{id}` | Aprueba, edita o quita el acceso. | Admin | T16 | Hecho |
