@@ -7,7 +7,7 @@ const variantes = {
   primario: 'bg-bosque text-white shadow-nivel-1 hover:bg-bosque-hover active:bg-bosque-hover',
   secundario: 'border-[1.5px] border-niebla bg-superficie text-bosque hover:border-bosque-hover hover:bg-tonal',
   tonal: 'bg-tonal text-bosque hover:bg-brote',
-  texto: 'text-bosque underline-offset-4 hover:underline',
+  texto: 'bg-transparent text-bosque underline-offset-4 hover:bg-transparent hover:underline',
   peligro: 'border-[1.5px] border-error bg-superficie text-error hover:bg-error-fondo',
 }
 
