@@ -59,12 +59,17 @@ func TestRegistrosConBase(t *testing.T) {
 	}
 	// Se registra antes que la limpieza de registros, así corre después (los Cleanup corren al revés).
 	t.Cleanup(func() { pool.Exec(ctx, `DELETE FROM fotos WHERE id = $1`, fotoID) })
-	// fotoAjena: la subió el admin y no está en ningún registro. fotoUsada: ya está en un registro.
-	pool.QueryRow(ctx, `
-		SELECT f.id FROM fotos f
-		WHERE f.subida_por = (SELECT id FROM usuarios WHERE email = 'admin@celulas.test')
-		  AND NOT EXISTS (SELECT 1 FROM registros r WHERE r.foto_id = f.id)
-		LIMIT 1`).Scan(&fotoAjena)
+	// fotoAjena: la subió el admin y no está en ningún registro. La crea el test, igual que fotoID,
+	// para no depender de qué fotos traiga el seed (desde el PR #33 el seed ya no crea fotos de plano).
+	err = pool.QueryRow(ctx, `
+		INSERT INTO fotos (ruta_r2, subida_por)
+		VALUES ('test/ajena.jpg', (SELECT id FROM usuarios WHERE email = 'admin@celulas.test'))
+		RETURNING id`).Scan(&fotoAjena)
+	if err != nil {
+		t.Fatalf("no se pudo crear la foto ajena de prueba: %v", err)
+	}
+	t.Cleanup(func() { pool.Exec(ctx, `DELETE FROM fotos WHERE id = $1`, fotoAjena) })
+	// fotoUsada: ya está en un registro del seed.
 	pool.QueryRow(ctx, `SELECT foto_id FROM registros WHERE foto_id IS NOT NULL LIMIT 1`).Scan(&fotoUsada)
 	if fotoAjena == 0 || fotoUsada == 0 {
 		t.Fatalf("faltan fotos en el seed (ajena %d, usada %d)", fotoAjena, fotoUsada)
