@@ -51,7 +51,7 @@ func (e *entornoAdmin) isletaDePruebaEnA(t *testing.T, filas, columnas int) int6
 func TestAltaCelula(t *testing.T) {
 	e := nuevoEntornoAltaCelula(t)
 	idX := e.crearLugarPrueba(t, "X")
-	isleta := e.crearIsletaPrueba(t, idX, 1, 3, 4) // 3 filas × 4 columnas, sin foto del plano
+	isleta := e.crearIsletaPrueba(t, idX, 1, 3, 4) // 3 filas × 4 columnas
 	e.crearCelulaPrueba(t, isleta, 7, 2, 2)        // la célula 7 ya ocupa la fila 2, columna 2
 
 	alta := func(numero, fila, columna int, fecha string) map[string]any {

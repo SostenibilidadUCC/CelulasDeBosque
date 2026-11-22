@@ -57,7 +57,7 @@ export default function TarjetaLugar({ lugar, onEditar, onAgregarIsleta, onEdita
                   </span>
                   <span className="text-body-sm text-texto-3 tabular-nums">
                     {isleta.cantidadCelulas} {isleta.cantidadCelulas === 1 ? 'célula' : 'células'} ·{' '}
-                    {isleta.planoFotoId ? `Plano de ${isleta.filas} × ${isleta.columnas}` : 'Sin plano'}
+                    Plano de {isleta.filas} × {isleta.columnas}
                   </span>
                 </Link>
                 <button

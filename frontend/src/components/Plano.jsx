@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 
 // Grilla del plano de una isleta (T12). Recibe todo por props para que la puedan reutilizar
 // Nueva célula (T17) y Lugares e isletas (T20).
@@ -12,8 +12,9 @@ import { useRef, useState } from 'react'
 //   resaltadaId         id de la célula a resaltar (por ejemplo, la que se buscó)
 //   onSeleccionar       (celula) => void, al tocar una célula
 //   onSeleccionarLibre  (fila, columna) => void, opcional: si está, las celdas libres se pueden tocar
-//   imagenUrl           opcional: foto de dron de fondo
 //   mostrarLeyenda      true por defecto
+//
+// El plano es solo la grilla, sobre un fondo liso: no lleva foto de fondo.
 
 // Colores de cada celda según el estado del mes. Son más fuertes que los chips para verse de lejos.
 const estilosCelda = {
@@ -48,13 +49,11 @@ export default function Plano({
   resaltadaId,
   onSeleccionar,
   onSeleccionarLibre,
-  imagenUrl,
   mostrarLeyenda = true,
 }) {
   // Zoom con dos dedos: al apoyar dos dedos se guarda la distancia entre ellos y el tamaño de la celda;
   // al moverlos, el tamaño cambia en la misma proporción que la distancia.
   const pellizco = useRef(null)
-  const [fotoFallo, setFotoFallo] = useState(false)
   const distancia = (toques) => Math.hypot(toques[0].clientX - toques[1].clientX, toques[0].clientY - toques[1].clientY)
 
   function alEmpezarToque(e) {
@@ -151,27 +150,15 @@ export default function Plano({
           pellizco.current = null
         }}
       >
-        <div className="relative w-max">
-          {/* Si la foto no carga, se oculta: si no, el navegador muestra su texto alternativo
-              y el ícono de imagen rota detrás de las celdas. */}
-          {imagenUrl && !fotoFallo && (
-            <img
-              src={imagenUrl}
-              alt="Foto aérea de la isleta"
-              onError={() => setFotoFallo(true)}
-              className="absolute inset-0 size-full rounded-xl object-cover"
-            />
-          )}
-          {/* El tamaño de la grilla depende de cada isleta: por eso va en style (es un valor calculado). */}
-          <div
-            className="relative grid gap-1"
-            style={{
-              gridTemplateColumns: `repeat(${columnas}, ${tamanoCelda}px)`,
-              gridAutoRows: `${tamanoCelda}px`,
-            }}
-          >
-            {celdas}
-          </div>
+        {/* El tamaño de la grilla depende de cada isleta: por eso va en style (es un valor calculado). */}
+        <div
+          className="grid w-max gap-1"
+          style={{
+            gridTemplateColumns: `repeat(${columnas}, ${tamanoCelda}px)`,
+            gridAutoRows: `${tamanoCelda}px`,
+          }}
+        >
+          {celdas}
         </div>
       </div>
     </div>

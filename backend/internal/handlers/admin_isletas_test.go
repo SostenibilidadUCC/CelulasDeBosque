@@ -19,6 +19,31 @@ func (e *entornoAdmin) crearLugarPrueba(t *testing.T, letra string) int64 {
 	return id
 }
 
+// crearIsletaPrueba inserta una isleta en el lugar y devuelve su id.
+func (e *entornoAdmin) crearIsletaPrueba(t *testing.T, lugarID int64, numero, filas, columnas int) int64 {
+	t.Helper()
+	var id int64
+	err := e.pool.QueryRow(context.Background(), `
+		INSERT INTO isletas (lugar_id, numero, filas, columnas) VALUES ($1, $2, $3, $4) RETURNING id`,
+		lugarID, numero, filas, columnas).Scan(&id)
+	if err != nil {
+		t.Fatalf("no se pudo crear la isleta de prueba: %v", err)
+	}
+	return id
+}
+
+// crearCelulaPrueba inserta una célula (sin individuos) en esa posición del plano.
+func (e *entornoAdmin) crearCelulaPrueba(t *testing.T, isletaID int64, numero, fila, columna int) {
+	t.Helper()
+	_, err := e.pool.Exec(context.Background(), `
+		INSERT INTO celulas (isleta_id, numero, fila, columna, fecha_plantacion, creado_por, modificado_por)
+		SELECT $1, $2, $3, $4, DATE '2026-11-25', u.id, u.id FROM usuarios u WHERE u.email = 'admin@celulas.test'`,
+		isletaID, numero, fila, columna)
+	if err != nil {
+		t.Fatalf("no se pudo crear la célula de prueba: %v", err)
+	}
+}
+
 // isletaGuardada es lo que importa de una isleta en la base.
 type isletaGuardada struct {
 	numero, filas, columnas int
@@ -49,7 +74,8 @@ func (e *entornoAdmin) idDeIsleta(t *testing.T, letra string, numero int) int64 
 	return id
 }
 
-// TestAdminIsletas prueba crear y editar isletas (LUG-04, RN-02, RN-03).
+// TestAdminIsletas prueba crear y editar isletas (LUG-04, LUG-06, RN-02, RN-03).
+// El plano es solo la grilla: se define al crear la isleta y se cambia al editarla.
 func TestAdminIsletas(t *testing.T) {
 	e := nuevoEntornoAdmin(t)
 	idZ := e.crearLugarPrueba(t, "Z")
@@ -62,7 +88,7 @@ func TestAdminIsletas(t *testing.T) {
 			if codigo, _ := pedir(e.mux, cookie, "POST", "/api/admin/isletas", nueva); codigo != http.StatusForbidden {
 				t.Errorf("%s POST: código = %d, se esperaba 403", nombre, codigo)
 			}
-			if codigo, _ := pedir(e.mux, cookie, "PUT", ruta(idA1), map[string]any{"numero": 1, "nombre": "Otro"}); codigo != http.StatusForbidden {
+			if codigo, _ := pedir(e.mux, cookie, "PUT", ruta(idA1), map[string]any{"numero": 1, "nombre": "Otro", "filas": 7, "columnas": 10}); codigo != http.StatusForbidden {
 				t.Errorf("%s PUT: código = %d, se esperaba 403", nombre, codigo)
 			}
 		}
@@ -80,7 +106,7 @@ func TestAdminIsletas(t *testing.T) {
 			t.Fatalf("código = %d, se esperaba 201. Cuerpo: %v", codigo, datos)
 		}
 		if datos["numero"] != float64(1) || datos["nombre"] != "Frente al aula magna" || datos["filas"] != float64(5) ||
-			datos["columnas"] != float64(6) || datos["planoFotoId"] != nil || datos["tieneRegistros"] != false {
+			datos["columnas"] != float64(6) || datos["tieneRegistros"] != false {
 			t.Errorf("respuesta inesperada: %v", datos)
 		}
 		idZ1 = int64(datos["id"].(float64))
@@ -134,19 +160,61 @@ func TestAdminIsletas(t *testing.T) {
 		}
 	})
 
-	t.Run("sin registros, el admin cambia el número y el nombre", func(t *testing.T) {
-		codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idZ1), map[string]any{"numero": 2, "nombre": "Junto al estacionamiento"})
-		if codigo != http.StatusOK || datos["numero"] != float64(2) {
-			t.Fatalf("código = %d, cuerpo = %v; se esperaba 200 con el número 2", codigo, datos)
+	t.Run("sin registros, el admin cambia el número, el nombre y la grilla", func(t *testing.T) {
+		codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idZ1),
+			map[string]any{"numero": 2, "nombre": "Junto al estacionamiento", "filas": 8, "columnas": 9})
+		if codigo != http.StatusOK || datos["numero"] != float64(2) || datos["filas"] != float64(8) || datos["columnas"] != float64(9) {
+			t.Fatalf("código = %d, cuerpo = %v; se esperaba 200 con el número 2 y la grilla 8 × 9", codigo, datos)
 		}
 		i := e.isletaEnBase(t, idZ1)
-		if i.numero != 2 || i.nombre == nil || *i.nombre != "Junto al estacionamiento" || i.filas != 5 || i.columnas != 6 {
-			t.Errorf("en la base quedó %+v (las filas y columnas no tenían que cambiar)", i)
+		if i.numero != 2 || i.nombre == nil || *i.nombre != "Junto al estacionamiento" || i.filas != 8 || i.columnas != 9 {
+			t.Errorf("en la base quedó %+v", i)
+		}
+	})
+
+	t.Run("si la grilla no alcanza para las células, no se guarda (LUG-06)", func(t *testing.T) {
+		e.crearCelulaPrueba(t, idZ1, 1, 4, 5)
+		e.crearCelulaPrueba(t, idZ1, 2, 2, 9)
+		codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idZ1), map[string]any{"numero": 2, "filas": 3, "columnas": 8})
+		if codigo != http.StatusBadRequest || datos["error"] != "La grilla es chica: hay células hasta la fila 4 y la columna 9" {
+			t.Errorf("código = %d, cuerpo = %v; se esperaba 400 con la fila y la columna más altas", codigo, datos)
+		}
+		if i := e.isletaEnBase(t, idZ1); i.filas != 8 || i.columnas != 9 || i.nombre == nil {
+			t.Errorf("la isleta cambió igual: %+v", i)
+		}
+	})
+
+	t.Run("si la grilla alcanza justo, se guarda sin mover las células", func(t *testing.T) {
+		codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idZ1), map[string]any{"numero": 2, "filas": 4, "columnas": 9})
+		if codigo != http.StatusOK {
+			t.Fatalf("código = %d, se esperaba 200. Cuerpo: %v", codigo, datos)
+		}
+		if i := e.isletaEnBase(t, idZ1); i.filas != 4 || i.columnas != 9 {
+			t.Errorf("en la base quedó %+v", i)
+		}
+		var cuantas int
+		e.pool.QueryRow(context.Background(),
+			`SELECT count(*) FROM celulas WHERE isleta_id = $1 AND ((fila = 4 AND columna = 5) OR (fila = 2 AND columna = 9))`, idZ1).Scan(&cuantas)
+		if cuantas != 2 {
+			t.Errorf("las células se movieron: quedan %d en su lugar, se esperaban 2", cuantas)
+		}
+	})
+
+	t.Run("editar con una grilla inválida da 400", func(t *testing.T) {
+		casos := map[string]map[string]any{
+			"sin filas ni columnas": {"numero": 2},
+			"filas 0":               {"numero": 2, "filas": 0, "columnas": 9},
+			"columnas 31":           {"numero": 2, "filas": 4, "columnas": 31},
+		}
+		for nombre, cuerpo := range casos {
+			if codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idZ1), cuerpo); codigo != http.StatusBadRequest || datos["error"] == nil {
+				t.Errorf("%s: código = %d, cuerpo = %v; se esperaba 400 con mensaje", nombre, codigo, datos)
+			}
 		}
 	})
 
 	t.Run("cambiar a un número que ya usa otra isleta del lugar da 409", func(t *testing.T) {
-		codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idZ1), map[string]any{"numero": 3})
+		codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idZ1), map[string]any{"numero": 3, "filas": 4, "columnas": 9})
 		if codigo != http.StatusConflict || datos["error"] != "Ya existe la isleta 3 en este lugar" {
 			t.Errorf("código = %d, cuerpo = %v; se esperaba 409", codigo, datos)
 		}
@@ -158,14 +226,14 @@ func TestAdminIsletas(t *testing.T) {
 		t.Cleanup(func() {
 			e.pool.Exec(context.Background(), `UPDATE isletas SET nombre = $1 WHERE id = $2`, antes.nombre, idA1)
 		})
-		codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idA1), map[string]any{"numero": 9, "nombre": antes.nombre})
+		codigo, datos := pedir(e.mux, e.admin, "PUT", ruta(idA1), map[string]any{"numero": 9, "nombre": antes.nombre, "filas": antes.filas, "columnas": antes.columnas})
 		if codigo != http.StatusBadRequest || datos["error"] != "El número no se puede cambiar porque la isleta ya tiene registros" {
 			t.Errorf("código = %d, cuerpo = %v; se esperaba 400 por RN-03", codigo, datos)
 		}
 		if i := e.isletaEnBase(t, idA1); i.numero != 1 {
 			t.Fatalf("el número de A-1 cambió a %d", i.numero)
 		}
-		codigo, _ = pedir(e.mux, e.admin, "PUT", ruta(idA1), map[string]any{"numero": 1, "nombre": "Isleta editada"})
+		codigo, _ = pedir(e.mux, e.admin, "PUT", ruta(idA1), map[string]any{"numero": 1, "nombre": "Isleta editada", "filas": antes.filas, "columnas": antes.columnas})
 		if codigo != http.StatusOK {
 			t.Errorf("editar el nombre de A-1: código = %d, se esperaba 200", codigo)
 		}
@@ -175,7 +243,7 @@ func TestAdminIsletas(t *testing.T) {
 	})
 
 	t.Run("editar una isleta que no existe da 404", func(t *testing.T) {
-		if codigo, _ := pedir(e.mux, e.admin, "PUT", ruta(999999), map[string]any{"numero": 1}); codigo != http.StatusNotFound {
+		if codigo, _ := pedir(e.mux, e.admin, "PUT", ruta(999999), map[string]any{"numero": 1, "filas": 5, "columnas": 5}); codigo != http.StatusNotFound {
 			t.Errorf("código = %d, se esperaba 404", codigo)
 		}
 	})

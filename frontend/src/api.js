@@ -169,10 +169,9 @@ export const crearLugar = (datos) => pedir('/admin/lugares', { method: 'POST', c
 export const editarLugar = (id, datos) => pedir(`/admin/lugares/${id}`, { method: 'PUT', cuerpo: datos })
 // datos = { lugarId, numero, nombre, filas, columnas }. Responde la isleta. 409 si el número ya existe en el lugar.
 export const crearIsleta = (datos) => pedir('/admin/isletas', { method: 'POST', cuerpo: datos })
-// datos = { numero, nombre }. El número no cambia si la isleta tiene registros (RN-03).
+// datos = { numero, nombre, filas, columnas }. El número no cambia si la isleta tiene registros (RN-03).
+// Las filas y columnas (de 1 a 30) son la grilla del plano: 400 si alguna célula quedaría afuera.
 export const editarIsleta = (id, datos) => pedir(`/admin/isletas/${id}`, { method: 'PUT', cuerpo: datos })
-// datos = { fotoId, filas, columnas }. fotoId sale de subirFoto; sin fotoId cambia solo la grilla.
-export const guardarPlano = (isletaId, datos) => pedir(`/admin/isletas/${isletaId}/plano`, { method: 'POST', cuerpo: datos })
 // datos = { desde, hasta, fechaPlantacion }. Con vistaPrevia no guarda nada. Responde { celulas: [{ numero, fila, columna, codigo }] }.
 export const crearCelulasEnLote = (isletaId, datos, vistaPrevia = false) =>
   pedir(`/admin/isletas/${isletaId}/celulas-lote${vistaPrevia ? '?vistaPrevia=true' : ''}`, { method: 'POST', cuerpo: datos })

@@ -82,7 +82,6 @@ export default function CelulasEnLote({ isleta, onGuardado }) {
             filas={isleta.filas}
             columnas={isleta.columnas}
             celulas={celulasConLote(isleta.celulas, vistaPrevia)}
-            imagenUrl={isleta.planoFotoId ? `/api/fotos/${isleta.planoFotoId}` : undefined}
             tamanoCelda={36}
           />
           <Boton icono="add" onClick={crear} cargando={estado === 'creando'} textoCargando="Creando…" className="sm:w-auto sm:self-start">

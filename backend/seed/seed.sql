@@ -22,7 +22,7 @@
 --   A-1-7                    registro del mes pasado cargado fuera de término
 --   Algunos individuos mueren en el segundo o tercer mes y siguen muertos (RN-09).
 --
--- Fotos: la tabla fotos guarda solo la ruta (seed/celula-01.jpg…, seed/plano-A-1.jpg…).
+-- Fotos: la tabla fotos guarda solo la ruta (seed/celula-01.jpg…).
 -- Los archivos se suben a R2 cuando esté listo el T07; hasta entonces las fotos no se ven.
 
 \set ON_ERROR_STOP on
@@ -53,21 +53,15 @@ INSERT INTO usuarios (nombre, email, password_hash, rol, estado, lugar_id, insti
     -- Un pedido de acceso (T16): rol "lector" es solo de relleno hasta que el admin lo apruebe.
     ('Usuario Pendiente',     'pendiente@celulas.test',     crypt('bosque1234', gen_salt('bf', 10)), 'lector',   'pendiente',     NULL,                                     'Colegio de Despeñaderos');
 
--- 3. Fotos: 5 planos (uno por isleta) y 10 fotos de células que se reparten entre los registros.
+-- 3. Fotos: 10 fotos de células que se reparten entre los registros.
 INSERT INTO fotos (ruta_r2, subida_por)
-SELECT ruta, (SELECT id FROM usuarios WHERE email = 'admin@celulas.test')
-FROM (
-    SELECT 'seed/plano-' || p.isleta || '.jpg' AS ruta
-    FROM (VALUES ('A-1'), ('A-2'), ('B-1'), ('B-2'), ('C-1')) AS p (isleta)
-    UNION ALL
-    SELECT 'seed/celula-' || lpad(n::text, 2, '0') || '.jpg'
-    FROM generate_series(1, 10) AS n
-) AS rutas;
+SELECT 'seed/celula-' || lpad(n::text, 2, '0') || '.jpg', (SELECT id FROM usuarios WHERE email = 'admin@celulas.test')
+FROM generate_series(1, 10) AS n;
 
--- 4. Isletas, cada una con su plano. A-1 tiene 70 lugares en la grilla y 60 células,
+-- 4. Isletas. El plano es solo la grilla de filas y columnas (sin foto de fondo). A-1 tiene 70 lugares en la grilla y 60 células,
 --    así quedan celdas libres para probar el alta de una célula nueva (T17, A-1-61).
-INSERT INTO isletas (lugar_id, numero, nombre, latitud, longitud, plano_foto_id, filas, columnas)
-SELECT l.id, v.numero, v.nombre, l.latitud + v.desvio, l.longitud + v.desvio, f.id, v.filas, v.columnas
+INSERT INTO isletas (lugar_id, numero, nombre, latitud, longitud, filas, columnas)
+SELECT l.id, v.numero, v.nombre, l.latitud + v.desvio, l.longitud + v.desvio, v.filas, v.columnas
 FROM (VALUES
     ('A', 1, 'Junto a Agronomía', 7, 10,  0.0010),
     ('A', 2, 'Ingeniería',        4,  6, -0.0010),
@@ -76,7 +70,6 @@ FROM (VALUES
     ('C', 1, 'Entrada',           3,  5,  0.0005)
 ) AS v (letra, numero, nombre, filas, columnas, desvio)
 JOIN lugares l ON l.letra = v.letra
-JOIN fotos f ON f.ruta_r2 = 'seed/plano-' || v.letra || '-' || v.numero || '.jpg'
 ORDER BY v.letra, v.numero; -- así los id salen en orden: A-1 es la isleta 1, A-2 la 2…
 
 -- 5. Células: 60 + 20 + 15 + 15 + 10 = 120. Se ubican en la grilla de izquierda a derecha

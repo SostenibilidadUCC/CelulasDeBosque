@@ -37,7 +37,6 @@ type isletaAdmin struct {
 	Nombre          *string `json:"nombre"` // opcional
 	Filas           int     `json:"filas"`
 	Columnas        int     `json:"columnas"`
-	PlanoFotoID     *int64  `json:"planoFotoId"`     // null si todavía no se subió el plano
 	CantidadCelulas int     `json:"cantidadCelulas"` // todas, también las dadas de baja: ocupan su celda
 	TieneRegistros  bool    `json:"tieneRegistros"`  // si es true, el número no se puede cambiar (RN-03)
 }
@@ -88,7 +87,7 @@ func leerLugaresAdmin(ctx context.Context, pool *pgxpool.Pool, soloID *int64) ([
 		posicion[l.ID] = i
 	}
 	filas, err = pool.Query(ctx, `
-		SELECT i.id, i.lugar_id, i.numero, i.nombre, i.filas, i.columnas, i.plano_foto_id,
+		SELECT i.id, i.lugar_id, i.numero, i.nombre, i.filas, i.columnas,
 		       (SELECT count(*) FROM celulas c WHERE c.isleta_id = i.id),
 		       EXISTS (SELECT 1 FROM registros r JOIN celulas c ON c.id = r.celula_id WHERE c.isleta_id = i.id)
 		FROM isletas i
@@ -104,7 +103,7 @@ func leerLugaresAdmin(ctx context.Context, pool *pgxpool.Pool, soloID *int64) ([
 			lugarID int64
 		)
 		if err := filas.Scan(&isleta.ID, &lugarID, &isleta.Numero, &isleta.Nombre, &isleta.Filas, &isleta.Columnas,
-			&isleta.PlanoFotoID, &isleta.CantidadCelulas, &isleta.TieneRegistros); err != nil {
+			&isleta.CantidadCelulas, &isleta.TieneRegistros); err != nil {
 			return nil, err
 		}
 		p := posicion[lugarID]
