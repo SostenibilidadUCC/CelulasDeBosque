@@ -5,11 +5,13 @@ import Boton from './Boton.jsx'
 import Icono from './Icono.jsx'
 import PanelInferior from './PanelInferior.jsx'
 
-// Opciones de compresión (CAR-05): lado mayor 1600 px y hasta 300 KB, siempre en JPEG.
+// Opciones de compresión (CAR-05): lado mayor 1600 px, calidad 0,85 y hasta 1 MB, siempre en JPEG.
+// Con un tope más bajo (antes 300 KB) la librería achicaba la foto y bajaba la calidad varias veces.
 // useWebWorker hace el trabajo en segundo plano para que la pantalla no se congele.
 const opcionesCompresion = {
   maxWidthOrHeight: 1600,
-  maxSizeMB: 0.3,
+  maxSizeMB: 1,
+  initialQuality: 0.85,
   fileType: 'image/jpeg',
   useWebWorker: true,
 }
